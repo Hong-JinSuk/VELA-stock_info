@@ -1,0 +1,9 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["prismaSchemaFolder"] // ⭐ 이 옵션이 꼭 있어야 폴더 안의 파일들을 모두 인식합니다!
+}
+
+datasource db {
+  provider = "postgresql"
+}
