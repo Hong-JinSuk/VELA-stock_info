@@ -1,8 +1,10 @@
+import { Button } from '@/components/ui/button';
 import { GalleryVerticalEnd } from 'lucide-react';
 import Image from 'next/image';
+import { toast } from 'sonner';
 import { LoginForm } from '../components/signin-form';
 
-export default function LoginPage() {
+export default function SigninPage() {
   return (
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col gap-4 p-6 md:p-10">
@@ -10,6 +12,10 @@ export default function LoginPage() {
           <a href="#" className="flex items-center gap-2 font-medium">
             <div className="flex size-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
               <GalleryVerticalEnd className="size-4" />
+              <Button
+                onClick={() => toast.success('test')}
+                variant={'outline'}
+              />
             </div>
             Welcome to Stock Info
           </a>
