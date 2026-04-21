@@ -23,6 +23,19 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<'form'>) {
   const { data: session } = useSession();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginSchema>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
   const runPromiseTest = (isSuccess: boolean) => {
     // 1. 2초 뒤에 결과가 나오는 가짜 비동기 작업
     const promise = new Promise((resolve, reject) => {
@@ -49,20 +62,6 @@ export function LoginForm({
     });
   };
 
-  // 1. Hook Form 초기화
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginSchema>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  });
-
-  // 2. 제출 핸들러
   const onSubmit = async (data: LoginSchema) => {
     try {
       console.log('서버 전송 데이터:', data);
