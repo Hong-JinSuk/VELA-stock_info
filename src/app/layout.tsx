@@ -30,8 +30,9 @@ export default function RootLayout({
     <html
       lang="ko"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning // ThemeProvider 때문에 class에 theme mode 에러발생 방지
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <AuthContext>
           <QueryProvider>
             <ThemeProvider
