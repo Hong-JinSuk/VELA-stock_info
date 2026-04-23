@@ -1,5 +1,5 @@
+import { HeroVisual } from '@/app/(landing)/welcome/components/Hero';
 import { GalleryVerticalEnd } from 'lucide-react';
-import Image from 'next/image';
 import { LoginForm } from '../components/signin-form';
 
 export default function LoginPage() {
@@ -20,14 +20,8 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-      <div className="relative hidden bg-muted lg:block">
-        <Image
-          width={100}
-          height={0}
-          src="/placeholder.svg"
-          alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-        />
+      <div className="relative hidden lg:block bg-blue-200">
+        <HeroVisual />
       </div>
     </div>
   );

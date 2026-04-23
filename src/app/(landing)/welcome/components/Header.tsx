@@ -1,6 +1,7 @@
 import { VelaLogo } from '@/components/common/VelaLogo2';
 import { Moon, Sun } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { navLinks } from '../navigation';
 
@@ -10,6 +11,7 @@ interface HeaderProps {
 }
 
 export function Header({ isDarkMode, toggleTheme }: HeaderProps) {
+  const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
 
   const handleScroll = (
@@ -71,6 +73,7 @@ export function Header({ isDarkMode, toggleTheme }: HeaderProps) {
             <AnimatePresence>
               {isScrolled && (
                 <motion.button
+                  onClick={() => router.push('/login')}
                   initial={{ opacity: 0, scale: 0.9, x: 20 }}
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 0.9, x: 20 }}

@@ -1,7 +1,10 @@
+'use client';
+
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { StaggerContainer } from '@/motion/StaggerContainers';
 import { motion } from 'motion/react';
+import { useRouter } from 'next/navigation';
 
 export function Hero() {
   return (
@@ -16,6 +19,7 @@ export function Hero() {
 }
 
 function HeroContent() {
+  const router = useRouter();
   return (
     <div className="p-8 lg:p-20 flex flex-col justify-center border-r border-black/10 dark:border-white/10 relative">
       <StaggerContainer delay={0.1}>
@@ -26,9 +30,9 @@ function HeroContent() {
           Premium Insights
         </Badge>
 
-        <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-normal tracking-tight mb-8 leading-[1.1]">
-          <div>데이터가 아닌,</div>
-          <span className="italic text-blue-500">기회</span>를 읽는 법.
+        <h1 className="font-serif text-2xl sm:text-3xl xl:text-5xl font-normal tracking-tight mb-8 leading-[1.1]">
+          <div>변화의 바람을 읽고,</div>
+          <span className="italic text-blue-500">부의 흐름</span>을 따릅니다.
         </h1>
 
         <p className="text-lg text-slate-600 dark:text-slate-400 mb-12 max-w-md leading-relaxed">
@@ -38,7 +42,10 @@ function HeroContent() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4">
-          <Button className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-6 rounded h-auto text-base font-semibold transition-colors">
+          <Button
+            className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-6 rounded h-auto text-base font-semibold transition-colors"
+            onClick={() => router.push('/login')}
+          >
             지금 시작하기
           </Button>
         </div>
@@ -47,7 +54,7 @@ function HeroContent() {
   );
 }
 
-function HeroVisual() {
+export function HeroVisual() {
   return (
     // 기존 Default Logo
     // <div className="p-8 lg:p-0 flex items-center justify-center relative bg-[radial-gradient(circle_at_70%_30%,#e2e8f0_0%,#F8FAFC_100%)] dark:bg-[radial-gradient(circle_at_70%_30%,#1E293B_0%,#0F1115_100%)] border-t lg:border-t-0 border-black/10 dark:border-white/10 overflow-hidden min-h-[500px]">
@@ -86,7 +93,7 @@ function HeroVisual() {
     // </div>
 
     // vela(돛, 방향) 느낌
-    <div className="p-8 lg:p-0 flex items-center justify-center relative bg-[radial-gradient(circle_at_70%_30%,#e2e8f0_0%,#F8FAFC_100%)] dark:bg-[radial-gradient(circle_at_70%_30%,#1E293B_0%,#0F1115_100%)] border-t lg:border-t-0 border-black/10 dark:border-white/10 overflow-hidden min-h-[500px]">
+    <div className="p-8 lg:p-0 flex items-center justify-center relative bg-[radial-gradient(circle_at_70%_30%,#e2e8f0_0%,#F8FAFC_100%)] dark:bg-[radial-gradient(circle_at_70%_30%,#1E293B_0%,#0F1115_100%)] border-t lg:border-t-0 border-black/10 dark:border-white/10 overflow-hidden min-h-[500px] h-full">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
