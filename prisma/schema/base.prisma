@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  output          = "../src/generated/prisma"
+  output          = "../../src/generated/prisma"
   previewFeatures = ["prismaSchemaFolder"] // ⭐ prisma Folder 파일 인식옵션
 }
 
