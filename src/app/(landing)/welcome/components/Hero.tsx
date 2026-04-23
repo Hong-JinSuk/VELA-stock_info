@@ -19,7 +19,6 @@ function HeroContent() {
   return (
     <div className="p-8 lg:p-20 flex flex-col justify-center border-r border-black/10 dark:border-white/10 relative">
       <StaggerContainer delay={0.1}>
-        {/* 1. 배지 */}
         <Badge
           variant="outline"
           className="px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-blue-500 border-blue-500 rounded-full mb-8 hover:bg-transparent"
@@ -27,29 +26,20 @@ function HeroContent() {
           Premium Insights
         </Badge>
 
-        {/* 2. 타이틀 (한 줄씩 나오게 하려면 div나 span으로 분리) */}
         <h1 className="font-serif text-5xl sm:text-6xl lg:text-7xl font-normal tracking-tight mb-8 leading-[1.1]">
           <div>데이터가 아닌,</div>
           <span className="italic text-blue-500">기회</span>를 읽는 법.
         </h1>
 
-        {/* 3. 본문 */}
         <p className="text-lg text-slate-600 dark:text-slate-400 mb-12 max-w-md leading-relaxed">
           투자는 복잡한 데이터와 씨름하는 것이 아닙니다. VELA는 방대한 시장
-          데이터를 분석하여, 당신의 의사결정에 꼭 필요한 핵심 신호만을
+          데이터를 제공하여, 당신의 의사결정에 꼭 필요한 핵심 신호만을
           직관적으로 전달합니다.
         </p>
 
-        {/* 4. 버튼 그룹 */}
         <div className="flex flex-col sm:flex-row gap-4">
-          <Button className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-7 rounded h-auto text-base font-semibold transition-colors">
+          <Button className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-6 rounded h-auto text-base font-semibold transition-colors">
             지금 시작하기
-          </Button>
-          <Button
-            variant="outline"
-            className="bg-transparent border-black/10 dark:border-white/10 px-8 py-7 rounded h-auto text-base font-semibold transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-          >
-            서비스 소개서 보기
           </Button>
         </div>
       </StaggerContainer>
@@ -345,10 +335,9 @@ function HeroVisual() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 1, delay: 0.8 }}
                     d="M 210 80 Q 350 170 280 255 L 210 255 Z"
-                    fill="url(#sail-gradient-right)"
                     stroke="#3B82F6"
                     strokeWidth="1.5"
-                    className="opacity-90"
+                    className="opacity-90 fill-[url(#sail-gradient-right)]"
                   />
 
                   {/* Hull (Line art with subtle gradient to match sails) */}
@@ -357,11 +346,9 @@ function HeroVisual() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1, delay: 1.2 }}
                     d="M 60 275 Q 195 295 330 275 L 280 320 L 110 320 Z"
-                    // fill="url(#sail-gradient-left)"
-                    fill="#2A508C"
                     stroke="#3B82F6"
                     strokeWidth="1.5"
-                    className="opacity-90"
+                    className="fill-[url(#sail-gradient-right)] dark:fill-[#2A508C] stroke-[#3B82F6] opacity-90 transition-colors duration-300"
                   />
                 </motion.g>
               </motion.g>
