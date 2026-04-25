@@ -1,6 +1,6 @@
 'use client';
 
-import { useTheme } from '@/hooks/useTheme';
+import { useTheme } from '@/hooks/use-theme';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Contact } from './components/Contact';

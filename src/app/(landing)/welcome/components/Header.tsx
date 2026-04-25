@@ -45,11 +45,11 @@ export function Header({ isDarkMode, toggleTheme }: HeaderProps) {
         <div className="flex items-center gap-4">
           <VelaLogo size={42} className="text-slate-900 dark:text-white" />
           <div className="w-px h-10 bg-slate-300 dark:bg-slate-700"></div>
-          <div className="flex flex-col gap-[2px]">
-            <span className="font-['Sora'] font-medium tracking-[0.24em] text-xl leading-none text-slate-900 dark:text-white">
+          <div className="flex flex-col gap-[4px]">
+            <span className="font-serif font-medium tracking-[0.24em] text-xl leading-none text-slate-900 dark:text-white">
               VELA
             </span>
-            <span className="font-['DM_Sans'] font-normal tracking-[0.32em] text-[10px] leading-none text-slate-600 dark:text-slate-400">
+            <span className="font-serif font-normal tracking-[0.32em] text-[10px] leading-none text-slate-600 dark:text-slate-400">
               MARKET &nbsp; INTELLIGENCE
             </span>
           </div>

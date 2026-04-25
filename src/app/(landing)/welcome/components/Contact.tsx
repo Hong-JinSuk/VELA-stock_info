@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ContactData, useContact } from '@/lib/queries/mail/useContact';
+import { ContactData, useContact } from '@/lib/queries/mail/use-contact';
 import { FadeInView } from '@/motion/FadeInView';
 import { useState } from 'react';
 import { toast } from 'sonner';

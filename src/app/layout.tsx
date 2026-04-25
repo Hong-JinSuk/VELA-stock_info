@@ -1,3 +1,4 @@
+import ModalProvider from '@/components/providers/ModalProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
 import ToastProvider from '@/components/providers/ToastProvider';
 import AuthContext from '@/context/AuthContext';
@@ -18,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'VELA',
-  description: 'Stock Info By Jinsuk',
+  description: 'Stock Insight by realtone',
 };
 
 export default function RootLayout({
@@ -43,6 +44,7 @@ export default function RootLayout({
             >
               {children}
             </ThemeProvider>
+            <ModalProvider />
           </QueryProvider>
         </AuthContext>
         <ToastProvider />

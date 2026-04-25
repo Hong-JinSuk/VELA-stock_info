@@ -10,7 +10,7 @@ export function Hero() {
   return (
     <main
       id="hero"
-      className="grid lg:grid-cols-2 min-h-screen pt-20 max-w-[1440px] mx-auto"
+      className="grid lg:grid-cols-2 min-h-screen lg:pt-20 max-w-[1440px] mx-auto"
     >
       <HeroContent />
       <HeroVisual />
@@ -25,7 +25,7 @@ function HeroContent() {
       <StaggerContainer delay={0.1}>
         <Badge
           variant="outline"
-          className="px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.1em] text-blue-500 border-blue-500 rounded-full mb-8 hover:bg-transparent"
+          className="p-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-blue-500 border-blue-500 rounded-full mb-8 hover:bg-transparent font-serif"
         >
           Premium Insights
         </Badge>
@@ -93,7 +93,7 @@ export function HeroVisual() {
     // </div>
 
     // vela(돛, 방향) 느낌
-    <div className="p-8 lg:p-0 flex items-center justify-center relative bg-[radial-gradient(circle_at_70%_30%,#e2e8f0_0%,#F8FAFC_100%)] dark:bg-[radial-gradient(circle_at_70%_30%,#1E293B_0%,#0F1115_100%)] border-t lg:border-t-0 border-black/10 dark:border-white/10 overflow-hidden min-h-[500px] h-full">
+    <div className="hidden lg:flex p-8 lg:p-0 items-center justify-center relative bg-[radial-gradient(circle_at_70%_30%,#e2e8f0_0%,#F8FAFC_100%)] dark:bg-[radial-gradient(circle_at_70%_30%,#1E293B_0%,#0F1115_100%)] border-t lg:border-t-0 border-black/10 dark:border-white/10 overflow-hidden min-h-[500px] h-full">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
