@@ -6,7 +6,8 @@ model User {
   password      String?   // 로컬 로그인을 위한 비밀번호 (소셜은 null)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-
+  
+  emailVerified DateTime?
   accounts      Account[] // 유저가 가진 소셜 로그인 계정들 (1:N)
   sessions      Session[] // ??
 
@@ -21,12 +22,12 @@ model Account {
   provider          String  // "google", "kakao", "github" 등
   providerAccountId String  // OAuth가 부여한 해당 유저의 고유 ID
 
-  refresh_token     String?
-  access_token      String?
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?
+  id_token          String? @db.Text
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
