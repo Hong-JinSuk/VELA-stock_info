@@ -1,16 +1,11 @@
-import { VelaLogo } from '@/components/common/VelaLogo2';
-import { Moon, Sun } from 'lucide-react';
+import { ThemeToggleButton } from '@/components/common/ThemeButton';
+import { VelaLogo } from '@/components/common/VelaLogo';
 import { AnimatePresence, motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { navLinks } from '../navigation';
 
-interface HeaderProps {
-  isDarkMode: boolean;
-  toggleTheme: () => void;
-}
-
-export function Header({ isDarkMode, toggleTheme }: HeaderProps) {
+export function Header() {
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -84,17 +79,7 @@ export function Header({ isDarkMode, toggleTheme }: HeaderProps) {
                 </motion.button>
               )}
             </AnimatePresence>
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded transition-colors cursor-pointer"
-              aria-label="Toggle dark mode"
-            >
-              {isDarkMode ? (
-                <Sun className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )}
-            </button>
+            <ThemeToggleButton />
           </div>
         </div>
       </div>

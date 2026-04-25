@@ -1,11 +1,14 @@
 export type User = {
   id: string;
   email: string;
+  emailVerified: Date | null; // 추가
   name: string | null;
+  nickname: string | null;
   image: string | null;
   password: string | null;
   createdAt: Date;
   updatedAt: Date;
+  // 추후에 Role 추가해줘야함
 };
 
 export type Account = {

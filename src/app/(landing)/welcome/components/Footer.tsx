@@ -1,4 +1,4 @@
-import { VelaLogo } from '@/components/common/VelaLogo2';
+import { VelaLogo } from '@/components/common/VelaLogo';
 
 export function Footer() {
   return (

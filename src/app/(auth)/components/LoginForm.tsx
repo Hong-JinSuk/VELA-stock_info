@@ -17,12 +17,14 @@ import useModal from '@/hooks/use-modal';
 import { cn } from '@/lib/utils';
 import { loginSchema, LoginSchema } from '@/schemas/login-schema';
 import { signIn, signOut, useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<'form'>) {
+  const router = useRouter();
   const { data: session } = useSession();
   const { openSignupModal } = useModal();
 
@@ -38,39 +40,46 @@ export function LoginForm({
     },
   });
 
-  const runPromiseTest = (isSuccess: boolean) => {
-    const promise = new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (isSuccess) resolve({ name: 'Stock Info' });
-        else reject(new Error('에러 발생'));
-      }, 2000);
-    });
+  const onSubmit = async (data: LoginSchema) => {
+    // Login 로직
+    const loginPromise = async () => {
+      const result = await signIn('credentials', {
+        email: data.email,
+        password: data.password,
+        redirect: false, // 커스텀 토스트를 보여주기 위해 false로 설정
+      });
 
-    toast.promise(promise, {
+      if (result?.error) {
+        // NextAuth authorize에서 던진 에러나 기본 에러 처리
+        throw new Error(result.error || '이메일 또는 비밀번호를 확인해주세요.');
+      }
+
+      return result;
+    };
+
+    toast.promise(loginPromise(), {
       loading: (
         <div className="flex gap-x-2 items-center">
           <span>로그인 중입니다</span>{' '}
           <DotLoader className="text-violet-500 self-end" />
         </div>
       ),
-      success: (data: any) => {
-        return `${data.name} 서비스에 접속되었습니다!`; // 성공 시 초록색(emerald-100)
+      success: () => {
+        // 성공 시 페이지 이동은 useEffect가 처리하거나 여기서 직접 할 수 있습니다.
+        return `VELA 서비스에 접속되었습니다!`;
       },
       error: (err) => {
-        return `문제가 발생했습니다: ${err.message}`; // 실패 시 빨간색(rose-100)
+        return `${err.message}`;
       },
     });
   };
 
-  const onSubmit = async (data: LoginSchema) => {
-    try {
-      // API 호출 시뮬레이션 (1초 대기)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      runPromiseTest(true);
-      // 초기화하지 않고 그대로 둠 (성공 후 로직은 필요시 여기에 추가)
-    } catch (error) {
-      console.error('로그인 에러:', error);
-    }
+  const handleGoogleSignIn = async () => {
+    await toast.promise(signIn('google'), {
+      loading: '구글 로그인으로 이동 중...',
+      success: '구글 로그인 페이지로 이동합니다!',
+      error: '연결에 실패했습니다. 다시 시도해 주세요.',
+    });
   };
 
   if (session) {
@@ -150,7 +159,7 @@ export function LoginForm({
 
         <Field>
           <Button
-            onClick={() => signIn('google')}
+            onClick={handleGoogleSignIn}
             variant="outline"
             type="button"
             className="w-full"

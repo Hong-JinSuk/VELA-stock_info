@@ -1,6 +1,5 @@
 'use client';
 
-import { useTheme } from '@/hooks/use-theme';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Contact } from './components/Contact';
@@ -12,7 +11,6 @@ import { Philosophy } from './components/Philosophy';
 
 export default function Page() {
   const router = useRouter();
-  const { isDarkMode, toggleTheme } = useTheme();
   const { data: session, status } = useSession();
 
   // if(session){
@@ -23,7 +21,7 @@ export default function Page() {
     <div className="min-h-screen bg-[#F8FAFC] text-[#0F1115] dark:bg-[#0F1115] dark:text-[#F8FAFC] font-sans selection:bg-blue-500/30 transition-colors duration-300">
       {/* {status === 'unauthenticated' && ( */}
       <>
-        <Header isDarkMode={isDarkMode} toggleTheme={toggleTheme} />
+        <Header />
         <Hero />
         <Features />
         <Philosophy />
