@@ -35,17 +35,21 @@
   --animate-dot-loader: dotLoader 1.4s ease-in-out infinite both;
 }
 
-/* 2. 신뢰감을 주는 VELA Blue 설정 */
+/* 2. VELA 테마 설정 */
 @layer base {
   :root {
-    /* 배경: 아주 깨끗한 화이트 */
+    /* [Light] 배경 및 텍스트 */
     --background: 0 0% 100%;
     --foreground: 224 71.4% 4.1%;
 
-    /* VELA 메인 컬러: Toss 스타일의 Vivid Blue */
+    /* [Light] 보더: border-black/10 스타일 */
+    --border: 0 0% 0% / 10%;
+    --input: 0 0% 0% / 10%;
+    --ring: 221.2 83.2% 53.3%;
+
+    /* [Light] VELA Blue 및 기타 설정 */
     --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 210 40% 98%;
-
     --card: 0 0% 100%;
     --card-foreground: 224 71.4% 4.1%;
     --popover: 0 0% 100%;
@@ -58,25 +62,28 @@
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
     --radius: 0.625rem;
   }
 
   .dark {
-    /* 다크모드 배경: 너무 검지 않은 깊은 네이비 블랙 */
-    --background: 222.2 84% 4.9%;
+    /* [Dark] 배경: 요청하신 세련된 블랙 (#0C0E12) */
+    --background: 220 20% 5.9%;
     --foreground: 210 40% 98%;
 
-    /* 다크모드 블루: 가독성을 위해 살짝 더 밝고 선명하게 */
+    /* [Dark] 보더: border-white/10 스타일 */
+    --border: 0 0% 100% / 10%;
+    --input: 0 0% 100% / 10%;
+    --ring: 224.3 76.3% 48%;
+
+    /* [Dark] 카드 및 팝업: 배경색과 일치시켜 일체감 부여 */
+    --card: 220 20% 5.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 220 20% 5.9%;
+    --popover-foreground: 210 40% 98%;
+
+    /* [Dark] VELA Blue 및 기타 설정 */
     --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
@@ -85,9 +92,6 @@
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
   }
 }
 
@@ -101,7 +105,7 @@
   }
 }
 
-/* 애니메이션 및 View Transition (기존 유지) */
+/* --- 애니메이션 및 View Transition 생략 (기존과 동일) --- */
 @keyframes dotLoader {
   0%,
   80%,

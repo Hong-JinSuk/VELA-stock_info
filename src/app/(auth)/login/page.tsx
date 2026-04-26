@@ -1,13 +1,16 @@
-import { HeroVisual } from '@/app/(landing)/welcome/components/Hero';
+import { HeroVisual } from '@/app/(welcome)/welcome/components/Hero';
 import VelaText from '@/components/common/VelaText';
+import { Separator } from '@/components/ui/separator';
 import { LoginForm } from '../components/LoginForm';
 
 export default function LoginPage() {
   return (
     <div className="flex flex-col overflow-hidden max-h-svh">
-      <div className="max-w-[1440px] px-8 min-h-20 flex">
+      <div className="w-full mx-auto lg:max-w-[1440px] px-8 min-h-20 flex">
         <VelaText />
       </div>
+      {/* <Separator className="border-b border-black/10 dark:border-white/10" /> */}
+      <Separator className="bg-black/10 dark:bg-white/10" />
       <div className="grid lg:grid-cols-2 h-screen">
         <div className="flex flex-col gap-4 p-5">
           <div className="flex flex-1 items-center justify-center">

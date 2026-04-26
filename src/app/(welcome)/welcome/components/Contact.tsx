@@ -50,7 +50,7 @@ export function Contact() {
   return (
     <section
       id="contact"
-      className="py-32 border-t border-border bg-slate-50/50 dark:bg-[#0c0e12]"
+      className="py-32 border-t border-black/10 dark:border-white/10 bg-slate-50/50 dark:bg-[#0c0e12]"
     >
       <div className="max-w-[1440px] mx-auto px-8">
         <FadeInView className="max-w-2xl mx-auto text-center mb-16">

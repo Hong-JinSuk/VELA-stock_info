@@ -1,26 +1,39 @@
+'use client'; // Next.js 클라이언트 컴포넌트 선언
+
 import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
 import { Button } from '../ui/button';
 
 export const ThemeToggleButton = () => {
-  // next-themes에서 제공하는 기본 훅을 사용합니다.
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const toggleTheme = () => {
-    // 현재 테마의 반대 값을 결정
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
 
-    // 1. View Transitions 미지원 브라우저 대응
     if (!document.startViewTransition) {
       setTheme(nextTheme);
       return;
     }
 
-    // 2. 애니메이션과 함께 테마 전환
     document.startViewTransition(() => {
       setTheme(nextTheme);
     });
   };
+
+  // 레이아웃이 깨지지 않게 빈 공간(Skeleton)만 보여줍니다.
+  if (!mounted) {
+    return (
+      <Button variant={'link'} size="icon" className="size-10">
+        <div className="size-5.5" />
+      </Button>
+    );
+  }
 
   return (
     <Button variant={'link'} onClick={toggleTheme}>

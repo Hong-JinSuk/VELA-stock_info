@@ -6,7 +6,7 @@ export function Philosophy() {
   return (
     <section
       id="philosophy"
-      className="py-32 border-t border-border bg-[#F8FAFC]/80 dark:bg-[#0c0e12]"
+      className="py-32 border-t border-black/10 dark:border-white/10 bg-[#F8FAFC]/80 dark:bg-[#0c0e12]"
     >
       <div className="max-w-[1440px] mx-auto px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-center">

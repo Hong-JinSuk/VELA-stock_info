@@ -3,14 +3,17 @@
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function Home() {
   const router = useRouter();
   const { data: user } = useSession();
 
-  if (!user) {
-    router.push(`/welcome`);
-  }
+  useEffect(() => {
+    if (!user) {
+      router.push(`/welcome`);
+    }
+  }, [user, router]);
 
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">

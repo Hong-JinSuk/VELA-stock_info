@@ -7,7 +7,7 @@ export function Features() {
     <FadeInView>
       <section
         id="features"
-        className="py-24 border-t border-black/10 dark:border-white/10 bg-[#F8FAFC]/80 dark:bg-[#0c0e12]"
+        className="py-24 border-t border-border bg-[#F8FAFC]/80 dark:bg-[#0c0e12]"
       >
         <div className="max-w-[1440px] mx-auto px-8">
           <div className="mb-16 max-w-2xl">
