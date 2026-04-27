@@ -1,4 +1,4 @@
-import { HeroVisual } from '@/app/(welcome)/welcome/components/hero';
+import { HeroVisual } from '@/app/(welcome)/welcome/components/hero-visual';
 import VelaText from '@/components/common/vela-text';
 import { Separator } from '@/components/ui/separator';
 import { LoginForm } from '../components/login-form';
