@@ -1,4 +1,4 @@
-import { VelaLogo } from './VelaLogo';
+import { VelaLogo } from './vela-logo';
 
 interface VelaTextProps {
   logoSize?: number;

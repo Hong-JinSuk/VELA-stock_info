@@ -4,9 +4,7 @@ import bcrypt from 'bcryptjs';
 import type { AuthOptions } from 'next-auth';
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
-import GithubProvider from 'next-auth/providers/github';
 import GoogleProvider from 'next-auth/providers/google';
-import NaverProvider from 'next-auth/providers/naver';
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -20,16 +18,16 @@ export const authOptions: AuthOptions = {
       clientSecret: process.env.GOOGLE_OAUTH_SECRET || '',
       allowDangerousEmailAccountLinking: true,
     }),
-    NaverProvider({
-      clientId: process.env.NAVER_ID || '',
-      clientSecret: process.env.NAVER_SECRET || '',
-      allowDangerousEmailAccountLinking: true,
-    }),
-    GithubProvider({
-      clientId: process.env.GITHUB_ID || '',
-      clientSecret: process.env.GITHUB_SECRET || '',
-      allowDangerousEmailAccountLinking: true,
-    }),
+    // NaverProvider({
+    //   clientId: process.env.NAVER_ID || '',
+    //   clientSecret: process.env.NAVER_SECRET || '',
+    //   allowDangerousEmailAccountLinking: true,
+    // }),
+    // GithubProvider({
+    //   clientId: process.env.GITHUB_ID || '',
+    //   clientSecret: process.env.GITHUB_SECRET || '',
+    //   allowDangerousEmailAccountLinking: true,
+    // }),
     Credentials({
       name: 'Credentials',
       credentials: {
@@ -37,15 +35,20 @@ export const authOptions: AuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error('이메일과 비밀번호를 모두 입력해주세요.');
+        }
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email as string },
         });
 
-        // 유저가 없거나, 소셜로만 가입해서 비밀번호가 없는 경우 방어
+        // 🚨 1. 유저가 없거나, 소셜로만 가입해서 비밀번호가 없는 경우 분기 처리
         if (!user || !user.password) {
-          return null;
+          // 보안상 조금 더 안전하게 가려면 "가입되지 않았거나 소셜 로그인 계정입니다." 정도로 안내할 수 있습니다.
+          throw new Error(
+            '존재하지 않는 계정이거나 소셜 로그인으로 가입된 계정입니다.',
+          );
         }
 
         const isValid = await bcrypt.compare(
@@ -53,14 +56,40 @@ export const authOptions: AuthOptions = {
           user.password,
         );
 
-        // 보안상 비밀번호 제거후 return
-        if (isValid) {
-          const { password, ...safeUser } = user;
-          return safeUser as any;
+        // 🚨 2. 비밀번호가 틀린 경우 분기 처리
+        if (!isValid) {
+          throw new Error('비밀번호가 일치하지 않습니다.');
         }
 
-        return null; // 비밀번호가 틀린 경우
+        // 성공 시 (보안상 비밀번호 제거 후 return)
+        const { password, ...safeUser } = user;
+        return safeUser as any;
       },
+      // async authorize(credentials) {
+      //   if (!credentials?.email || !credentials?.password) return null;
+
+      //   const user = await prisma.user.findUnique({
+      //     where: { email: credentials.email as string },
+      //   });
+
+      //   // 유저가 없거나, 소셜로만 가입해서 비밀번호가 없는 경우 방어
+      //   if (!user || !user.password) {
+      //     return null;
+      //   }
+
+      //   const isValid = await bcrypt.compare(
+      //     credentials.password as string,
+      //     user.password,
+      //   );
+
+      //   // 보안상 비밀번호 제거후 return
+      //   if (isValid) {
+      //     const { password, ...safeUser } = user;
+      //     return safeUser as any;
+      //   }
+
+      //   return null; // 비밀번호가 틀린 경우
+      // },
     }),
   ],
   callbacks: {

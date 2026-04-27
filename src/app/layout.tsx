@@ -1,7 +1,8 @@
-import ModalProvider from '@/components/providers/ModalProvider';
-import QueryProvider from '@/components/providers/QueryProvider';
-import ToastProvider from '@/components/providers/ToastProvider';
-import AuthContext from '@/context/AuthContext';
+import ModalProvider from '@/components/providers/modal-provider';
+import QueryProvider from '@/components/providers/query-provider';
+import ToastProvider from '@/components/providers/toast-provider';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import AuthContext from '@/context/auth-context';
 import type { Metadata } from 'next';
 import { ThemeProvider } from 'next-themes';
 import { Geist, Geist_Mono } from 'next/font/google';
@@ -36,15 +37,17 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <AuthContext>
           <QueryProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
-              {children}
-            </ThemeProvider>
-            <ModalProvider />
+            <TooltipProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="system"
+                enableSystem
+                disableTransitionOnChange
+              >
+                {children}
+              </ThemeProvider>
+              <ModalProvider />
+            </TooltipProvider>
           </QueryProvider>
         </AuthContext>
         <ToastProvider />

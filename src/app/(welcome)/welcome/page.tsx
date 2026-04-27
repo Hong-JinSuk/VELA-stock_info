@@ -2,12 +2,12 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Contact } from './components/Contact';
-import { Features } from './components/Features';
-import { Footer } from './components/Footer';
-import { Header } from './components/Header';
-import { Hero } from './components/Hero';
-import { Philosophy } from './components/Philosophy';
+import { Contact } from './components/contact';
+import { Features } from './components/features';
+import { Footer } from './components/footer';
+import { Header } from './components/header';
+import { Hero } from './components/hero';
+import { Philosophy } from './components/philosophy';
 
 export default function Page() {
   const router = useRouter();

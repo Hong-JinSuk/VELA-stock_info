@@ -1,5 +1,5 @@
-import { ThemeToggleButton } from '@/components/common/ThemeButton';
-import { VelaLogo } from '@/components/common/VelaLogo';
+import { ThemeToggleButton } from '@/components/common/theme-button';
+import { VelaLogo } from '@/components/common/vela-logo';
 import { AnimatePresence, motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';

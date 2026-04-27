@@ -1,7 +1,7 @@
-import { HeroVisual } from '@/app/(welcome)/welcome/components/Hero';
-import VelaText from '@/components/common/VelaText';
+import { HeroVisual } from '@/app/(welcome)/welcome/components/hero';
+import VelaText from '@/components/common/vela-text';
 import { Separator } from '@/components/ui/separator';
-import { LoginForm } from '../components/LoginForm';
+import { LoginForm } from '../components/login-form';
 
 export default function LoginPage() {
   return (

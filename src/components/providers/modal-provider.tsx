@@ -2,8 +2,8 @@
 
 import { modalAtom } from '@/store/modal-atom';
 import { useAtom } from 'jotai';
-import { ConfirmModal } from '../modals/ConfirmModal';
-import SignupModal from '../modals/SignupModal';
+import { ConfirmModal } from '../modals/confirm-modal';
+import SignupModal from '../modals/signup-modal';
 
 export default function ModalProvider() {
   const [{ isOpen, type, data }, setModal] = useAtom(modalAtom);

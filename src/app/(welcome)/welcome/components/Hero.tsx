@@ -2,7 +2,7 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { StaggerContainer } from '@/motion/StaggerContainers';
+import { StaggerContainer } from '@/motion/stagger-containers';
 import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 
@@ -44,7 +44,7 @@ function HeroContent() {
         <div className="flex flex-col sm:flex-row gap-4">
           <Button
             className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-6 rounded h-auto text-base font-semibold transition-colors"
-            onClick={() => router.push('/login')}
+            onClick={() => router.push('/overview')}
           >
             지금 시작하기
           </Button>

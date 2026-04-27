@@ -1,5 +1,5 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { FadeInView } from '@/motion/FadeInView';
+import { FadeInView } from '@/motion/fade-in-view';
 import { philosophyData } from '../data/philosophy-data';
 
 export function Philosophy() {

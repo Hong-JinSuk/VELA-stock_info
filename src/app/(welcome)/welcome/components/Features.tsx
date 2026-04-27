@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FadeInView } from '@/motion/FadeInView';
+import { FadeInView } from '@/motion/fade-in-view';
 import { featuresData } from '../data/features-data';
 
 export function Features() {

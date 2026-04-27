@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 
-import DotLoader from '@/components/common/DotLoader';
+import DotLoader from '@/components/common/dot-loader';
 import { Button } from '@/components/ui/button';
 import {
   Field,
@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { loginSchema, LoginSchema } from '@/schemas/login-schema';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { toast } from 'sonner';
 
 export function LoginForm({
@@ -65,7 +66,6 @@ export function LoginForm({
         </div>
       ),
       success: () => {
-        // 성공 시 페이지 이동은 useEffect가 처리하거나 여기서 직접 할 수 있습니다.
         return `VELA 서비스에 접속되었습니다!`;
       },
       error: (err) => {
@@ -86,6 +86,12 @@ export function LoginForm({
     console.log('session : ', session);
     // session이 있다면 곧바로 메인 페이지로 보내야함.
   }
+
+  useEffect(() => {
+    if (session?.user) {
+      router.push('/overview');
+    }
+  }, [session, router]);
 
   return (
     <form
