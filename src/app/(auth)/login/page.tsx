@@ -9,7 +9,6 @@ export default function LoginPage() {
       <div className="w-full mx-auto lg:max-w-[1440px] px-8 min-h-20 flex">
         <VelaText />
       </div>
-      {/* <Separator className="border-b border-black/10 dark:border-white/10" /> */}
       <Separator className="bg-black/10 dark:bg-white/10" />
       <div className="grid lg:grid-cols-2 h-screen">
         <div className="flex flex-col gap-4 p-5">
