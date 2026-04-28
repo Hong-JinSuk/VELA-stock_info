@@ -38,9 +38,9 @@ export const ThemeToggleButton = () => {
   return (
     <Button variant={'link'} onClick={toggleTheme}>
       {theme === 'dark' ? (
-        <Sun className="size-5.5 text-yellow-500" />
+        <Sun className="size-5.5 text-yellow-500 fill-yellow-500" />
       ) : (
-        <Moon className="size-5.5 text-slate-600" />
+        <Moon className="size-5.5 text-gray-400 fill-gray-200" />
       )}
     </Button>
   );

@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { sendVerificationEmail } from '@/lib/queries/auth/mailer';
+import { sendVerificationEmail } from '@/lib/services/auth/mailer';
 import { NextResponse } from 'next/server';
 
 function generateCode() {

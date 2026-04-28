@@ -8,8 +8,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useEmail } from '@/lib/queries/auth/use-email';
-import { SignupData, useSignup } from '@/lib/queries/auth/use-signup';
+import { useEmail } from '@/lib/services/auth/use-email';
+import { SignupData, useSignup } from '@/lib/services/auth/use-signup';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';

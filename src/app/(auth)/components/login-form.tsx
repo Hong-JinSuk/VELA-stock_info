@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import useModal from '@/hooks/use-modal';
 import { cn } from '@/lib/utils';
 import { loginSchema, LoginSchema } from '@/schemas/login-schema';
+import { IconUserCircle } from '@tabler/icons-react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -164,6 +165,10 @@ export function LoginForm({
         <FieldSeparator>Or continue with</FieldSeparator>
 
         <Field>
+          <Button variant={'outline'} onClick={() => router.push('/overview')}>
+            <IconUserCircle />
+            Continue as Guest
+          </Button>
           <Button
             onClick={handleGoogleSignIn}
             variant="outline"

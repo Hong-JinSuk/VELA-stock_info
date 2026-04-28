@@ -1,4 +1,3 @@
-// src/lib/queries/auth/use-signup.ts
 import { api } from '@/lib/api/axios';
 import { ApiResponse } from '@/lib/api/response';
 import { User } from '@/types/user';

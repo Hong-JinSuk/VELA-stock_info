@@ -47,17 +47,9 @@ export function NavMain({ items }: { items: NavItemProps[] }) {
                 >
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
-                      {/* <SidebarMenuButton
-                        tooltip={item.title}
-                        className="w-full py-4 px-3 rounded-xl"
-                      >
-                        {item.icon && <item.icon />}
-                        <span>{item.title}</span>
-                        <IconChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                      </SidebarMenuButton> */}
                       <SidebarMenuButton
                         tooltip={item.title}
-                        className={`w-full py-4 px-3 rounded-xl transition-all dark:text-white dark:hover:text-white ${nonActiveColor}`}
+                        className={`w-full py-4 px-3 rounded-xl transition-all cursor-pointer dark:text-white dark:hover:text-white ${nonActiveColor}`}
                       >
                         {item.icon && <item.icon />}
                         <span>{item.title}</span>
