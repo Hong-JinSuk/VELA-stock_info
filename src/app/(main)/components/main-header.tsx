@@ -4,9 +4,13 @@ import { ThemeToggleButton } from '@/components/common/theme-button';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
+import { agentStatusAtom } from '@/store/ai-atom';
+import { useAtomValue } from 'jotai';
 import { useSession } from 'next-auth/react';
 
 export function MainHeader() {
+  const agentStatus = useAtomValue(agentStatusAtom);
   const { data: session } = useSession();
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -28,19 +32,19 @@ export function MainHeader() {
               Stock Info
             </a>
           </Button>
-          {/* <div className="flex items-center gap-2 bg-card px-3 py-1.5 rounded-full border border-border">
+          <div className="flex items-center gap-2 bg-card px-3 py-1.5 rounded-full border border-border">
             <div className="relative flex h-2 w-2">
-              {aiState.agentStatus === '분석 중' && (
+              {agentStatus === '분석 중' && (
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
               )}
               <span
                 className={cn(
                   'relative inline-flex rounded-full h-2 w-2',
-                  aiState.agentStatus === '분석 중'
+                  agentStatus === '분석 중'
                     ? 'bg-yellow-500'
-                    : aiState.agentStatus === '분석 완료'
+                    : agentStatus === '분석 완료'
                       ? 'bg-blue-500'
-                      : aiState.agentStatus === '사용 만료'
+                      : agentStatus === '사용 만료'
                         ? 'bg-red-500'
                         : 'bg-primary',
                 )}
@@ -50,19 +54,19 @@ export function MainHeader() {
               <span className="text-foreground">AI AGENT: </span>
               <span
                 className={cn(
-                  aiState.agentStatus === '분석 중'
+                  agentStatus === '분석 중'
                     ? 'text-yellow-500 animate-dots'
-                    : aiState.agentStatus === '분석 완료'
+                    : agentStatus === '분석 완료'
                       ? 'text-blue-500'
-                      : aiState.agentStatus === '사용 만료'
+                      : agentStatus === '사용 만료'
                         ? 'text-red-500'
                         : 'text-primary',
                 )}
               >
-                {aiState.agentStatus}
+                {agentStatus}
               </span>
             </span>
-          </div> */}
+          </div>
           <ThemeToggleButton />
         </div>
       </div>

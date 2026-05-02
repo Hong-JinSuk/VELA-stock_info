@@ -7,45 +7,48 @@ enum Role {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  name          String?
-  nickname      String?   @unique
-  image         String?   // 소셜 로그인 시 받아올 프로필 이미지
-  password      String?   // 로컬 로그인을 위한 비밀번호 (소셜은 null)
+  id       String  @id @default(uuid())
+  email    String  @unique
+  name     String?
+  nickname String? @unique
+  image    String? // 소셜 로그인 시 받아올 프로필 이미지
+  password String? // 로컬 로그인을 위한 비밀번호 (소셜은 null)
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  role          Role      @default(FREE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  role Role @default(FREE)
 
   emailVerified DateTime?
   accounts      Account[] // 유저가 가진 소셜 로그인 계정들 (1:N)
   sessions      Session[] // ??
+
+  // 유저가 ai로 검색한 로그
+  aiLog AiLog[]
 
   // watchlists Watchlist[] (나중에 추가할 관심종목)
 }
 
 // 💡 소셜 로그인(OAuth) 정보를 저장하는 전용 테이블
 model Account {
-  id                String  @id @default(uuid())
+  id                String @id @default(uuid())
   userId            String
-  type              String  // "OAuth" 등
-  provider          String  // "google", "kakao", "github" 등
-  providerAccountId String  // OAuth가 부여한 해당 유저의 고유 ID
+  type              String // "OAuth" 등
+  provider          String // "google", "kakao", "github" 등
+  providerAccountId String // OAuth가 부여한 해당 유저의 고유 ID
 
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
+  refresh_token String? @db.Text
+  access_token  String? @db.Text
+  expires_at    Int?
+  token_type    String?
+  scope         String?
+  id_token      String? @db.Text
+  session_state String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // 하나의 소셜 계정은 한 번만 연결되도록 복합키 설정
-  @@unique([provider, providerAccountId]) 
+  @@unique([provider, providerAccountId])
 }
 
 model Session {

@@ -6,11 +6,11 @@ import { useEffect, useState } from 'react';
 import { Button } from '../ui/button';
 
 interface ThemeToggleButtonProps {
-  variant?: 'toggle' | 'switch';
+  type?: 'toggle' | 'switch';
 }
 
 export const ThemeToggleButton = ({
-  variant = 'switch',
+  type = 'toggle',
 }: ThemeToggleButtonProps) => {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -33,7 +33,7 @@ export const ThemeToggleButton = ({
   };
 
   if (!mounted) {
-    if (variant === 'switch') {
+    if (type === 'switch') {
       return <div className="h-6 w-11 rounded-full bg-muted" />;
     }
     return (
@@ -45,7 +45,7 @@ export const ThemeToggleButton = ({
 
   const isDark = theme === 'dark';
 
-  if (variant === 'switch') {
+  if (type === 'switch') {
     return (
       <button
         role="switch"

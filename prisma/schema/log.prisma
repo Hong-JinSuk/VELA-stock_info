@@ -1,0 +1,18 @@
+model AiLog {
+  id     String @id @default(uuid())
+  userId String
+
+  actionType String // 예: "PREDICT", "COMPARE"
+  ticker     String? // 종목 코드
+
+  queryData  Json? // AI 요청 데이터 (stockData 등)
+  refineData Json? // 프롬프트화된 요청 데이터
+  resultData Json? // AI 응답 데이터
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 특정 유저의 날짜별 쿼리를 빠르게 하기 위한 인덱스
+  @@index([userId, createdAt])
+}

@@ -15,11 +15,11 @@ export default function Layout({ children }: { children: ReactNode }) {
       className="dark:bg-[#171717]"
     >
       <AppSidebar variant="inset" />
-      <SidebarInset>
+      <SidebarInset className="flex flex-col h-svh overflow-hidden">
         <MainHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-2">
-            <div className="flex flex-col flex-1 gap-4 p-4 md:p-6">
+        <div className="flex flex-1 flex-col overflow-y-auto lg:overflow-hidden min-h-0">
+          <div className="@container/main flex flex-1 flex-col gap-2 min-h-0">
+            <div className="flex flex-col flex-1 gap-4 p-4 md:p-6 min-h-0 h-full">
               {children}
             </div>
           </div>
