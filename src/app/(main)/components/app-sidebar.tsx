@@ -2,7 +2,6 @@
 
 import {
   IconCamera,
-  IconChartBar,
   IconDashboard,
   IconDatabase,
   IconFileAi,
@@ -28,7 +27,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { SquareTerminal } from 'lucide-react';
+import { Sparkles, SquareTerminal } from 'lucide-react';
 import Link from 'next/link';
 import { NavDocuments } from './nav-documents';
 import { NavMain } from './nav-main';
@@ -48,9 +47,9 @@ const data = {
       icon: IconDashboard,
     },
     {
-      title: 'Dashboard',
+      title: 'AI-Analytics',
       url: '#',
-      icon: IconDashboard,
+      icon: Sparkles,
     },
     {
       title: 'Playground',
@@ -97,11 +96,6 @@ const data = {
       url: '#',
       icon: IconListDetails,
       badge: '10',
-    },
-    {
-      title: 'Analytics',
-      url: '#',
-      icon: IconChartBar,
     },
     {
       title: 'Projects',

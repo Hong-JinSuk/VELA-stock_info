@@ -1,7 +1,9 @@
 'use client';
 
+import { MacroCard } from '@/components/common/macro-card';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react'; // Hydration 방지용
+import { MACRO_INDICATORS } from './data/data';
 
 const guest = process.env.NEXT_PUBLIC_GUEST;
 
@@ -31,7 +33,7 @@ export default function Page() {
 
   return (
     <main className="flex flex-col flex-1">
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between mb-5">
         <div className="flex flex-col gap-1">
           <h1 className="font-serif text-xl tracking-tight">
             {greeting} {user?.nickname ?? guest}
@@ -44,7 +46,11 @@ export default function Page() {
         </div>
       </header>
       <section className="flex-1 flex flex-col">
-        <div className="flex items-center"></div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
+          {MACRO_INDICATORS.map((indicator) => (
+            <MacroCard key={indicator.id} indicator={indicator} />
+          ))}
+        </div>
         <div className="flex-1"></div>
       </section>
     </main>

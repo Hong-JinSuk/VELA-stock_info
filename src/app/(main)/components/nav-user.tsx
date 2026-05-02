@@ -9,6 +9,7 @@ import {
   IconUserCircle,
 } from '@tabler/icons-react';
 
+import { ThemeToggleButton } from '@/components/common/theme-button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -98,6 +99,9 @@ export function NavUser() {
               <DropdownMenuItem>
                 <IconNotification />
                 Notifications
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <ThemeToggleButton />
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

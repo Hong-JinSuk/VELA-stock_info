@@ -1,3 +1,5 @@
+export type UserRole = 'FREE' | 'PRO' | 'MAX' | 'ADMIN' | 'TESTER';
+
 export type User = {
   id: string;
   email: string;
@@ -8,6 +10,7 @@ export type User = {
   password: string | null;
   createdAt: Date;
   updatedAt: Date;
+  role: UserRole;
   // 추후에 Role 추가해줘야함
 };
 

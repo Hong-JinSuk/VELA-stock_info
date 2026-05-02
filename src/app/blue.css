@@ -132,6 +132,27 @@
   }
 }
 
+@keyframes dots {
+  0%,
+  20% {
+    content: '.';
+  }
+  40% {
+    content: '..';
+  }
+  60%,
+  100% {
+    content: '...';
+  }
+}
+.animate-dots::after {
+  content: '.';
+  display: inline-block;
+  animation: dots 1.5s infinite steps(1, end);
+  width: 1em;
+  text-align: left;
+}
+
 /* toggle theme css */
 ::view-transition-old(root),
 ::view-transition-new(root) {
