@@ -173,37 +173,38 @@ export function PredictionResult() {
                         Current Price
                       </p>
                       <p className="text-2xl font-mono text-foreground">
-                        {result.currentPrice}
+                        {result?.currentPrice}
                       </p>
                     </div>
                   </div>
 
                   <div className="w-full grid grid-cols-2 sm:grid-cols-5 gap-3">
-                    {Object.entries(result.predictions).map(
-                      ([period, data]) => (
-                        <div
-                          key={period}
-                          className="bg-secondary/50 border border-border p-4 rounded-2xl flex flex-col justify-center"
-                        >
-                          <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-2">
-                            {period.replace('m', ' Months')}
-                          </p>
-                          <p className="text-xl sm:text-2xl font-bold text-foreground tracking-tighter mb-1">
-                            {data.targetPrice}
-                          </p>
-                          <p
-                            className={cn(
-                              'text-xs font-bold tracking-wider',
-                              data.upsidePotential.includes('-')
-                                ? 'text-rose-400'
-                                : 'text-primary',
-                            )}
+                    {result.predictions &&
+                      Object.entries(result.predictions).map(
+                        ([period, data]) => (
+                          <div
+                            key={period}
+                            className="bg-secondary/50 border border-border p-4 rounded-2xl flex flex-col justify-center"
                           >
-                            {data.upsidePotential}
-                          </p>
-                        </div>
-                      ),
-                    )}
+                            <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-2">
+                              {period.replace('m', ' Months')}
+                            </p>
+                            <p className="text-xl sm:text-2xl font-bold text-foreground tracking-tighter mb-1">
+                              {data.targetPrice}
+                            </p>
+                            <p
+                              className={cn(
+                                'text-xs font-bold tracking-wider',
+                                data.upsidePotential.includes('-')
+                                  ? 'text-rose-400'
+                                  : 'text-primary',
+                              )}
+                            >
+                              {data.upsidePotential}
+                            </p>
+                          </div>
+                        ),
+                      )}
                   </div>
                 </div>
                 {/* Abstract Grid background */}
@@ -222,7 +223,7 @@ export function PredictionResult() {
                   <TrendingUp className="w-4 h-4" /> Strong Bull Case
                 </h3>
                 <p className="text-sm text-foreground leading-relaxed font-medium whitespace-pre-wrap">
-                  {result.bullCase.replace(/\\n/g, '\n')}
+                  {result?.bullCase?.replace(/\\n/g, '\n')}
                 </p>
               </div>
 
@@ -232,7 +233,7 @@ export function PredictionResult() {
                   <TrendingDown className="w-4 h-4" /> Hard Bear Case
                 </h3>
                 <p className="text-sm text-foreground leading-relaxed font-medium whitespace-pre-wrap">
-                  {result.bearCase.replace(/\\n/g, '\n')}
+                  {result?.bearCase?.replace(/\\n/g, '\n')}
                 </p>
               </div>
 
@@ -244,12 +245,12 @@ export function PredictionResult() {
                     Prediction Logic Insights
                   </h3>
                   <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-                    {result.oneLineSummary}
+                    {result?.oneLineSummary}
                   </h2>
                 </div>
                 <div className="prose prose-invert prose-sm max-w-none prose-headings:text-foreground prose-headings:font-bold prose-headings:border-b prose-headings:border-border prose-headings:pb-2 prose-a:text-primary prose-p:text-foreground prose-p:leading-relaxed prose-strong:text-primary prose-ul:text-foreground prose-li:marker:text-primary">
                   <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>
-                    {result.rationale.replace(/\\n/g, '\n')}
+                    {result?.rationale?.replace(/\\n/g, '\n')}
                   </Markdown>
                 </div>
               </div>
