@@ -2,9 +2,9 @@
 
 import { usePredictMutation } from '@/lib/services/stock/use-predict-mutation';
 import { cn } from '@/lib/utils';
-import { aiPredictFormAtom } from '@/store/ai-atom';
+import { agentStatusAtom, aiPredictFormAtom } from '@/store/ai-atom';
 import { motion } from 'framer-motion';
-import { useAtom } from 'jotai';
+import { useAtom, useAtomValue } from 'jotai';
 import {
   AlertCircle,
   BarChart3,
@@ -12,20 +12,26 @@ import {
   ShieldCheck,
   Target,
 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { useRef } from 'react';
 
 export function PredictionForm() {
   const [aiForm, setAiForm] = useAtom(aiPredictFormAtom);
   const { stockName, stockData } = aiForm;
+  const { data: user } = useSession();
+  const agentStatus = useAtomValue(agentStatusAtom);
   const { predictMutation } = usePredictMutation();
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const loading = predictMutation.isPending;
-  const error = predictMutation.error
-    ? (predictMutation.error as any)?.code === 'ERR_CANCELED'
-      ? '분석이 취소되었습니다.'
-      : (predictMutation.error as Error).message
-    : '';
+  const isExpired = agentStatus === '사용 만료';
+  const error = isExpired
+    ? '이번 달 사용 횟수를 모두 소진했습니다.'
+    : predictMutation.error
+      ? (predictMutation.error as any)?.code === 'ERR_CANCELED'
+        ? '분석이 취소되었습니다.'
+        : (predictMutation.error as Error).message
+      : '';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +51,6 @@ export function PredictionForm() {
   };
 
   return (
-    // ✨ lg:h-full lg:overflow-hidden 을 줘서 이 컬럼이 스크롤 되지 않고 높이가 고정되게 유지
     <div className="lg:col-span-4 flex flex-col gap-4 lg:h-full lg:overflow-hidden">
       <div className="bg-card rounded-3xl border border-border p-6 flex flex-col flex-1 min-h-0 shrink-0">
         <div className="flex items-center gap-2 mb-6 shrink-0">
@@ -129,10 +134,10 @@ export function PredictionForm() {
             ) : (
               <button
                 type="submit"
-                disabled={!stockName.trim()}
+                disabled={!stockName.trim() || !user || isExpired}
                 className={cn(
                   'w-full flex items-center justify-center gap-2 py-4 px-4 rounded-2xl font-bold uppercase tracking-widest text-xs transition-all',
-                  !stockName.trim()
+                  !stockName.trim() || !user || isExpired
                     ? 'bg-secondary text-muted-foreground cursor-not-allowed'
                     : 'bg-primary text-primary-foreground hover:bg-primary shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_25px_rgba(52,211,153,0.4)]',
                 )}

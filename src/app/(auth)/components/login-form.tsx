@@ -165,7 +165,11 @@ export function LoginForm({
         <FieldSeparator>Or continue with</FieldSeparator>
 
         <Field>
-          <Button variant={'outline'} onClick={() => router.push('/overview')}>
+          <Button
+            variant={'outline'}
+            onClick={() => router.push('/overview')}
+            type="button"
+          >
             <IconUserCircle />
             Continue as Guest
           </Button>

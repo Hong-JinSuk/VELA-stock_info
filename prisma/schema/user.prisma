@@ -1,5 +1,6 @@
 enum Role {
   FREE
+  BASIC
   PRO
   MAX
   ADMIN
@@ -17,14 +18,15 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  role Role @default(FREE)
+  role      Role @default(FREE)
+  usage     UserUsage?
 
   emailVerified DateTime?
   accounts      Account[] // 유저가 가진 소셜 로그인 계정들 (1:N)
   sessions      Session[] // ??
 
   // 유저가 ai로 검색한 로그
-  aiLog AiLog[]
+  aiLog     AiLog[]
 
   // watchlists Watchlist[] (나중에 추가할 관심종목)
 }
@@ -65,4 +67,18 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model UserUsage {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  
+  // 💡 수정: 자식(UserUsage) 쪽에서는 onDelete: Cascade를 지웁니다.
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  maxLimit    Int
+  usedCount   Int      @default(0)
+  cycleStart  DateTime
+  cycleEnd    DateTime
+  updatedAt   DateTime @updatedAt
 }

@@ -1,4 +1,14 @@
-export type UserRole = 'FREE' | 'PRO' | 'MAX' | 'ADMIN' | 'TESTER';
+export type UserRole = 'FREE' | 'BASIC' | 'PRO' | 'MAX' | 'ADMIN' | 'TESTER';
+
+// -1은 무제한
+export const ROLE_LIMITS: Record<UserRole, number> = {
+  FREE: 1,
+  BASIC: 15,
+  PRO: 30,
+  MAX: -1,
+  ADMIN: -1,
+  TESTER: -1,
+};
 
 export type User = {
   id: string;
@@ -11,6 +21,8 @@ export type User = {
   createdAt: Date;
   updatedAt: Date;
   role: UserRole;
+
+  usage?: UserUsage | null;
   // 추후에 Role 추가해줘야함
 };
 
@@ -38,4 +50,14 @@ export type Session = {
 
 export type UserWithAccounts = User & {
   accounts: Account[];
+};
+
+export type UserUsage = {
+  id: string;
+  userId: string;
+  maxLimit: number;
+  usedCount: number;
+  cycleStart: Date;
+  cycleEnd: Date;
+  updatedAt: Date;
 };

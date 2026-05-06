@@ -1,11 +1,57 @@
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { ai, errorMessage } from '@/lib/ai/gemini';
 import { getPredictPrompt } from '@/lib/ai/prompts';
+import prisma from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
-
-export const runtime = 'edge';
 
 export async function POST(request: Request) {
   try {
+    // 1. 인증 확인
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json(
+        { message: '로그인이 필요합니다.' },
+        { status: 401 },
+      );
+    }
+
+    const userId = (session.user as any).id as string;
+
+    // 2. Usage 조회
+    const usage = await prisma.userUsage.findUnique({ where: { userId } });
+    if (!usage) {
+      return NextResponse.json(
+        { message: '사용량 정보를 찾을 수 없습니다.' },
+        { status: 403 },
+      );
+    }
+
+    // 3. 주기 만료 시 자동 리셋
+    const now = new Date();
+    if (usage.cycleEnd < now) {
+      const newCycleEnd = new Date(usage.cycleEnd);
+      newCycleEnd.setMonth(newCycleEnd.getMonth() + 1);
+      await prisma.userUsage.update({
+        where: { userId },
+        data: {
+          usedCount: 0,
+          cycleStart: usage.cycleEnd,
+          cycleEnd: newCycleEnd,
+        },
+      });
+      usage.usedCount = 0;
+    }
+
+    // 4. 사용 한도 확인 (-1은 무제한)
+    if (usage.maxLimit !== -1 && usage.usedCount >= usage.maxLimit) {
+      return NextResponse.json(
+        { message: '이번 달 사용 횟수를 모두 소진했습니다.' },
+        { status: 429 },
+      );
+    }
+
+    // 5. 예측 실행
     const { stockName, refinedData } = await request.json();
 
     if (!stockName) {
@@ -33,7 +79,6 @@ export async function POST(request: Request) {
 
     console.log('============ End Predict ============');
 
-    // JSON 추출
     const startIndex = fullText.indexOf('{');
     const endIndex = fullText.lastIndexOf('}');
 
@@ -56,6 +101,12 @@ export async function POST(request: Request) {
       );
     }
 
+    // 6. 사용량 증가 (atomic)
+    await prisma.userUsage.update({
+      where: { userId },
+      data: { usedCount: { increment: 1 } },
+    });
+
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('Predict Route Error:', error);
@@ -73,66 +124,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
-// export async function POST(request: Request) {
-//   try {
-//     const { stockName, refinedData } = await request.json();
-
-//     if (!stockName) {
-//       return new Response(JSON.stringify({ message: '종목명이 필요합니다.' }), {
-//         status: 400,
-//         headers: { 'Content-Type': 'application/json' },
-//       });
-//     }
-
-//     console.log(`============ Start Predict Stream: ${stockName} ============`);
-
-//     const stream = await ai.models.generateContentStream({
-//       model: 'gemini-2.5-flash',
-//       contents: getPredictPrompt(stockName, refinedData ?? ''),
-//       config: {
-//         temperature: 0.1,
-//         tools: [{ googleSearch: {} }],
-//       },
-//     });
-
-//     // 💡 핵심: ReadableStream을 만들어 청크가 생길 때마다 전송
-//     const readableStream = new ReadableStream({
-//       async start(controller) {
-//         try {
-//           for await (const chunk of stream) {
-//             if (chunk.text) {
-//               controller.enqueue(new TextEncoder().encode(chunk.text));
-//             }
-//           }
-//           console.log('============ End Predict Stream ============');
-//           controller.close();
-//         } catch (error) {
-//           console.error('Stream Generation Error:', error);
-//           controller.error(error);
-//         }
-//       },
-//     });
-
-//     // 💡 NextResponse.json() 대신 순수 Response 객체로 스트림 반환
-//     return new Response(readableStream, {
-//       headers: {
-//         'Content-Type': 'text/plain; charset=utf-8',
-//         'Transfer-Encoding': 'chunked',
-//       },
-//     });
-//   } catch (error: any) {
-//     console.error('Predict Route Error:', error);
-//     const status = error.response?.status || error.status || 500;
-//     const message = errorMessage[status] || '알 수 없는 오류가 발생했습니다.';
-
-//     return new Response(
-//       JSON.stringify({
-//         message,
-//         debug:
-//           process.env.NODE_ENV === 'development' ? error.message : undefined,
-//       }),
-//       { status, headers: { 'Content-Type': 'application/json' } },
-//     );
-//   }
-// }

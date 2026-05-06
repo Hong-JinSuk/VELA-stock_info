@@ -9,7 +9,7 @@ import { atom } from 'jotai';
 export const activeAgentServiceAtom = atom<AgentServiceType>('IDLE');
 
 // 에이전트의 동작 상태
-export const agentStatusAtom = atom<AgentStatus>('사용 가능');
+export const agentStatusAtom = atom<AgentStatus>('로그인 필요');
 
 export interface AiFormState {
   stockName: string;

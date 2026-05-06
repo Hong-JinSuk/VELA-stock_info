@@ -4,12 +4,12 @@ model AiLog {
 
   actionType String // 예: "PREDICT", "COMPARE"
   ticker     String? // 종목 코드
+  
+  createdAt DateTime @default(now())
 
   queryData  Json? // AI 요청 데이터 (stockData 등)
   refineData Json? // 프롬프트화된 요청 데이터
   resultData Json? // AI 응답 데이터
-
-  createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

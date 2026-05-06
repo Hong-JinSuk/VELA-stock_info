@@ -1,5 +1,10 @@
 // main-header 에서 사용될 에이전트 타입
-export type AgentStatus = '사용 가능' | '분석 중' | '분석 완료' | '사용 만료';
+export type AgentStatus =
+  | '사용 가능'
+  | '분석 중'
+  | '분석 완료'
+  | '사용 만료'
+  | '로그인 필요';
 
 // 앱 전체에서 사용될 AI 서비스들의 고유 타입
 export type AgentServiceType = 'IDLE' | 'PREDICT' | 'COMPARE' | 'PORTFOLIO';

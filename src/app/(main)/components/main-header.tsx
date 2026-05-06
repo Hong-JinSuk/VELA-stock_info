@@ -6,12 +6,26 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
 import { agentStatusAtom } from '@/store/ai-atom';
-import { useAtomValue } from 'jotai';
+import { useAtom } from 'jotai';
 import { useSession } from 'next-auth/react';
+import { useEffect } from 'react';
 
 export function MainHeader() {
-  const agentStatus = useAtomValue(agentStatusAtom);
+  const [agentStatus, setAgentStatus] = useAtom(agentStatusAtom);
   const { data: session } = useSession();
+
+  useEffect(() => {
+    if (!session) {
+      setAgentStatus('로그인 필요');
+      return;
+    }
+    const usage = (session.user as any)?.usage;
+    if (usage && usage.maxLimit !== -1 && usage.usedCount >= usage.maxLimit) {
+      setAgentStatus('사용 만료');
+      return;
+    }
+    setAgentStatus('사용 가능');
+  }, [session, setAgentStatus]);
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
