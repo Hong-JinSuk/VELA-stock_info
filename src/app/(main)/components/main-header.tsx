@@ -8,13 +8,22 @@ import { cn } from '@/lib/utils';
 import { agentStatusAtom } from '@/store/ai-atom';
 import { useAtom } from 'jotai';
 import { useSession } from 'next-auth/react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+
+const ACTIVE_STATUSES = ['분석 중'] as const;
 
 export function MainHeader() {
   const [agentStatus, setAgentStatus] = useAtom(agentStatusAtom);
   const { data: session } = useSession();
+  const agentStatusRef = useRef(agentStatus);
 
   useEffect(() => {
+    agentStatusRef.current = agentStatus;
+  });
+
+  useEffect(() => {
+    if (ACTIVE_STATUSES.includes(agentStatusRef.current as any)) return;
+
     if (!session) {
       setAgentStatus('로그인 필요');
       return;

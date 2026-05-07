@@ -98,7 +98,7 @@ export function usePredictMutation() {
         return;
       }
 
-      setAgentStatus('사용 만료');
+      setAgentStatus('분석 오류');
     },
     meta: {
       ignoreGlobalError: true,
