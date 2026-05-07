@@ -5,6 +5,10 @@ export function errorInterceptors(instance: AxiosInstance) {
   instance.interceptors.response.use(
     (response) => response,
     (error) => {
+      if (axios.isCancel(error) || error?.code === 'ERR_CANCELED') {
+        throw error;
+      }
+
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
         const message =

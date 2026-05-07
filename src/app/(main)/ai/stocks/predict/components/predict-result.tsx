@@ -1,10 +1,9 @@
 'use client';
 
+import { useExportPdf } from '@/hooks/use-export-pdf';
 import { cn } from '@/lib/utils';
 import { aiPredictResultAtom } from '@/store/ai-atom';
-import { toPng } from 'html-to-image';
 import { useAtomValue } from 'jotai';
-import { jsPDF } from 'jspdf';
 import {
   BarChart3,
   Download,
@@ -14,108 +13,20 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
 import Markdown from 'react-markdown';
 import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 
-export function PredictionResult() {
+export default function PredictionResult() {
   const result = useAtomValue(aiPredictResultAtom);
-  const [isExporting, setIsExporting] = useState(false);
 
   const stockName = result?.targetStockName || '';
 
-  const getRecommendationBadge = (rec?: string) => {
-    if (!rec) return null;
-    let bgColor = 'bg-primary/20',
-      textColor = 'text-primary',
-      borderColor = 'border-primary/30';
-
-    if (rec.includes('강력 매수')) {
-      bgColor = 'bg-primary/30';
-      textColor = 'text-primary';
-      borderColor = 'border-primary/50';
-    } else if (rec.includes('매도')) {
-      bgColor = 'bg-rose-500/20';
-      textColor = 'text-rose-400';
-      borderColor = 'border-rose-500/30';
-      if (rec.includes('강력')) {
-        bgColor = 'bg-rose-500/30';
-        borderColor = 'border-rose-500/50';
-      }
-    } else if (rec.includes('보류')) {
-      bgColor = 'bg-amber-500/20';
-      textColor = 'text-amber-500';
-      borderColor = 'border-amber-500/30';
-    }
-
-    return (
-      <span
-        className={cn(
-          'px-3 py-1 rounded-full text-xs font-bold border ml-3 align-middle',
-          bgColor,
-          textColor,
-          borderColor,
-        )}
-      >
-        {rec}
-      </span>
-    );
-  };
-
-  const handleExportPDF = async () => {
-    const element = document.getElementById('prediction-result');
-    if (!element || isExporting) return;
-
-    setIsExporting(true);
-    const isDark = document.documentElement.classList.contains('dark');
-    const bgColor = isDark ? '#09090b' : '#ffffff';
-    const pdfFillColor = isDark ? [9, 9, 11] : [255, 255, 255];
-
-    try {
-      const imgData = await toPng(element, {
-        pixelRatio: 2,
-        backgroundColor: bgColor,
-        filter: (node) => {
-          if (
-            node instanceof HTMLElement &&
-            node.hasAttribute('data-export-ignore')
-          ) {
-            return false;
-          }
-          return true;
-        },
-      });
-      const img = new Image();
-      img.src = imgData;
-      await new Promise((resolve) => {
-        img.onload = resolve;
-      });
-
-      const pdfWidth = 210; // A4 width in mm
-      const pdfHeight = (img.height * pdfWidth) / img.width;
-
-      const pdf = new jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: [pdfWidth, pdfHeight],
-      });
-
-      pdf.setFillColor(pdfFillColor[0], pdfFillColor[1], pdfFillColor[2]);
-      pdf.rect(0, 0, pdfWidth, pdfHeight, 'F');
-
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${stockName || 'prediction'}_analysis.pdf`);
-    } catch (error) {
-      console.error('Failed to generate PDF', error);
-    } finally {
-      setIsExporting(false);
-    }
-  };
+  const { exportPdf, isExporting } = useExportPdf();
 
   return (
     // ✨ 우측 결과 컬럼은 lg:overflow-y-auto 를 통해 자체적으로 스크롤을 가지고, 커스텀 스크롤바 디자인을 부여했습니다
-    <div className="lg:col-span-8 flex flex-col h-full lg:overflow-y-auto lg:pr-3 rounded-3xl [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
+    <div className="lg:col-span-8 flex flex-col h-full min-h-0 lg:overflow-y-auto lg:pr-3 rounded-3xl [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
       <AnimatePresence mode="wait">
         {result ? (
           <motion.div
@@ -140,11 +51,16 @@ export function PredictionResult() {
                           Primary Prediction
                         </p>
                         <button
-                          onClick={handleExportPDF}
+                          onClick={() =>
+                            exportPdf(
+                              'prediction-result',
+                              `${stockName}_analysis.pdf`,
+                            )
+                          }
                           disabled={isExporting}
                           data-export-ignore="true"
                           className={cn(
-                            'flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary/80 transition-colors bg-primary/10 hover:bg-primary/20 border border-primary/20 px-3 py-1 rounded-full outline-none',
+                            'hidden sm:flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-primary hover:text-primary/80 transition-colors bg-primary/10 hover:bg-primary/20 border border-primary/20 px-3 py-1 rounded-full outline-none',
                             isExporting
                               ? 'opacity-50 cursor-not-allowed'
                               : 'cursor-pointer',
@@ -163,7 +79,7 @@ export function PredictionResult() {
                           )}
                         </button>
                       </div>
-                      <h2 className="text-3xl font-bold text-foreground uppercase tracking-tight flex items-center">
+                      <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground uppercase tracking-tight flex items-center">
                         {stockName}
                         {getRecommendationBadge(result.recommendation)}
                       </h2>
@@ -172,7 +88,7 @@ export function PredictionResult() {
                       <p className="text-muted-foreground text-[10px] uppercase tracking-widest font-bold mb-1">
                         Current Price
                       </p>
-                      <p className="text-2xl font-mono text-foreground">
+                      <p className="text-lg md:text-xl lg:text-2xl font-mono text-foreground">
                         {result?.currentPrice}
                       </p>
                     </div>
@@ -189,7 +105,7 @@ export function PredictionResult() {
                             <p className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-2">
                               {period.replace('m', ' Months')}
                             </p>
-                            <p className="text-xl sm:text-2xl font-bold text-foreground tracking-tighter mb-1">
+                            <p className="text-base md::text-lg lg:text-xl font-bold text-foreground tracking-tighter mb-1">
                               {data.targetPrice}
                             </p>
                             <p
@@ -222,9 +138,11 @@ export function PredictionResult() {
                 <h3 className="text-[10px] font-black text-primary mb-3 uppercase tracking-widest flex items-center gap-2">
                   <TrendingUp className="w-4 h-4" /> Strong Bull Case
                 </h3>
-                <p className="text-sm text-foreground leading-relaxed font-medium whitespace-pre-wrap">
-                  {result?.bullCase?.replace(/\\n/g, '\n')}
-                </p>
+                <div className="prose prose-invert prose-sm max-w-none prose-headings:text-foreground prose-headings:font-bold prose-p:text-foreground prose-p:leading-relaxed prose-strong:text-primary prose-ul:text-foreground prose-li:marker:text-primary">
+                  <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+                    {result?.bullCase?.replace(/\\n/g, '\n')}
+                  </Markdown>
+                </div>
               </div>
 
               <div className="md:col-span-4 bg-card rounded-3xl border border-border p-6 flex flex-col relative overflow-hidden">
@@ -232,9 +150,11 @@ export function PredictionResult() {
                 <h3 className="text-[10px] font-black text-rose-400 mb-3 uppercase tracking-widest flex items-center gap-2">
                   <TrendingDown className="w-4 h-4" /> Hard Bear Case
                 </h3>
-                <p className="text-sm text-foreground leading-relaxed font-medium whitespace-pre-wrap">
-                  {result?.bearCase?.replace(/\\n/g, '\n')}
-                </p>
+                <div className="prose prose-invert prose-sm max-w-none prose-headings:text-foreground prose-headings:font-bold prose-p:text-foreground prose-p:leading-relaxed prose-strong:text-rose-400 prose-ul:text-foreground prose-li:marker:text-rose-400">
+                  <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+                    {result?.bearCase?.replace(/\\n/g, '\n')}
+                  </Markdown>
+                </div>
               </div>
 
               {/* Logic Insights */}
@@ -282,3 +202,41 @@ export function PredictionResult() {
     </div>
   );
 }
+
+const getRecommendationBadge = (rec?: string) => {
+  if (!rec) return null;
+  let bgColor = 'bg-primary/20',
+    textColor = 'text-primary',
+    borderColor = 'border-primary/30';
+
+  if (rec.includes('강력 매수')) {
+    bgColor = 'bg-primary/30';
+    textColor = 'text-primary';
+    borderColor = 'border-primary/50';
+  } else if (rec.includes('매도')) {
+    bgColor = 'bg-rose-500/20';
+    textColor = 'text-rose-400';
+    borderColor = 'border-rose-500/30';
+    if (rec.includes('강력')) {
+      bgColor = 'bg-rose-500/30';
+      borderColor = 'border-rose-500/50';
+    }
+  } else if (rec.includes('보류')) {
+    bgColor = 'bg-amber-500/20';
+    textColor = 'text-amber-500';
+    borderColor = 'border-amber-500/30';
+  }
+
+  return (
+    <span
+      className={cn(
+        'px-3 py-1 rounded-full text-xs font-bold border ml-3 align-middle',
+        bgColor,
+        textColor,
+        borderColor,
+      )}
+    >
+      {rec}
+    </span>
+  );
+};

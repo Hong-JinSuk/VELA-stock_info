@@ -12,10 +12,10 @@ export default function Layout({ children }: { children: ReactNode }) {
           '--header-height': 'calc(var(--spacing) * 12)',
         } as React.CSSProperties
       }
-      className="dark:bg-[#171717]"
+      className="h-svh overflow-hidden dark:bg-[#171717]"
     >
       <AppSidebar variant="inset" />
-      <SidebarInset className="flex flex-col h-svh overflow-hidden">
+      <SidebarInset className="flex flex-col flex-1 overflow-hidden">
         <MainHeader />
         <div className="flex flex-1 flex-col overflow-y-auto lg:overflow-hidden min-h-0">
           <div className="@container/main flex flex-1 flex-col gap-2 min-h-0">

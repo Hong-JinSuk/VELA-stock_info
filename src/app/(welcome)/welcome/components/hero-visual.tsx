@@ -1,7 +1,6 @@
-'use client';
 import { motion } from 'motion/react';
 
-export function HeroVisual() {
+export default function HeroVisual() {
   return (
     // vela(돛, 방향) 느낌
     <div className="hidden lg:flex p-8 lg:p-0 items-center justify-center relative bg-[radial-gradient(circle_at_70%_30%,#e2e8f0_0%,#F8FAFC_100%)] dark:bg-[radial-gradient(circle_at_70%_30%,#1E293B_0%,#0F1115_100%)] border-t lg:border-t-0 border-black/10 dark:border-white/10 overflow-hidden min-h-[500px] h-full">

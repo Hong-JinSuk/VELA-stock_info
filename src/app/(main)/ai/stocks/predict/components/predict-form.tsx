@@ -15,7 +15,7 @@ import {
 import { useSession } from 'next-auth/react';
 import { useRef } from 'react';
 
-export function PredictionForm() {
+export default function PredictionForm() {
   const [aiForm, setAiForm] = useAtom(aiPredictFormAtom);
   const { stockName, stockData } = aiForm;
   const { data: user } = useSession();
@@ -28,9 +28,7 @@ export function PredictionForm() {
   const error = isExpired
     ? '이번 달 사용 횟수를 모두 소진했습니다.'
     : predictMutation.error
-      ? (predictMutation.error as any)?.code === 'ERR_CANCELED'
-        ? '분석이 취소되었습니다.'
-        : (predictMutation.error as Error).message
+      ? (predictMutation.error as Error).message
       : '';
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -51,7 +49,7 @@ export function PredictionForm() {
   };
 
   return (
-    <div className="lg:col-span-4 flex flex-col gap-4 lg:h-full lg:overflow-hidden">
+    <div className="lg:col-span-4 flex flex-col gap-4 lg:h-full min-h-[400px] lg:overflow-hidden">
       <div className="bg-card rounded-3xl border border-border p-6 flex flex-col flex-1 min-h-0 shrink-0">
         <div className="flex items-center gap-2 mb-6 shrink-0">
           <BarChart3 className="w-5 h-5 text-primary" />
