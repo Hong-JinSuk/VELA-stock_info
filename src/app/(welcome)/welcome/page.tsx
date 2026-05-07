@@ -14,7 +14,7 @@ export default function Page() {
   const { data: session, status } = useSession();
 
   // if(session){
-  //   router.push('/home')
+  //   router.push('/welcome')
   // }
 
   return (
