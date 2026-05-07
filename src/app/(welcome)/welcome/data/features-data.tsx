@@ -3,7 +3,7 @@ import { Shield, Sparkles, TrendingUp } from 'lucide-react';
 export const featuresData = [
   {
     icon: <Shield className="w-6 h-6" />,
-    title: '검증된 리포트',
+    title: '검증된 데이터',
     desc: '자극적인 정보에 흔들리지 않도록 객관적인 지표로 검증된 사실만을 전달합니다.',
   },
   {

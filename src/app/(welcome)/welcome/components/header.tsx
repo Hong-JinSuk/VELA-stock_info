@@ -1,6 +1,5 @@
 import { ThemeToggleButton } from '@/components/common/theme-button';
 import { VelaLogo } from '@/components/common/vela-logo';
-import { AnimatePresence, motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { navLinks } from '../navigation';
@@ -23,7 +22,7 @@ export function Header() {
   useEffect(() => {
     const handleScrollEvent = () => {
       // 500px 이상 스크롤 했을 때 버튼 등장
-      if (window.scrollY > 500) {
+      if (window.scrollY > 550) {
         setIsScrolled(true);
       } else {
         setIsScrolled(false);
@@ -64,21 +63,21 @@ export function Header() {
             ))}
           </div>
 
-          <div className="flex items-center gap-4">
-            <AnimatePresence>
-              {isScrolled && (
-                <motion.button
-                  onClick={() => router.push('/login')}
-                  initial={{ opacity: 0, scale: 0.9, x: 20 }}
-                  animate={{ opacity: 1, scale: 1, x: 0 }}
-                  exit={{ opacity: 0, scale: 0.9, x: 20 }}
-                  transition={{ duration: 0.2 }}
-                  className="hidden md:block bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-semibold transition-colors"
-                >
-                  지금 시작하기
-                </motion.button>
-              )}
-            </AnimatePresence>
+          <div className="flex items-center">
+            <div
+              className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out hidden md:block ${
+                isScrolled
+                  ? 'max-w-[160px] opacity-100 mr-4'
+                  : 'max-w-0 opacity-0 mr-0'
+              }`}
+            >
+              <button
+                onClick={() => router.push('/login')}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-semibold transition-colors"
+              >
+                지금 시작하기
+              </button>
+            </div>
             <ThemeToggleButton />
           </div>
         </div>

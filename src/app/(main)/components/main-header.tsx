@@ -79,11 +79,13 @@ export function MainHeader() {
                 className={cn(
                   agentStatus === '분석 중'
                     ? 'text-yellow-500 animate-dots'
-                    : agentStatus === '분석 완료'
-                      ? 'text-blue-500'
-                      : agentStatus === '사용 만료'
-                        ? 'text-red-500'
-                        : 'text-primary',
+                    : agentStatus === '분석 오류'
+                      ? 'text-yellow-700'
+                      : agentStatus === '분석 완료'
+                        ? 'text-blue-500'
+                        : agentStatus === '사용 만료'
+                          ? 'text-red-500'
+                          : 'text-primary',
                 )}
               >
                 {agentStatus}
