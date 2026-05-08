@@ -1,10 +1,22 @@
 'use client';
 
 import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { useIsMobile } from '@/hooks/use-mobile';
 import PredictionForm from './components/predict-form';
 import PredictionResult from './components/predict-result';
 
 export default function Page() {
+  const isMobile = useIsMobile();
+
+  if (isMobile) {
+    return (
+      <div className="flex flex-col gap-4">
+        <PredictionForm />
+        <PredictionResult />
+      </div>
+    );
+  }
+
   return (
     <ResizablePanelGroup
       orientation="horizontal"

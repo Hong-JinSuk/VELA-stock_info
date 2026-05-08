@@ -49,7 +49,7 @@ export default function PredictionForm() {
   };
 
   return (
-    <div className="flex flex-col gap-4 h-full min-h-[400px] overflow-hidden">
+    <div className="flex flex-col gap-4 h-full min-h-[600px] overflow-hidden">
       <div className="bg-card rounded-3xl border border-border p-6 flex flex-col flex-1 min-h-0 shrink-0">
         <div className="flex items-center gap-2 mb-6 shrink-0">
           <BarChart3 className="w-5 h-5 text-primary" />
@@ -83,7 +83,7 @@ export default function PredictionForm() {
           </div>
 
           {/* ✨ Textarea 영역이 남는 공간(flex-1)을 정확히 차지하도록 min-h-0 속성 추가 */}
-          <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 flex flex-col min-h-40">
             <div className="flex justify-between items-end mb-2 shrink-0">
               <label
                 htmlFor="stockData"

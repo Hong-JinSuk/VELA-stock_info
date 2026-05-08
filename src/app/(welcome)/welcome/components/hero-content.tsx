@@ -21,12 +21,14 @@ export default function HeroContent() {
           <div>변화의 바람을 읽고,</div>
           <span className="italic text-blue-500">부의 흐름</span>을 따릅니다.
         </h1>
-
-        <p className="text-lg text-slate-600 dark:text-slate-400 mb-12 max-w-md leading-relaxed">
-          투자는 복잡한 데이터와 씨름하는 것이 아닙니다. VELA는 방대한 시장
-          데이터를 제공하여, 당신의 의사결정에 꼭 필요한 핵심 신호만을
-          직관적으로 전달합니다.
-        </p>
+        <div className="text-lg text-slate-600 dark:text-slate-400 mb-12 max-w-md leading-relaxed ">
+          <span>투자는 복잡한 데이터와 씨름하는 것이 아닙니다. </span>
+          <span className="font-serif">VELA</span>
+          <span>
+            는 방대한 시장 데이터를 제공하여, 당신의 의사결정에 꼭 필요한 핵심
+            신호만을 직관적으로 전달합니다.
+          </span>
+        </div>
 
         <div className="flex flex-col sm:flex-row gap-4">
           <Button

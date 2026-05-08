@@ -26,7 +26,7 @@ export default function PredictionResult() {
   const { exportPdf, isExporting } = useExportPdf();
 
   return (
-    <div className="flex flex-col h-full min-h-0 overflow-y-auto pr-3 rounded-3xl [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
+    <div className="flex flex-col h-full min-h-0 max-h-[75svh] md:max-h-none overflow-y-auto pr-3 rounded-3xl [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
       <AnimatePresence mode="wait">
         {result ? (
           <motion.div

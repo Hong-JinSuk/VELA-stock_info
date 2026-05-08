@@ -1,19 +1,19 @@
-import { Shield, Sparkles, TrendingUp } from 'lucide-react';
+import { Database, Radar, Sparkles } from 'lucide-react';
 
 export const featuresData = [
   {
-    icon: <Shield className="w-6 h-6" />,
+    icon: <Database className="w-6 h-6" />,
     title: '검증된 데이터',
     desc: '자극적인 정보에 흔들리지 않도록 객관적인 지표로 검증된 사실만을 전달합니다.',
   },
   {
-    icon: <TrendingUp className="w-6 h-6" />,
-    title: '매크로 트렌드 요약',
-    desc: '어려운 경제 용어 대신, 누구나 이해할 수 있는 언어로 글로벌 징후를 명확하게 짚어드립니다.',
+    icon: <Radar className="w-6 h-6" />,
+    title: '투자 시그널',
+    desc: '시장 분석에 꼭 필요한 핵심 지표만 엄선해 한눈에. 곧 나에게 중요한 지표만 골라보는 맞춤 설정도 만나보세요.',
   },
   {
     icon: <Sparkles className="w-6 h-6" />,
-    title: '개별맞춤 인사이트',
-    desc: '사용자의 관심 섹터와 투자 성향에 맞춘, 나만의 데일리 브리핑을 받아보세요.',
+    title: '개별맞춤 주가분석',
+    desc: '같은 종목, 다른 분석. 당신이 중시하는 지표를 반영한 1:1 맞춤 리포트를 만나보세요.',
   },
 ];
