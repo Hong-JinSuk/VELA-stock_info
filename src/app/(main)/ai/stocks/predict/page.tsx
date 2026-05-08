@@ -25,12 +25,11 @@ export default function Page() {
       <ResizablePanel
         defaultSize="380px"
         minSize="250px"
+        maxSize="500px"
         className="flex flex-col"
       >
         <PredictionForm />
       </ResizablePanel>
-
-      {/* <ResizableHandle /> */}
 
       <ResizablePanel className="flex flex-col">
         <PredictionResult />
