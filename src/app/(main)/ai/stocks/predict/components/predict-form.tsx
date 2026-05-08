@@ -24,6 +24,7 @@ export default function PredictionForm() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const loading = predictMutation.isPending;
+
   const isExpired = agentStatus === '사용 만료';
   const error = isExpired
     ? '이번 달 사용 횟수를 모두 소진했습니다.'

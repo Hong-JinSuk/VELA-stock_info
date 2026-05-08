@@ -1,14 +1,33 @@
 export type UserRole = 'FREE' | 'BASIC' | 'PRO' | 'MAX' | 'ADMIN' | 'TESTER';
 
-// -1은 무제한
+// AI 사용 정책
+// FREE    2회  / 1주일 주기
+// BASIC  20회  / 1달 주기
+// PRO    50회  / 1달 주기
+// MAX    10회  / 1시간 주기 (시간당 최대 10회)
+// ADMIN  무제한 (-1)
+// TESTER 무제한 (-1)
 export const ROLE_LIMITS: Record<UserRole, number> = {
-  FREE: 1,
-  BASIC: 15,
-  PRO: 30,
-  MAX: -1,
+  FREE: 2,
+  BASIC: 20,
+  PRO: 50,
+  MAX: 10,
   ADMIN: -1,
   TESTER: -1,
 };
+
+// FREE: 1주 / MAX: 1시간 / 그 외: 1달
+export function getNextCycleEnd(role: UserRole, from: Date): Date {
+  const end = new Date(from);
+  if (role === 'FREE') {
+    end.setDate(end.getDate() + 7);
+  } else if (role === 'MAX') {
+    end.setHours(end.getHours() + 1);
+  } else {
+    end.setMonth(end.getMonth() + 1);
+  }
+  return end;
+}
 
 export type User = {
   id: string;

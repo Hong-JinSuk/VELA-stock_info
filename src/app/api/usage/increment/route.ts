@@ -1,5 +1,6 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
+import { getNextCycleEnd, UserRole } from '@/types/user';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 
@@ -32,14 +33,13 @@ export async function POST() {
     // 주기 만료 시 리셋 후 새 주기로 increment
     const now = new Date();
     if (existing.cycleEnd < now) {
-      const newCycleEnd = new Date(existing.cycleEnd);
-      newCycleEnd.setMonth(newCycleEnd.getMonth() + 1);
+      const role = ((session.user as any).role as UserRole) ?? 'FREE';
       const usage = await prisma.userUsage.update({
         where: { userId },
         data: {
           usedCount: 1,
           cycleStart: existing.cycleEnd,
-          cycleEnd: newCycleEnd,
+          cycleEnd: getNextCycleEnd(role, existing.cycleEnd),
         },
       });
       return NextResponse.json({

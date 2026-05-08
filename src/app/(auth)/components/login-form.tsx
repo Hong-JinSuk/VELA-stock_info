@@ -17,7 +17,7 @@ import useModal from '@/hooks/use-modal';
 import { cn } from '@/lib/utils';
 import { loginSchema, LoginSchema } from '@/schemas/login-schema';
 import { IconUserCircle } from '@tabler/icons-react';
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
@@ -155,11 +155,6 @@ export function LoginForm({
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? 'Logging in...' : 'Login'}
           </Button>
-          {session && (
-            <Button onClick={() => signOut()} type="button" className="w-full">
-              LogOut
-            </Button>
-          )}
         </Field>
 
         <FieldSeparator>Or continue with</FieldSeparator>

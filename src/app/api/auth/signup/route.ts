@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { ROLE_LIMITS } from '@/types/user';
+import { getNextCycleEnd, ROLE_LIMITS } from '@/types/user';
 import bcrypt from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -18,10 +18,7 @@ export async function POST(req: NextRequest) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 💡 결제일(가입일) 기준 한 달 주기 계산
     const now = new Date();
-    const nextMonth = new Date(now);
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
 
     // 💡 유저와 사용량(UserUsage)을 동시에 생성 (Nested Write)
     const user = await prisma.user.create({
@@ -29,13 +26,13 @@ export async function POST(req: NextRequest) {
         email,
         name,
         password: hashedPassword,
-        role: 'FREE', // 스키마 기본값이지만 명시적으로 지정
+        role: 'FREE',
         usage: {
           create: {
-            maxLimit: ROLE_LIMITS['FREE'], // FREE 요금제에 해당하는 1회 부여
+            maxLimit: ROLE_LIMITS['FREE'],
             usedCount: 0,
             cycleStart: now,
-            cycleEnd: nextMonth,
+            cycleEnd: getNextCycleEnd('FREE', now),
           },
         },
       },

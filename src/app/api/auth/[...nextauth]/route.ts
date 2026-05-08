@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { ROLE_LIMITS } from '@/types/user';
+import { getNextCycleEnd, ROLE_LIMITS, UserRole } from '@/types/user';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
 import type { AuthOptions } from 'next-auth';
@@ -123,16 +123,14 @@ export const authOptions: AuthOptions = {
 
         if (!existingUsage) {
           const now = new Date();
-          const cycleEnd = new Date(now);
-          cycleEnd.setMonth(cycleEnd.getMonth() + 1);
-
+          const role = (user as any).role as UserRole ?? 'FREE';
           await prisma.userUsage.create({
             data: {
               userId: user.id,
-              maxLimit: ROLE_LIMITS['FREE'],
+              maxLimit: ROLE_LIMITS[role],
               usedCount: 0,
               cycleStart: now,
-              cycleEnd,
+              cycleEnd: getNextCycleEnd(role, now),
             },
           });
         }
@@ -162,16 +160,15 @@ export const authOptions: AuthOptions = {
           // upsert: 동시 요청으로 인한 중복 생성 에러 방지
           if (!usage) {
             const now = new Date();
-            const cycleEnd = new Date(now);
-            cycleEnd.setMonth(cycleEnd.getMonth() + 1);
+            const role = (token.role as UserRole) ?? 'FREE';
             usage = await prisma.userUsage.upsert({
               where: { userId },
               create: {
                 userId,
-                maxLimit: ROLE_LIMITS['FREE'],
+                maxLimit: ROLE_LIMITS[role],
                 usedCount: 0,
                 cycleStart: now,
-                cycleEnd,
+                cycleEnd: getNextCycleEnd(role, now),
               },
               update: {},
             });
