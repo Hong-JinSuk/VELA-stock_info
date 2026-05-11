@@ -48,7 +48,7 @@ export default function OverviewAiInsight() {
           <div className="py-12 flex flex-col items-center justify-center space-y-4">
             <div className="w-8 h-8 rounded-full border-2 border-indigo-500/20 border-t-indigo-500 animate-spin" />
             <p className="text-sm text-muted-foreground animate-pulse">
-              현재 매크로 데이터를 바탕으로 시장을 분석 중입니다...
+              VELA AI가 시장 데이터를 바탕으로 시장을 분석 중입니다...
             </p>
           </div>
         ) : error ? (

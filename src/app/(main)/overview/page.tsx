@@ -44,9 +44,6 @@ export default function Page() {
               ? `We’ve picked the most important market updates for you.`
               : `Nice to meet you. Let's see what's happening in the market.`}
           </p>
-          <p className="flex items-end gap-1">
-            아직 데이터가 연동되지 않았습니다. 빠른시일 내에 준비하겠습니다.
-          </p>
         </div>
       </header>
       <section className="flex-1 flex flex-col gap-6">
