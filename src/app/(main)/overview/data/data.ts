@@ -94,7 +94,7 @@ export const MACRO_INDICATORS: Indicator[] = [
     name: '공포탐욕지수',
     icon: Gauge,
     valueMain: '65',
-    valueSuffix: ' (탐욕)',
+    valueSuffix: '(탐욕)',
     status: 'Neutral',
     description:
       '"투자자 심리" - 극도의 탐욕(매도 경계), 극도의 공포(매수 기회).',

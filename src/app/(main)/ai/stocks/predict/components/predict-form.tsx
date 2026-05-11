@@ -155,9 +155,10 @@ export default function PredictionForm() {
           System Notice
         </h3>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Prediction model outputs rely on unstructured user inputs via Gemini
-          framework. Results are speculative and not intended as financial
-          advice.
+          본 서비스에서 제공하는 모든 정보는 AI 모델에 기반한 투자 참고
+          자료이며, 투자 권유나 수익을 보장하지 않습니다. 투자의 최종 결정과
+          그로 인한 결과에 대한 책임은 본인에게 있으며, 과거의 성과가 미래의
+          수익을 담보하지 않음을 유의하시기 바랍니다.
         </p>
       </div>
     </div>
