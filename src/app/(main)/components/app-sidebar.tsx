@@ -1,6 +1,5 @@
 'use client';
 
-import { IconDashboard } from '@tabler/icons-react';
 import * as React from 'react';
 
 import { VelaLogo } from '@/components/common/vela-logo';
@@ -13,90 +12,68 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { Sparkles } from 'lucide-react';
+import {
+  IconCamera,
+  IconDatabase,
+  IconFileAi,
+  IconFileDescription,
+  IconFileWord,
+  IconReport,
+} from '@tabler/icons-react';
 import Link from 'next/link';
-import { NavDocuments } from './nav-documents';
+import { navMain, navPresonal } from './nav-data';
 import { NavMain } from './nav-main';
-import { NavSecondary } from './nav-secondary';
+import { NavPersonal } from './nav-personal';
 import { NavUser } from './nav-user';
 
 const data = {
-  user: {
-    name: 'shadcn',
-    email: 'm@example.com',
-    // avatar: '/avatars/shadcn.jpg',
-  },
-  navMain: [
+  navClouds: [
     {
-      title: 'Overview',
-      url: '/overview',
-      icon: IconDashboard,
-    },
-    {
-      title: 'AI-Analytics',
-      url: '/ai/stocks',
-      icon: Sparkles,
+      title: 'Capture',
+      icon: IconCamera,
       isActive: true,
+      url: '#',
       items: [
         {
-          title: 'Predict',
-          url: '/predict',
+          title: 'Active Proposals',
+          url: '#',
         },
         {
-          title: 'Compare',
-          url: '/compare',
-          disabled: true,
+          title: 'Archived',
+          url: '#',
         },
       ],
     },
-  ],
-  navClouds: [
-    // {
-    //   title: 'Capture',
-    //   icon: IconCamera,
-    //   isActive: true,
-    //   url: '#',
-    //   items: [
-    //     {
-    //       title: 'Active Proposals',
-    //       url: '#',
-    //     },
-    //     {
-    //       title: 'Archived',
-    //       url: '#',
-    //     },
-    //   ],
-    // },
-    // {
-    //   title: 'Proposal',
-    //   icon: IconFileDescription,
-    //   url: '#',
-    //   items: [
-    //     {
-    //       title: 'Active Proposals',
-    //       url: '#',
-    //     },
-    //     {
-    //       title: 'Archived',
-    //       url: '#',
-    //     },
-    //   ],
-    // },
-    // {
-    //   title: 'Prompts',
-    //   icon: IconFileAi,
-    //   url: '#',
-    //   items: [
-    //     {
-    //       title: 'Active Proposals',
-    //       url: '#',
-    //     },
-    //     {
-    //       title: 'Archived',
-    //       url: '#',
-    //     },
-    //   ],
-    // },
+    {
+      title: 'Proposal',
+      icon: IconFileDescription,
+      url: '#',
+      items: [
+        {
+          title: 'Active Proposals',
+          url: '#',
+        },
+        {
+          title: 'Archived',
+          url: '#',
+        },
+      ],
+    },
+    {
+      title: 'Prompts',
+      icon: IconFileAi,
+      url: '#',
+      items: [
+        {
+          title: 'Active Proposals',
+          url: '#',
+        },
+        {
+          title: 'Archived',
+          url: '#',
+        },
+      ],
+    },
   ],
   navSecondary: [
     // {
@@ -116,21 +93,21 @@ const data = {
     // },
   ],
   documents: [
-    // {
-    //   name: 'Data Library',
-    //   url: '#',
-    //   icon: IconDatabase,
-    // },
-    // {
-    //   name: 'Reports',
-    //   url: '#',
-    //   icon: IconReport,
-    // },
-    // {
-    //   name: 'Word Assistant',
-    //   url: '#',
-    //   icon: IconFileWord,
-    // },
+    {
+      name: 'Data Library',
+      url: '#',
+      icon: IconDatabase,
+    },
+    {
+      name: 'Reports',
+      url: '#',
+      icon: IconReport,
+    },
+    {
+      name: 'Word Assistant',
+      url: '#',
+      icon: IconFileWord,
+    },
   ],
 };
 
@@ -155,11 +132,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {data.navMain.length > 0 && <NavMain items={data.navMain} />}
-        {data.documents.length > 0 && <NavDocuments items={data.documents} />}
+        {navMain.length > 0 && <NavMain items={navMain} />}
+        {navPresonal.length > 0 && <NavPersonal items={navPresonal} />}
+        {/* {data.documents.length > 0 && <NavDocuments items={data.documents} />}
         {data.navSecondary.length > 0 && (
           <NavSecondary items={data.navSecondary} className="mt-auto" />
-        )}
+        )} */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

@@ -3,6 +3,7 @@
 import { MacroCard } from '@/components/common/macro-card';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react'; // Hydration 방지용
+import OverviewAiInsight from './components/overview-ai-insight';
 import { MACRO_INDICATORS } from './data/data';
 
 const guest = process.env.NEXT_PUBLIC_GUEST;
@@ -32,7 +33,7 @@ export default function Page() {
   }, []);
 
   return (
-    <main className="flex flex-col flex-1">
+    <main className="flex flex-col flex-1 min-h-0 overflow-y-auto no-scrollbar">
       <header className="flex items-center justify-between mb-5">
         <div className="flex flex-col gap-1">
           <h1 className="font-serif text-xl tracking-tight">
@@ -48,7 +49,8 @@ export default function Page() {
           </p>
         </div>
       </header>
-      <section className="flex-1 flex flex-col">
+      <section className="flex-1 flex flex-col gap-6">
+        <OverviewAiInsight />
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
           {MACRO_INDICATORS.map((indicator) => (
             <MacroCard key={indicator.id} indicator={indicator} />

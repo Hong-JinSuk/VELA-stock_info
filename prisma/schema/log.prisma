@@ -1,3 +1,35 @@
+// overview 페이지에 표시할 데이터 타입
+enum SnapshotType {
+  AI_INSIGHT      // Gemini AI 섹터 인사이트
+  MARKET_SUMMARY  // 향후 확장용
+}
+
+// 타입별 일일 스냅샷 (AI 인사이트 등 문서 단위 데이터)
+model DailySnapshot {
+  id        String       @id @default(uuid())
+  type      SnapshotType
+  dateKey   String       // "YYYY-MM-DD" KST 기준
+  payload   Json
+  createdAt DateTime     @default(now())
+
+  @@unique([type, dateKey])
+  @@index([type, dateKey])
+}
+
+// 개별 매크로 지표 스냅샷 (지표 id별 개별 레코드 → 사용자 맞춤화 대비)
+model MacroIndicatorSnapshot {
+  id          String   @id @default(uuid())
+  indicatorId String   // 'vix', 'treasury-10y' 등
+  dateKey     String   // "YYYY-MM-DD" KST 기준
+  valueMain   String
+  valueSuffix String
+  status      String   // 'Good' | 'Neutral' | 'Bad'
+  createdAt   DateTime @default(now())
+
+  @@unique([indicatorId, dateKey])
+  @@index([indicatorId, dateKey])
+}
+
 model AiLog {
   id     String @id @default(uuid())
   userId String
