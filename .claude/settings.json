@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn add *)",
+      "Bash(mkdir -p /Users/hjs/projects/gemini-server/src/jobs)",
+      "Bash(yarn ts-node *)",
+      "Bash(node -e ' *)",
+      "Bash(grep -v \"Use \\\\`node\")"
+    ],
+    "additionalDirectories": [
+      "/Users/hjs/projects/gemini-server/src"
+    ]
+  }
+}
