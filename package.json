@@ -5,7 +5,7 @@
   "scripts": {
     "local": "dotenv -e .env.local -- next dev",
     "dev": "dotenv -e .env next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && MIGRATE_MODE=true prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint",
     "migrate:neon": "MIGRATE_MODE=true prisma migrate dev --name"
