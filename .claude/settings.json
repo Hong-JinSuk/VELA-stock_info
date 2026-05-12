@@ -5,7 +5,8 @@
       "Bash(mkdir -p /Users/hjs/projects/gemini-server/src/jobs)",
       "Bash(yarn ts-node *)",
       "Bash(node -e ' *)",
-      "Bash(grep -v \"Use \\\\`node\")"
+      "Bash(grep -v \"Use \\\\`node\")",
+      "Bash(git mv *)"
     ],
     "additionalDirectories": [
       "/Users/hjs/projects/gemini-server/src"

@@ -43,7 +43,7 @@
 
 // 기존에 잘되던것
 import axios from 'axios';
-import { errorInterceptors } from './error-enterceptors';
+import { errorInterceptors } from './error-interceptors';
 
 const PREFIX = process.env.NEXT_PUBLIC_API_PATH;
 
