@@ -56,7 +56,7 @@ export function usePredictMutation() {
 
         if (stockData) {
           const { data } = await api.post(
-            `${GEMINI_SERVER}/ai/refine-context`,
+            `${GEMINI_SERVER}/refine-context`,
             { stockData },
             { timeout: 60000, signal },
           );
@@ -64,7 +64,7 @@ export function usePredictMutation() {
         }
 
         const { data } = await api.post<AiPredictionResultType>(
-          `${GEMINI_SERVER}/ai/predict`,
+          `${GEMINI_SERVER}/predict`,
           { stockName, refinedData },
           { timeout: 60000, signal },
         );
