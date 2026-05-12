@@ -6,7 +6,11 @@
       "Bash(yarn ts-node *)",
       "Bash(node -e ' *)",
       "Bash(grep -v \"Use \\\\`node\")",
-      "Bash(git mv *)"
+      "Bash(git mv *)",
+      "Bash(supabase --version)",
+      "Bash(supabase projects *)",
+      "Bash(brew install *)",
+      "Bash(npm install *)"
     ],
     "additionalDirectories": [
       "/Users/hjs/projects/gemini-server/src"
