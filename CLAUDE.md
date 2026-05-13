@@ -6,19 +6,47 @@
 
 ## Project Overview
 
-- **Stack**: Next.js (App Router) + TypeScript + Tailwind CSS
-- **Package Manager**: `yarn` (또는 사용 중인 것으로 교체)
+- **Stack**: Next.js (App Router) + TypeScript + Tailwind CSS v4
+- **Package Manager**: `yarn`
 - **Purpose**: 개인화된 주가예측 서비스 제공
+- **Base path**: `/vela` (`NEXT_PUBLIC_BASE_PATH`)
 
 ## Commands
 
 ```bash
-yarn run dev       # 개발 서버 실행
-yarn run build     # 프로덕션 빌드
-yarn run lint      # ESLint 검사
+yarn run dev                  # 로컬 env 사용 (.env.local)
+yarn run build                # prisma generate + migrate deploy + next build
+yarn run lint                 # ESLint 검사
+yarn run migrate:dev <이름>   # prisma migrate dev (개발용, Supabase에 신규 마이그레이션 생성/적용)
 ```
 
 > 작업 후 반드시 `lint`를 실행해 오류가 없는지 확인할 것.
+
+## Backend & Data
+
+- **DB**: Supabase (PostgreSQL), Prisma ORM
+- **Auth**: NextAuth (Google OAuth + Credentials)
+- **AI Server**: Supabase Edge Functions (`gemini-server` 레포에서 관리)
+  - Endpoint base: `NEXT_PUBLIC_GEMINI_SERVER`
+  - 로컬 개발: `http://localhost:3001/ai` (로컬 Express 서버)
+  - 프로덕션: `https://<project-ref>.supabase.co/functions/v1`
+- **Prisma migrate**: 빌드 시 `MIGRATE_MODE=true` 환경변수로 `DIRECT_URL` 사용 (pgbouncer는 DDL 지원 안 함)
+- **Cron**: Supabase `pg_cron` + `pg_net`으로 Edge Function 호출 (예: `overview-snapshot` 08:00 KST)
+
+## State Management
+
+- **Server state**: TanStack Query (캐싱은 `staleTime`으로 명시)
+- **Client state**: jotai (atom은 `src/store/`에 모음)
+- **Form**: react-hook-form + zod (`src/schemas/`)
+
+## Error Handling
+
+- API 호출은 hook 안에서 → 오류는 `throw new Error(message)`로 던질 것
+- `src/lib/api/error-interceptors.ts`가 받아서:
+  - 메시지가 있으면 그대로 toast로 표시
+  - 없으면 status code → `STATUS_MESSAGES` 매핑 fallback
+  - 그것도 없으면 `FALLBACK_ERROR_MESSAGE` 표시
+- 특정 mutation에서 글로벌 toast를 끄려면 `meta: { ignoreGlobalError: true }`
 
 ## Code Style
 
@@ -42,25 +70,37 @@ yarn run lint      # ESLint 검사
 - 레이아웃을 건드려야 할 경우 먼저 확인 후 진행할 것.
 - 컴포넌트를 만들 때는 모바일 환경도 고려할 것.
 
+## Mobile Considerations
+
+- 터치 환경에서는 hover가 동작하지 않으므로 **Tooltip 대신 Popover** 사용.
+- 반응형 검증 시 모바일 폭(< 640px)에서도 동작 확인.
+
 ## Project Structure
 
 ```
+prisma/
+└── schema/        # Prisma 스키마 (분할 관리)
+
 src/
-├── app/          # Next.js App Router 페이지
-├── components/   # 재사용 컴포넌트
-├── constants/    # 매직 넘버, 문자열 상수 관리
-├── hooks/        # 커스텀 훅
-├── lib/          # 유틸리티 / 헬퍼
-├── motion/       # motion/react
-├── schemas/      # react-hook-form 관련 zod
-├── store/        # jotai / atom 관리
-└── types/        # 공유 TypeScript 타입
+├── app/           # Next.js App Router 페이지 / API route
+├── components/    # 재사용 컴포넌트
+├── constants/     # 매직 넘버, 문자열 상수 관리
+├── generated/     # Prisma client 생성물 (커밋됨)
+├── hooks/         # 커스텀 훅
+├── lib/           # 유틸리티 / 헬퍼 (api, prisma, services 등)
+├── motion/        # motion/react
+├── schemas/       # react-hook-form 관련 zod
+├── store/         # jotai / atom 관리
+└── types/         # 공유 TypeScript 타입
 ```
 
 ## What Claude Gets Wrong (Known Issues)
 
 - 스타일 요청 없이 Tailwind 클래스를 임의로 추가하거나 수정하는 것 → 하지 말 것.
 - `console.log` 를 디버그용으로 남겨두는 것 → 커밋 전 제거할 것.
+- 새 라우트/엔드포인트 추가 시 `/vela` base path를 빠뜨리는 것.
+- API 응답이 `null` + `404` 인 경우를 에러로 오인 → 의도된 "데이터 없음" 패턴인 경우가 있음 (예: `/api/overview/insight`).
+- Edge Function의 DB 작업에서 Prisma 사용 시도 → Deno 환경에서 호환 어려움, `@supabase/supabase-js` 사용.
 
 ## Compaction Instructions
 

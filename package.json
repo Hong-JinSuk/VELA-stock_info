@@ -8,7 +8,7 @@
     "build": "prisma generate && MIGRATE_MODE=true prisma migrate deploy && next build",
     "start": "next start",
     "lint": "eslint",
-    "migrate:neon": "MIGRATE_MODE=true prisma migrate dev --name"
+    "migrate:dev": "MIGRATE_MODE=true prisma migrate dev --name"
   },
   "dependencies": {
     "@google/genai": "^1.50.1",
