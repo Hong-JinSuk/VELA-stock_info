@@ -26,6 +26,41 @@ import { NavMain } from './nav-main';
 import { NavPersonal } from './nav-personal';
 import { NavUser } from './nav-user';
 
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  return (
+    <Sidebar collapsible="offcanvas" {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              className="data-[slot=sidebar-menu-button]:p-1.5!"
+            >
+              <Link href="/overview">
+                <VelaLogo className="size-7!" />
+                <span className="text-base font-semibold tracking-widest">
+                  VELA
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        {navMain.length > 0 && <NavMain items={navMain} />}
+        {navPresonal.length > 0 && <NavPersonal items={navPresonal} />}
+        {/* {data.documents.length > 0 && <NavDocuments items={data.documents} />}
+        {data.navSecondary.length > 0 && (
+          <NavSecondary items={data.navSecondary} className="mt-auto" />
+        )} */}
+      </SidebarContent>
+      <SidebarFooter>
+        <NavUser />
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
+
 const data = {
   navClouds: [
     {
@@ -110,38 +145,3 @@ const data = {
     },
   ],
 };
-
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
-            >
-              <Link href="/overview">
-                <VelaLogo className="size-7!" />
-                <span className="text-base font-semibold tracking-widest">
-                  VELA
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-      <SidebarContent>
-        {navMain.length > 0 && <NavMain items={navMain} />}
-        {navPresonal.length > 0 && <NavPersonal items={navPresonal} />}
-        {/* {data.documents.length > 0 && <NavDocuments items={data.documents} />}
-        {data.navSecondary.length > 0 && (
-          <NavSecondary items={data.navSecondary} className="mt-auto" />
-        )} */}
-      </SidebarContent>
-      <SidebarFooter>
-        <NavUser />
-      </SidebarFooter>
-    </Sidebar>
-  );
-}

@@ -26,7 +26,9 @@ import { navMain } from './nav-data';
 function getFullUrl(parentUrl: string, childUrl: string) {
   if (!parentUrl || parentUrl === '#') return childUrl;
   if (childUrl.startsWith(parentUrl)) return childUrl;
-  const cleanParent = parentUrl.endsWith('/') ? parentUrl.slice(0, -1) : parentUrl;
+  const cleanParent = parentUrl.endsWith('/')
+    ? parentUrl.slice(0, -1)
+    : parentUrl;
   const cleanChild = childUrl.startsWith('/') ? childUrl : `/${childUrl}`;
   return `${cleanParent}${cleanChild}`;
 }
@@ -100,7 +102,11 @@ export function MainHeader() {
           {breadcrumbs.map((crumb, i) => (
             <span key={i} className="flex items-center gap-1.5">
               {i > 0 && <span className="text-muted-foreground/50">/</span>}
-              <span className={i < breadcrumbs.length - 1 ? 'text-muted-foreground' : ''}>
+              <span
+                className={
+                  i < breadcrumbs.length - 1 ? 'text-muted-foreground' : ''
+                }
+              >
                 {crumb}
               </span>
             </span>
@@ -146,7 +152,11 @@ export function MainHeader() {
               {agentStatus === '사용 가능' && isMobile ? (
                 <>
                   <span className="text-muted-foreground">
-                    {isUnlimited ? '(∞)' : `(${remaining}회 남음)`}
+                    {remaining
+                      ? isUnlimited
+                        ? '(∞)'
+                        : `(${remaining}회 남음)`
+                      : `(사용불가)`}
                   </span>
                   {policyDesc && (
                     <Popover>
@@ -167,7 +177,11 @@ export function MainHeader() {
               ) : (
                 <>
                   <span className="text-muted-foreground">
-                    {isUnlimited ? '(∞)' : `(${remaining}회 남음)`}
+                    {remaining
+                      ? isUnlimited
+                        ? '(∞)'
+                        : `(${remaining}회 남음)`
+                      : `(사용불가)`}
                   </span>
                   {policyDesc && (
                     <Tooltip>

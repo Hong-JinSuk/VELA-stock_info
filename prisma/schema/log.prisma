@@ -5,8 +5,9 @@ enum SnapshotType {
 }
 
 // 타입별 일일 스냅샷 (AI 인사이트 등 문서 단위 데이터)
+// id: Edge Function/cron이 DB-side 자동 생성을 사용하므로 dbgenerated로 고정
 model DailySnapshot {
-  id        String       @id @default(uuid())
+  id        String       @id @default(dbgenerated("gen_random_uuid()::text"))
   type      SnapshotType
   dateKey   String       // "YYYY-MM-DD" KST 기준
   payload   Json

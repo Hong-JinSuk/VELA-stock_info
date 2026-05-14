@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { loginSchema, LoginSchema } from '@/schemas/login-schema';
 import { IconUserCircle } from '@tabler/icons-react';
 import { signIn, useSession } from 'next-auth/react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
@@ -29,6 +30,8 @@ export function LoginForm({
   const router = useRouter();
   const { data: session } = useSession();
   const { openSignupModal } = useModal();
+  // const { resolvedTheme } = useTheme();
+  // const isDarkMode = resolvedTheme === 'dark';
 
   const {
     register,
@@ -83,6 +86,14 @@ export function LoginForm({
     });
   };
 
+  const handleNaverSignIn = async () => {
+    await toast.promise(signIn('naver'), {
+      loading: '네이버 로그인으로 이동 중...',
+      success: '네이버 로그인 페이지로 이동합니다!',
+      error: '연결에 실패했습니다. 다시 시도해 주세요.',
+    });
+  };
+
   if (session) {
     console.log('session : ', session);
     // session이 있다면 곧바로 메인 페이지로 보내야함.
@@ -129,12 +140,12 @@ export function LoginForm({
         <Field>
           <div className="flex items-center">
             <FieldLabel htmlFor="password">Password</FieldLabel>
-            <a
+            {/* <a
               href="#"
               className="ml-auto text-sm underline-offset-4 hover:underline"
             >
               Forgot your password?
-            </a>
+            </a> */}
           </div>
           <Input
             id="password"
@@ -168,12 +179,7 @@ export function LoginForm({
             <IconUserCircle />
             Continue as Guest
           </Button>
-          <Button
-            onClick={handleGoogleSignIn}
-            variant="outline"
-            type="button"
-            className="w-full"
-          >
+          <Button onClick={handleGoogleSignIn} variant="outline" type="button">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               x="0px"
@@ -200,6 +206,25 @@ export function LoginForm({
               ></path>
             </svg>
             Continue with Google
+          </Button>
+          <Button
+            // variant={'outline'}
+            className="bg-[#03A94D]"
+            type="button"
+            onClick={handleNaverSignIn}
+          >
+            <Image
+              // src={
+              //   isDarkMode
+              //     ? '/NAVER_login_Dark_KR_white_icon_H48.png'
+              //     : '/NAVER_login_Dark_KR_green_icon_H48.png'
+              // }
+              src={'/NAVER_login_Dark_KR_white_icon_H48.png'}
+              alt="네이버 로고"
+              width={18} // 적절한 너비값
+              height={18} // 적절한 높이값
+            />
+            Continue with Naver
           </Button>
           {/* <Button
             onClick={() => signIn('github')}

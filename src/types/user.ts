@@ -37,6 +37,9 @@ export type User = {
   nickname: string | null;
   image: string | null;
   password: string | null;
+  gender: string | null;
+  birthday: string | null;
+  ageRange: string | null;
   createdAt: Date;
   updatedAt: Date;
   role: UserRole;

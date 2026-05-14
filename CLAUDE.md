@@ -18,9 +18,20 @@ yarn run dev                  # 로컬 env 사용 (.env.local)
 yarn run build                # prisma generate + migrate deploy + next build
 yarn run lint                 # ESLint 검사
 yarn run migrate:dev <이름>   # prisma migrate dev (개발용, Supabase에 신규 마이그레이션 생성/적용)
+npx prisma generate           # Prisma 클라이언트 재생성 (스키마 변경 후 필수)
 ```
 
 > 작업 후 반드시 `lint`를 실행해 오류가 없는지 확인할 것.
+
+## DB / Prisma Workflow — ⚠️ CRITICAL
+
+**`prisma/schema/*.prisma`를 수정한 뒤에는 반드시 아래 순서를 안내할 것.** 클라이언트만 재생성 안 하면 dev 서버는 옛 스키마로 쿼리해서 `Unknown argument 'xxx'` 같은 런타임 에러가 난다.
+
+1. `yarn run migrate:dev <마이그레이션_이름>` — DB에 마이그레이션 적용
+2. `npx prisma generate` — `src/generated/prisma` 클라이언트 재생성 (migrate:dev가 자동 실행하긴 하지만 dev 서버가 캐시된 모듈을 잡고 있을 수 있으므로 명시적으로 확인)
+3. dev 서버 재시작 (`Ctrl+C` → `yarn run dev`) — Next.js HMR이 생성물을 못 잡는 경우가 있음. 필요하면 `rm -rf .next`도 같이.
+
+스키마 수정만 하고 migrate는 미루는 경우라도 **클라이언트 재생성과 dev 서버 재시작은 항상 안내할 것.**
 
 ## Backend & Data
 
@@ -101,6 +112,7 @@ src/
 - 새 라우트/엔드포인트 추가 시 `/vela` base path를 빠뜨리는 것.
 - API 응답이 `null` + `404` 인 경우를 에러로 오인 → 의도된 "데이터 없음" 패턴인 경우가 있음 (예: `/api/overview/insight`).
 - Edge Function의 DB 작업에서 Prisma 사용 시도 → Deno 환경에서 호환 어려움, `@supabase/supabase-js` 사용.
+- Prisma 스키마 수정 후 `prisma generate` + dev 서버 재시작을 빠뜨리는 것 → 옛 클라이언트로 쿼리하다 런타임 에러. "DB / Prisma Workflow" 섹션 참고.
 
 ## Compaction Instructions
 

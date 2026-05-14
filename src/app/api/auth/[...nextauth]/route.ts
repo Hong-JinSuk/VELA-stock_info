@@ -2,13 +2,44 @@ import prisma from '@/lib/prisma';
 import { getNextCycleEnd, ROLE_LIMITS, UserRole } from '@/types/user';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
+import { randomUUID } from 'crypto';
 import type { AuthOptions } from 'next-auth';
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
+import NaverProvider from 'next-auth/providers/naver';
+
+// 네이버 프로필 응답 타입 (체크된 항목만 응답에 포함됨)
+type NaverProfileResponse = {
+  response: {
+    id: string;
+    email?: string;
+    name?: string;
+    nickname?: string;
+    profile_image?: string;
+    gender?: string;
+    birthday?: string;
+    age?: string;
+    birthyear?: string;
+    mobile?: string;
+  };
+};
+
+// nickname 중복 시 _<UUID8> 형태로 회피
+async function resolveUniqueNickname(
+  raw: string | undefined,
+): Promise<string | null> {
+  if (!raw) return null;
+  const existing = await prisma.user.findUnique({ where: { nickname: raw } });
+  if (!existing) return raw;
+  return `${raw}_${randomUUID().slice(0, 8)}`;
+}
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
+
+  // 디버깅용 — 원인 확인 후 제거 예정
+  debug: true,
 
   // CredentialsProvider는 DB 세션 못 씀 → JWT 필수
   session: { strategy: 'jwt' },
@@ -19,11 +50,26 @@ export const authOptions: AuthOptions = {
       clientSecret: process.env.GOOGLE_OAUTH_SECRET || '',
       allowDangerousEmailAccountLinking: true,
     }),
-    // NaverProvider({
-    //   clientId: process.env.NAVER_ID || '',
-    //   clientSecret: process.env.NAVER_SECRET || '',
-    //   allowDangerousEmailAccountLinking: true,
-    // }),
+    NaverProvider({
+      clientId: process.env.NAVER_OAUTH_ID || '',
+      clientSecret: process.env.NAVER_OAUTH_SECRET || '',
+      allowDangerousEmailAccountLinking: true,
+      async profile(profile: NaverProfileResponse) {
+        const res = profile.response;
+        const nickname = await resolveUniqueNickname(res.nickname);
+
+        return {
+          id: res.id,
+          email: res.email ?? '',
+          name: res.name ?? null,
+          nickname,
+          image: res.profile_image ?? null,
+          gender: res.gender ?? null,
+          birthday: res.birthday ?? null,
+          ageRange: res.age ?? null,
+        } as any; // PrismaAdapter는 추가 필드도 user 테이블에 그대로 저장함
+      },
+    }),
     // GithubProvider({
     //   clientId: process.env.GITHUB_ID || '',
     //   clientSecret: process.env.GITHUB_SECRET || '',
@@ -123,7 +169,7 @@ export const authOptions: AuthOptions = {
 
         if (!existingUsage) {
           const now = new Date();
-          const role = (user as any).role as UserRole ?? 'FREE';
+          const role = ((user as any).role as UserRole) ?? 'FREE';
           await prisma.userUsage.create({
             data: {
               userId: user.id,
@@ -180,54 +226,59 @@ export const authOptions: AuthOptions = {
       return session;
     },
   },
-  // callbacks: {
-  //   async jwt({ token, user, account }) {
-  //     // 특정 데이터만 넘겨주고 싶을 때, 쓰는 방법
-  //     // if (user) {
-  //     //   token.id = user.id;
-  //     //   token.createdAt = user.createdAt;
-  //     // }
-
-  //     // password를 제외한 데이터를 넘겨줌
-  //     if (user) {
-  //       const { password, ...safeUser } = user;
-
-  //       if (!token.provider) {
-  //         // 유저 ID로 Account 테이블을 뒤져서 어떤 소셜인지 알아냅니다.
-  //         const dbAccount = await prisma.account.findFirst({
-  //           where: { userId: user.id },
-  //         });
-
-  //         if (dbAccount) {
-  //           token.provider = dbAccount.provider; // "google" 등
-  //         } else if (user.password) {
-  //           token.provider = 'credentials'; // Account가 없는데 비번이 있다? 이메일 로그인!
-  //         }
-  //       }
-  //       return { ...token, ...safeUser };
-  //     }
-  //     if (account) {
-  //       console.log(
-  //         '🌟 [JWT 콜백] account 들어옴! provider:',
-  //         account.provider,
-  //       );
-  //       token.provider = account.provider;
-  //     }
-  //     return token;
-  //   },
-  //   async session({ session, token }) {
-  //     const { iat, exp, jti, sub, ...userData } = token;
-  //     if (session.user) {
-  //       // 특정 데이터만 넘겨주고 싶을 때, 쓰는 방법
-  //       // (session.user as any).id = token.id;
-  //       // (session.user as any).role = token.role;
-  //       // (session.user as any).createdAt = token.createdAt;
-  //       (session.user as any) = { ...session.user, ...userData };
-  //     }
-  //     return session;
-  //   },
-  // },
+  pages: {
+    signIn: '/login',
+    error: '/login',
+  },
 };
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
+
+// callbacks: {
+//   async jwt({ token, user, account }) {
+//     // 특정 데이터만 넘겨주고 싶을 때, 쓰는 방법
+//     // if (user) {
+//     //   token.id = user.id;
+//     //   token.createdAt = user.createdAt;
+//     // }
+
+//     // password를 제외한 데이터를 넘겨줌
+//     if (user) {
+//       const { password, ...safeUser } = user;
+
+//       if (!token.provider) {
+//         // 유저 ID로 Account 테이블을 뒤져서 어떤 소셜인지 알아냅니다.
+//         const dbAccount = await prisma.account.findFirst({
+//           where: { userId: user.id },
+//         });
+
+//         if (dbAccount) {
+//           token.provider = dbAccount.provider; // "google" 등
+//         } else if (user.password) {
+//           token.provider = 'credentials'; // Account가 없는데 비번이 있다? 이메일 로그인!
+//         }
+//       }
+//       return { ...token, ...safeUser };
+//     }
+//     if (account) {
+//       console.log(
+//         '🌟 [JWT 콜백] account 들어옴! provider:',
+//         account.provider,
+//       );
+//       token.provider = account.provider;
+//     }
+//     return token;
+//   },
+//   async session({ session, token }) {
+//     const { iat, exp, jti, sub, ...userData } = token;
+//     if (session.user) {
+//       // 특정 데이터만 넘겨주고 싶을 때, 쓰는 방법
+//       // (session.user as any).id = token.id;
+//       // (session.user as any).role = token.role;
+//       // (session.user as any).createdAt = token.createdAt;
+//       (session.user as any) = { ...session.user, ...userData };
+//     }
+//     return session;
+//   },
+// },

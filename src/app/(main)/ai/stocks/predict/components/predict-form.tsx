@@ -55,7 +55,8 @@ export default function PredictionForm() {
         <div className="flex items-center gap-2 mb-6 shrink-0">
           <BarChart3 className="w-5 h-5 text-primary" />
           <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">
-            Primary Prediction Settings
+            {/* Primary Prediction Settings */}
+            주요 예측 설정
           </h2>
         </div>
 
@@ -68,7 +69,8 @@ export default function PredictionForm() {
               htmlFor="stockName"
               className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2"
             >
-              Target Instrument
+              {/* Target Instrument */}
+              대상 종목
             </label>
             <input
               id="stockName"
@@ -90,11 +92,9 @@ export default function PredictionForm() {
                 htmlFor="stockData"
                 className="block text-xs font-bold uppercase tracking-widest text-muted-foreground"
               >
-                Additional Context Data (Optional)
+                {/* Additional Context Data (Optional) */}
+                추가 사용자 데이터
               </label>
-              <span className="text-[10px] text-muted-foreground font-medium uppercase">
-                Raw Input
-              </span>
             </div>
             <textarea
               id="stockData"
@@ -128,7 +128,8 @@ export default function PredictionForm() {
                 className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-2xl font-bold uppercase tracking-widest text-xs transition-all bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20"
               >
                 <Loader2 className="w-4 h-4 animate-spin" />
-                CANCEL PREDICTION
+                {/* CANCEL PREDICTION */}
+                분석 요청하기
               </button>
             ) : (
               <button
@@ -142,7 +143,8 @@ export default function PredictionForm() {
                 )}
               >
                 <Target className="w-4 h-4" />
-                Initialize Prediction
+                {/* Initialize Prediction */}
+                분석 취소
               </button>
             )}
           </div>
@@ -152,7 +154,7 @@ export default function PredictionForm() {
       <div className="bg-card rounded-3xl border border-border p-6 flex flex-col justify-center gap-2 shrink-0">
         <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-          System Notice
+          시스템 알림
         </h3>
         <p className="text-xs text-muted-foreground leading-relaxed">
           본 서비스에서 제공하는 모든 정보는 AI 모델에 기반한 투자 참고
