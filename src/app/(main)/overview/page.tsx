@@ -20,13 +20,13 @@ export default function Page() {
       const hour = new Date().getHours();
 
       if (hour >= 5 && hour < 12) {
-        return 'Good morning 🌤️,';
+        return '좋은 아침이에요 아침 시황을 확인해볼까요? 🌤️,';
       } else if (hour >= 12 && hour < 18) {
-        return 'Good afternoon ☕,';
+        return '커피한잔하기 좋은 오후네요 ☕,';
       } else if (hour >= 18 && hour < 22) {
-        return 'Good evening 🌙,';
+        return '주식을 분석하기 좋은 밤이에요 🌙,';
       } else {
-        return 'Good night ✨,';
+        return '좋은 새벽이에요. 어서 시장을 확인하고 잘준비도 해야겠죠? ✨,';
       }
     };
     setGreeting(getGreeting());
@@ -41,8 +41,8 @@ export default function Page() {
           </h1>
           <p className="font-serif text-sm text-gray-400">
             {!!user
-              ? `We’ve picked the most important market updates for you.`
-              : `Nice to meet you. Let's see what's happening in the market.`}
+              ? `${user.nickname}님을 위한 데이터가 준비되어 있습니다! 확인해보시겠어요?`
+              : `안녕하세요 게스트님! 저희는 아래 데이터 이외에도 많은 데이터를 제공하고 있습니다! 더 많은 데이터를 투자를 위해서 검토해보시길 바랄게요!`}
           </p>
         </div>
       </header>

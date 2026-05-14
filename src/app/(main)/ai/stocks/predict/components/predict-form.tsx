@@ -3,18 +3,19 @@
 import { usePredictMutation } from '@/lib/services/stock/use-predict-mutation';
 import { cn } from '@/lib/utils';
 import { agentStatusAtom, aiPredictFormAtom } from '@/store/ai-atom';
-import { motion } from 'framer-motion';
 import { useAtom, useAtomValue } from 'jotai';
 import {
   AlertCircle,
   BarChart3,
   Loader2,
-  ShieldCheck,
   Target,
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useSession } from 'next-auth/react';
 import { useRef } from 'react';
+import PredictSystemNotice from './predict-form/predict-system-notice';
 
+// 종목명/추가 컨텍스트 입력을 받아 AI 예측 mutation을 트리거한다. 진행 중에는 취소 버튼으로 전환되며, 사용 만료/미로그인 시 입력을 차단한다.
 export default function PredictionForm() {
   const [aiForm, setAiForm] = useAtom(aiPredictFormAtom);
   const { stockName, stockData } = aiForm;
@@ -24,8 +25,9 @@ export default function PredictionForm() {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const loading = predictMutation.isPending;
-
   const isExpired = agentStatus === '사용 만료';
+  const isSubmitDisabled = !stockName.trim() || !user || isExpired;
+
   const error = isExpired
     ? '이번 달 사용 횟수를 모두 소진했습니다.'
     : predictMutation.error
@@ -55,7 +57,6 @@ export default function PredictionForm() {
         <div className="flex items-center gap-2 mb-6 shrink-0">
           <BarChart3 className="w-5 h-5 text-primary" />
           <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">
-            {/* Primary Prediction Settings */}
             주요 예측 설정
           </h2>
         </div>
@@ -69,7 +70,6 @@ export default function PredictionForm() {
               htmlFor="stockName"
               className="block text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2"
             >
-              {/* Target Instrument */}
               대상 종목
             </label>
             <input
@@ -85,14 +85,13 @@ export default function PredictionForm() {
             />
           </div>
 
-          {/* ✨ Textarea 영역이 남는 공간(flex-1)을 정확히 차지하도록 min-h-0 속성 추가 */}
+          {/* Textarea가 남는 공간(flex-1)을 차지하도록 min-h-0 유지 */}
           <div className="flex-1 flex flex-col min-h-40">
             <div className="flex justify-between items-end mb-2 shrink-0">
               <label
                 htmlFor="stockData"
                 className="block text-xs font-bold uppercase tracking-widest text-muted-foreground"
               >
-                {/* Additional Context Data (Optional) */}
                 추가 사용자 데이터
               </label>
             </div>
@@ -102,8 +101,7 @@ export default function PredictionForm() {
               onChange={(e) =>
                 setAiForm((prev) => ({ ...prev, stockData: e.target.value }))
               }
-              placeholder="추가 분석, 최신 뉴스 요약 등 참고할 데이터를 입력해주세요..."
-              // ✨ h-full 추가 및 min-h 값을 약간 낮춰 창 크기가 작아져도 깨지지 않게 유연하게 조정
+              placeholder="개인적으로 추가하실 분석, 최신 뉴스 요약 등 참고할 데이터를 입력해주세요..."
               className="w-full h-full min-h-[140px] px-4 py-3 bg-background border border-border rounded-xl focus:ring-1 focus:ring-primary focus:border-primary transition-colors text-sm text-foreground overflow-y-auto resize-none outline-none leading-relaxed"
               disabled={loading}
             />
@@ -128,22 +126,20 @@ export default function PredictionForm() {
                 className="w-full flex items-center justify-center gap-2 py-4 px-4 rounded-2xl font-bold uppercase tracking-widest text-xs transition-all bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20"
               >
                 <Loader2 className="w-4 h-4 animate-spin" />
-                {/* CANCEL PREDICTION */}
                 분석 취소
               </button>
             ) : (
               <button
                 type="submit"
-                disabled={!stockName.trim() || !user || isExpired}
+                disabled={isSubmitDisabled}
                 className={cn(
                   'w-full flex items-center justify-center gap-2 py-4 px-4 rounded-2xl font-bold uppercase tracking-widest text-xs transition-all',
-                  !stockName.trim() || !user || isExpired
+                  isSubmitDisabled
                     ? 'bg-secondary text-muted-foreground cursor-not-allowed'
                     : 'bg-primary text-primary-foreground hover:bg-primary shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:shadow-[0_0_25px_rgba(52,211,153,0.4)]',
                 )}
               >
                 <Target className="w-4 h-4" />
-                {/* Initialize Prediction */}
                 분석 요청하기
               </button>
             )}
@@ -151,18 +147,7 @@ export default function PredictionForm() {
         </form>
       </div>
 
-      <div className="bg-card rounded-3xl border border-border p-6 flex flex-col justify-center gap-2 shrink-0">
-        <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-          <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-          시스템 알림
-        </h3>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          본 서비스에서 제공하는 모든 정보는 AI 모델에 기반한 투자 참고
-          자료이며, 투자 권유나 수익을 보장하지 않습니다. 투자의 최종 결정과
-          그로 인한 결과에 대한 책임은 본인에게 있으며, 과거의 성과가 미래의
-          수익을 담보하지 않음을 유의하시기 바랍니다.
-        </p>
-      </div>
+      <PredictSystemNotice />
     </div>
   );
 }
