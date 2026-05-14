@@ -23,33 +23,6 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import { navMain } from './nav-data';
 
-function getFullUrl(parentUrl: string, childUrl: string) {
-  if (!parentUrl || parentUrl === '#') return childUrl;
-  if (childUrl.startsWith(parentUrl)) return childUrl;
-  const cleanParent = parentUrl.endsWith('/')
-    ? parentUrl.slice(0, -1)
-    : parentUrl;
-  const cleanChild = childUrl.startsWith('/') ? childUrl : `/${childUrl}`;
-  return `${cleanParent}${cleanChild}`;
-}
-
-function getBreadcrumbs(pathname: string): string[] {
-  for (const item of navMain) {
-    if (item.items && item.items.length > 0) {
-      for (const sub of item.items) {
-        const fullUrl = getFullUrl(item.url, sub.url);
-        if (pathname === fullUrl || pathname.startsWith(`${fullUrl}/`)) {
-          return [item.title, sub.title];
-        }
-      }
-    }
-    if (pathname === item.url || pathname.startsWith(`${item.url}/`)) {
-      return [item.title];
-    }
-  }
-  return [];
-}
-
 const ACTIVE_STATUSES = ['분석 중'] as const;
 
 export function MainHeader() {
@@ -152,11 +125,11 @@ export function MainHeader() {
               {agentStatus === '사용 가능' && isMobile ? (
                 <>
                   <span className="text-muted-foreground">
-                    {remaining
-                      ? isUnlimited
-                        ? '(∞)'
-                        : `(${remaining}회 남음)`
-                      : `(사용불가)`}
+                    {isUnlimited
+                      ? '(∞)'
+                      : remaining
+                        ? `(${remaining}회 남음)`
+                        : `(사용불가)`}
                   </span>
                   {policyDesc && (
                     <Popover>
@@ -177,11 +150,11 @@ export function MainHeader() {
               ) : (
                 <>
                   <span className="text-muted-foreground">
-                    {remaining
-                      ? isUnlimited
-                        ? '(∞)'
-                        : `(${remaining}회 남음)`
-                      : `(사용불가)`}
+                    {isUnlimited
+                      ? '(∞)'
+                      : remaining
+                        ? `(${remaining}회 남음)`
+                        : `(사용불가)`}
                   </span>
                   {policyDesc && (
                     <Tooltip>
@@ -233,4 +206,31 @@ function getPolicyDescription(
     default:
       return '';
   }
+}
+
+function getFullUrl(parentUrl: string, childUrl: string) {
+  if (!parentUrl || parentUrl === '#') return childUrl;
+  if (childUrl.startsWith(parentUrl)) return childUrl;
+  const cleanParent = parentUrl.endsWith('/')
+    ? parentUrl.slice(0, -1)
+    : parentUrl;
+  const cleanChild = childUrl.startsWith('/') ? childUrl : `/${childUrl}`;
+  return `${cleanParent}${cleanChild}`;
+}
+
+function getBreadcrumbs(pathname: string): string[] {
+  for (const item of navMain) {
+    if (item.items && item.items.length > 0) {
+      for (const sub of item.items) {
+        const fullUrl = getFullUrl(item.url, sub.url);
+        if (pathname === fullUrl || pathname.startsWith(`${fullUrl}/`)) {
+          return [item.title, sub.title];
+        }
+      }
+    }
+    if (pathname === item.url || pathname.startsWith(`${item.url}/`)) {
+      return [item.title];
+    }
+  }
+  return [];
 }

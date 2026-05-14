@@ -18,9 +18,10 @@ import { cn } from '@/lib/utils';
 import { loginSchema, LoginSchema } from '@/schemas/login-schema';
 import { IconUserCircle } from '@tabler/icons-react';
 import { signIn, useSession } from 'next-auth/react';
+import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 export function LoginForm({
@@ -30,8 +31,12 @@ export function LoginForm({
   const router = useRouter();
   const { data: session } = useSession();
   const { openSignupModal } = useModal();
-  // const { resolvedTheme } = useTheme();
-  // const isDarkMode = resolvedTheme === 'dark';
+  const { resolvedTheme } = useTheme();
+  // SSR 시점엔 theme이 undefined여서 서버/클라이언트 src가 갈리며 hydration mismatch 발생
+  // mounted 이후에만 실제 테마를 반영
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isDarkMode = mounted && resolvedTheme === 'dark';
 
   const {
     register,
@@ -79,7 +84,7 @@ export function LoginForm({
   };
 
   const handleGoogleSignIn = async () => {
-    await toast.promise(signIn('google'), {
+    await toast.promise(signIn('google', { callbackUrl: '/overview' }), {
       loading: '구글 로그인으로 이동 중...',
       success: '구글 로그인 페이지로 이동합니다!',
       error: '연결에 실패했습니다. 다시 시도해 주세요.',
@@ -87,7 +92,7 @@ export function LoginForm({
   };
 
   const handleNaverSignIn = async () => {
-    await toast.promise(signIn('naver'), {
+    await toast.promise(signIn('naver', { callbackUrl: '/overview' }), {
       loading: '네이버 로그인으로 이동 중...',
       success: '네이버 로그인 페이지로 이동합니다!',
       error: '연결에 실패했습니다. 다시 시도해 주세요.',
@@ -214,12 +219,12 @@ export function LoginForm({
             onClick={handleNaverSignIn}
           >
             <Image
-              // src={
-              //   isDarkMode
-              //     ? '/NAVER_login_Dark_KR_white_icon_H48.png'
-              //     : '/NAVER_login_Dark_KR_green_icon_H48.png'
-              // }
-              src={'/NAVER_login_Dark_KR_white_icon_H48.png'}
+              src={
+                isDarkMode
+                  ? '/NAVER_login_Dark_KR_white_icon_H48.png'
+                  : '/NAVER_login_Light_KR_white_icon_H48.png'
+              }
+              // src={'/NAVER_login_Dark_KR_white_icon_H48.png'}
               alt="네이버 로고"
               width={18} // 적절한 너비값
               height={18} // 적절한 높이값

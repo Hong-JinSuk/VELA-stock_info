@@ -129,7 +129,7 @@ export default function PredictionForm() {
               >
                 <Loader2 className="w-4 h-4 animate-spin" />
                 {/* CANCEL PREDICTION */}
-                분석 요청하기
+                분석 취소
               </button>
             ) : (
               <button
@@ -144,7 +144,7 @@ export default function PredictionForm() {
               >
                 <Target className="w-4 h-4" />
                 {/* Initialize Prediction */}
-                분석 취소
+                분석 요청하기
               </button>
             )}
           </div>
