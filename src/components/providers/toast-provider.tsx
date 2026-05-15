@@ -29,14 +29,14 @@ export default function ToastProvider() {
           // 경고 (옐로우/오렌지)
           warning: '!bg-amber-100 !text-amber-800 !border-amber-200',
 
-          // 부가 설명 텍스트
-          description: 'group-[.toast]:!text-slate-600 text-xs font-medium',
+          // 부가 설명 텍스트 - sonner 내부의 다크 테마 description 룰(거의 흰색)을 덮어쓰기 위해 `!` 사용
+          description:
+            'text-xs font-medium group-data-[type=success]:!text-emerald-700 group-data-[type=error]:!text-rose-700 group-data-[type=info]:!text-sky-700 group-data-[type=warning]:!text-amber-700 group-data-[type=loading]:!text-violet-700',
 
-          // 버튼 스타일 (필요시)
+          // 액션/취소 버튼: 토스트 배경과 대비되도록 타입별 진한 색을 사용
           actionButton:
-            'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
-          cancelButton:
-            'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
+            'group-data-[type=success]:!bg-emerald-600 group-data-[type=error]:!bg-rose-600 group-data-[type=info]:!bg-sky-600 group-data-[type=warning]:!bg-amber-600 group-data-[type=loading]:!bg-violet-600 !text-white',
+          cancelButton: '!bg-muted !text-muted-foreground',
         },
       }}
     />

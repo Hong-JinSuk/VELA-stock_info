@@ -50,6 +50,23 @@ npx prisma generate           # Prisma 클라이언트 재생성 (스키마 변�
 - **Client state**: jotai (atom은 `src/store/`에 모음)
 - **Form**: react-hook-form + zod (`src/schemas/`)
 
+## API Calls — ⚠️ CRITICAL
+
+- **HTTP 클라이언트**: 모든 API 호출은 `src/lib/api/axios.ts`의 `api` 인스턴스를 사용한다. `fetch`는 사용하지 말 것 (서버/클라이언트 모두).
+  - 자체 API 호출(상대 경로): `api.get('/overview/insight')` — `NEXT_PUBLIC_API_PATH` baseURL이 자동 prefix.
+  - 외부 API(gemini-server 등) 호출: `api.post(\`${GEMINI_SERVER}/...\`, payload)` 처럼 절대 URL 전달 (axios가 baseURL을 무시함).
+  - 긴 응답이 예상되는 호출(Gemini 등)은 `{ timeout: 60000 }` 등으로 timeout을 명시할 것 (기본 10s).
+  - 응답 에러는 `error-interceptors`가 `throw new Error(message)` 형태로 정규화하므로, 호출 측은 `error instanceof Error ? error.message : ...` 패턴으로 받을 수 있음.
+
+## AI / Gemini API Workflow — ⚠️ CRITICAL
+
+**Gemini 및 AI 관련 신규 엔드포인트는 반드시 `gemini-server` 프로젝트를 참조해서 작성할 것.** (추가 working directory에 등록되어 있음.)
+
+- 신규 AI 엔드포인트는 **gemini-server에 라우트를 먼저 추가**하고, vela web은 그 엔드포인트를 호출하는 thin wrapper로 작성한다.
+- vela web 쪽에서 Gemini 호출(프롬프트 정의, vertex 설정, 응답 파싱)을 중복 작성하지 말 것. 단일 소스는 항상 gemini-server.
+- DB 저장이 포함된 배치 로직(예: `runOverviewSnapshot`)은 gemini-server 쪽에서 cron과 manual trigger가 동일 함수를 재사용하도록 설계.
+- cron이 죽으면 안 되므로 cron 래퍼는 try/catch로 흡수하되, manual 트리거용 함수는 throw해서 호출 측이 에러를 받을 수 있게 분리.
+
 ## Error Handling
 
 - API 호출은 hook 안에서 → 오류는 `throw new Error(message)`로 던질 것
@@ -113,6 +130,8 @@ src/
 - API 응답이 `null` + `404` 인 경우를 에러로 오인 → 의도된 "데이터 없음" 패턴인 경우가 있음 (예: `/api/overview/insight`).
 - Edge Function의 DB 작업에서 Prisma 사용 시도 → Deno 환경에서 호환 어려움, `@supabase/supabase-js` 사용.
 - Prisma 스키마 수정 후 `prisma generate` + dev 서버 재시작을 빠뜨리는 것 → 옛 클라이언트로 쿼리하다 런타임 에러. "DB / Prisma Workflow" 섹션 참고.
+- `fetch`로 API를 호출하는 것 → 반드시 `src/lib/api/axios.ts`의 `api` 인스턴스를 사용. "API Calls" 섹션 참고.
+- AI 관련 로직을 vela web 안에서 직접 작성하는 것 → Gemini 호출/프롬프트는 `gemini-server`에만 두고 vela web은 호출만. "AI / Gemini API Workflow" 섹션 참고.
 
 ## Compaction Instructions
 

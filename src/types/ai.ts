@@ -17,7 +17,7 @@ export interface TargetPrediction {
 }
 
 export interface AiPredictionResultType {
-  targetStockName?: string;
+  targetStockName: string;
   isValidStock: boolean;
   errorReason?: string;
   currentPrice: string;
