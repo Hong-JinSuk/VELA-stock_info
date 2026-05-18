@@ -31,6 +31,38 @@ model MacroIndicatorSnapshot {
   @@index([indicatorId, dateKey])
 }
 
+// FRED / Yahoo Finance 등 외부 소스에서 받아오는 raw 지표 스냅샷.
+// (indicatorId, dateKey) upsert로 누적 방지. Yahoo는 15분마다 호출되지만 하루 1행 유지.
+// 90일 retention: cleanup cron이 createdAt 기준으로 정리.
+model IndicatorSnapshot {
+  id              String   @id @default(uuid())
+  indicatorId     String   // catalog 내부 ID (예: "vix", "ust_10y")
+  source          String   // "fred" | "yahoo" 등
+  frequency       String   // 우리 시스템 수집 주기: "realtime" (Yahoo 15분 polling) | "daily" (FRED daily batch)
+  dateKey         String   // "YYYY-MM-DD" KST 기준
+  observationDate String?  // 소스 측 관측일 (FRED 시리즈의 date 등)
+
+  value         Float
+  previousValue Float?
+  change        Float?
+  changePercent Float?
+
+  // 카드 UI 표시용 메타데이터 (catalog의 indicator.display를 그대로 반영).
+  // 미정의 indicator는 null. 구조: { iconName, description, marketImpact, valueDecimals, unitSuffix, thresholdGood?, thresholdBad?, invertThreshold?, relationIcon1, relationText1, relationIcon2, relationText2 }
+  displayMeta Json?
+
+  // FRED Release Calendar에서 가져온 다음 발표 예정일 ("YYYY-MM-DD").
+  // monthly/weekly/quarterly FRED indicator만 채워짐. Yahoo / daily FRED는 null.
+  nextReleaseDate String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([indicatorId, dateKey])
+  @@index([indicatorId, dateKey])
+  @@index([createdAt])
+}
+
 model AiLog {
   id     String @id @default(uuid())
   userId String

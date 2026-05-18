@@ -10,7 +10,19 @@
       "Bash(supabase --version)",
       "Bash(supabase projects *)",
       "Bash(brew install *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(pkill -f \"prisma db execute\")",
+      "Bash(pkill -f \"prisma migrate\")",
+      "Bash(pkill -f \"schema-engine-darwin\")",
+      "Bash(npx tsx *)",
+      "Bash(lsof -nP -iTCP:3000 -sTCP:LISTEN)",
+      "Bash(curl -i -s 'http://localhost:3000/vela/api/overview/insight')",
+      "Bash(curl -i -s -X POST 'http://localhost:3000/vela/api/overview/insight')",
+      "Bash(curl -i -s -X POST 'http://localhost:3001/ai/overview-snapshot' --max-time 5)",
+      "Bash(curl -i -s -X POST 'http://localhost:3001/ai/indicator-batch' --max-time 5)",
+      "Bash(MIGRATE_MODE=true npx prisma migrate dev --name add_indicator_display_meta --create-only)",
+      "Bash(MIGRATE_MODE=true npx prisma migrate deploy)",
+      "Bash(lsof -nP -iTCP:3001 -sTCP:LISTEN)"
     ],
     "additionalDirectories": [
       "/Users/hjs/projects/gemini-server/src"

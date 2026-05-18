@@ -66,7 +66,7 @@ export default function OverviewAiInsight() {
                 <h4 className="flex items-center gap-2 text-emerald-500 font-semibold px-1 shrink-0">
                   <TrendingUp className="w-4 h-4" /> 유망 섹터
                 </h4>
-                <div className="flex flex-col gap-4 flex-1">
+                <div className="flex flex-col gap-4 flex-1 max-h-32">
                   {insight.promisingSectors.map((sector, idx) => (
                     <SectorCard
                       key={idx}
