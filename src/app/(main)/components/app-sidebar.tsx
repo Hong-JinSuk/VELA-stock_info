@@ -22,9 +22,8 @@ import {
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { NavAdmin } from './nav-admin';
-import { navMain, navPresonal } from './nav-data';
+import { navMain } from './nav-data';
 import { NavMain } from './nav-main';
-import { NavPersonal } from './nav-personal';
 import { NavUser } from './nav-user';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -49,7 +48,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         {navMain.length > 0 && <NavMain items={navMain} />}
-        {navPresonal.length > 0 && <NavPersonal items={navPresonal} />}
+        {/* {navPresonal.length > 0 && <NavPersonal items={navPresonal} />} */}
         <NavAdmin />
         {/* {data.documents.length > 0 && <NavDocuments items={data.documents} />}
         {data.navSecondary.length > 0 && (
