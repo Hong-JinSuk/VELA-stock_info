@@ -103,6 +103,15 @@ npx prisma generate           # Prisma 클라이언트 재생성 (스키마 변�
 - 터치 환경에서는 hover가 동작하지 않으므로 **Tooltip 대신 Popover** 사용.
 - 반응형 검증 시 모바일 폭(< 640px)에서도 동작 확인.
 
+## Static Fallback Policy — ⚠️ CRITICAL
+
+**사용자가 명시적으로 요청하거나 실제로 다른 방법이 전혀 없는 경우가 아니면, hardcoded static 대안(예: CUSIP→ticker 매핑 테이블, 종목 리스트, 회사명 dictionary 등)을 만들지 말 것.**
+
+- 이유: static 데이터는 (1) 커버리지가 좁고, (2) 손으로 적은 entry는 휴먼 에러(잘못된 CUSIP/매핑 등) 발생, (3) 외부 소스가 바뀌면 stale 됨.
+- 우선순위: API/서비스(예: OpenFIGI, SEC EDGAR) > DB 캐시 > static fallback.
+- 외부 API가 일시적으로 실패할 수 있다는 우려가 있어도, 그 자체로는 static 대안의 정당화 사유가 아님. 캐시·재시도·에러 핸들링이 우선.
+- 정말 static이 필요한 경우(예: API에 없는 도메인 특화 매핑, 사용자 override)는 먼저 사유 설명하고 사용자 확인 후 진행.
+
 ## Project Structure
 
 ```
@@ -132,6 +141,7 @@ src/
 - Prisma 스키마 수정 후 `prisma generate` + dev 서버 재시작을 빠뜨리는 것 → 옛 클라이언트로 쿼리하다 런타임 에러. "DB / Prisma Workflow" 섹션 참고.
 - `fetch`로 API를 호출하는 것 → 반드시 `src/lib/api/axios.ts`의 `api` 인스턴스를 사용. "API Calls" 섹션 참고.
 - AI 관련 로직을 vela web 안에서 직접 작성하는 것 → Gemini 호출/프롬프트는 `gemini-server`에만 두고 vela web은 호출만. "AI / Gemini API Workflow" 섹션 참고.
+- 외부 API/서비스로 풀 수 있는 매핑·데이터를 손으로 hardcoded static map으로 만드는 것 → 휴먼 에러와 커버리지 한계 발생. "Static Fallback Policy" 섹션 참고.
 
 ## Compaction Instructions
 

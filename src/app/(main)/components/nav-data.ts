@@ -12,17 +12,17 @@ export const navMain: NavItemProps[] = [
     title: '시장 데이터',
     url: '/market',
     icon: CandlestickChart,
-    isActive: true,
+    isActive: false,
     items: [
       { title: '섹터·경제 지표', url: '/indicators', disabled: true },
-      { title: '13F', url: '/13f', disabled: true },
+      { title: '13F', url: '/13f', disabled: false },
     ],
   },
   {
     title: 'AI 분석',
     url: '/ai/stocks',
     icon: Sparkles,
-    isActive: true,
+    isActive: false,
     items: [
       { title: '주가 예측', url: '/predict' },
       { title: '적정 주가 평가', url: '/valuation', disabled: true },
@@ -33,7 +33,7 @@ export const navMain: NavItemProps[] = [
     title: '마이페이지',
     url: '/my',
     icon: UserCircle,
-    isActive: true,
+    isActive: false,
     items: [
       { title: 'AI 분석 기록', url: '/ai-logs', disabled: true },
       {

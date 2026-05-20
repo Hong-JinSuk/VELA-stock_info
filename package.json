@@ -24,6 +24,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "embla-carousel-react": "^8.6.0",
+    "fast-xml-parser": "^5.8.0",
     "html-to-image": "^1.11.13",
     "jotai": "^2.19.1",
     "jspdf": "^4.2.1",
