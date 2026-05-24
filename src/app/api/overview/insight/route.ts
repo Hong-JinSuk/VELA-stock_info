@@ -11,13 +11,27 @@ function getInsightDateKey(): string {
 }
 
 export async function GET() {
-  const snapshot = await prisma.dailySnapshot.findUnique({
-    where: { type_dateKey: { type: 'AI_INSIGHT', dateKey: getInsightDateKey() } },
+  const todayKey = getInsightDateKey();
+
+  let snapshot = await prisma.dailySnapshot.findUnique({
+    where: { type_dateKey: { type: 'AI_INSIGHT', dateKey: todayKey } },
   });
+
+  // 오늘 스냅샷이 없으면 가장 최신 것으로 fallback (cron 실패 등 대비).
+  if (!snapshot) {
+    snapshot = await prisma.dailySnapshot.findFirst({
+      where: { type: 'AI_INSIGHT' },
+      orderBy: { dateKey: 'desc' },
+    });
+  }
 
   if (!snapshot) {
     return NextResponse.json(null, { status: 404 });
   }
 
-  return NextResponse.json(snapshot.payload);
+  return NextResponse.json({
+    insight: snapshot.payload,
+    dateKey: snapshot.dateKey,
+    isToday: snapshot.dateKey === todayKey,
+  });
 }

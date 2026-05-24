@@ -18,11 +18,9 @@ interface SectorCardProps {
 }
 
 export default function OverviewAiInsight() {
-  const {
-    data: insight,
-    isLoading: loading,
-    isError: error,
-  } = useOverviewInsight();
+  const { data, isLoading: loading, isError: error } = useOverviewInsight();
+  const insight = data?.insight;
+  const isToday = data?.isToday ?? true;
 
   return (
     <Card className="border border-border bg-card/40 backdrop-blur-md rounded-2xl p-6 relative overflow-hidden flex flex-col shadow-none ring-0 mt-8">
@@ -37,7 +35,9 @@ export default function OverviewAiInsight() {
               Today Insight
             </h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Vela AI가 분석한 오늘의 섹터 전망
+              {isToday
+                ? 'Vela AI가 분석한 오늘의 섹터 전망'
+                : 'Vela AI가 분석한 최신 섹터 전망'}
             </p>
           </div>
         </div>
@@ -66,7 +66,7 @@ export default function OverviewAiInsight() {
                 <h4 className="flex items-center gap-2 text-emerald-500 font-semibold px-1 shrink-0">
                   <TrendingUp className="w-4 h-4" /> 유망 섹터
                 </h4>
-                <div className="flex flex-col gap-4 flex-1 max-h-32">
+                <div className="flex flex-col gap-4 flex-1">
                   {insight.promisingSectors.map((sector, idx) => (
                     <SectorCard
                       key={idx}

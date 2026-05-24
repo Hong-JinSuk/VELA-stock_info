@@ -12,8 +12,16 @@ export interface AiInsightData {
   poorSectors: SectorInsight[];
 }
 
-async function fetchOverviewInsight(): Promise<AiInsightData | null> {
-  const { data } = await api.get<AiInsightData | null>('/overview/insight');
+export interface OverviewInsightResponse {
+  insight: AiInsightData;
+  dateKey: string;
+  isToday: boolean;
+}
+
+async function fetchOverviewInsight(): Promise<OverviewInsightResponse | null> {
+  const { data } = await api.get<OverviewInsightResponse | null>(
+    '/overview/insight',
+  );
   return data;
 }
 
