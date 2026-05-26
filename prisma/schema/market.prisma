@@ -1,10 +1,12 @@
 // SEC 13F-HR 매니저 명단. gemini-server cron이 매일 form.idx에서 받아와 갱신.
 // 자동완성 dropdown 용도. 분기 4번 윈도우에서 dedupe해 9k rows 내외.
 model ThirteenFFiler {
-  cik           String   @id @db.VarChar(10)
-  name          String
-  lastFiledDate String   @db.VarChar(10) // "YYYY-MM-DD"
-  updatedAt     DateTime @default(now())
+  cik             String   @id @db.VarChar(10)
+  name            String
+  lastFiledDate   String   @db.VarChar(10) // "YYYY-MM-DD"
+  latestAccession String?  @db.VarChar(20) // "0001193125-26-217663". batch 직후엔 채워져 있어야 함
+  updatedAt       DateTime @default(now())
 
   @@index([name])
+  @@index([lastFiledDate])
 }

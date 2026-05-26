@@ -17,50 +17,46 @@ model DailySnapshot {
   @@index([type, dateKey])
 }
 
-// 개별 매크로 지표 스냅샷 (지표 id별 개별 레코드 → 사용자 맞춤화 대비)
-model MacroIndicatorSnapshot {
-  id          String   @id @default(uuid())
-  indicatorId String   // 'vix', 'treasury-10y' 등
-  dateKey     String   // "YYYY-MM-DD" KST 기준
-  valueMain   String
-  valueSuffix String
-  status      String   // 'Good' | 'Neutral' | 'Bad'
-  createdAt   DateTime @default(now())
+// indicator의 "현재 상태" (id 1행). 카드 렌더링의 단일 소스.
+// gemini-server batch가 (indicatorId)로 upsert. value/observationDate가 동일하면 update 자체 스킵.
+model Indicator {
+  id     String @id // catalog 내부 ID (예: "vix", "ust_10y")
+  source String // "fred" | "yahoo" (디버깅용)
+  // catalog 발표 주기: 'realtime' | 'daily' | 'weekly' | 'monthly' | 'quarterly'.
+  // History 누적 여부 결정 + UI 필터(매일/실시간/분기 등)에 사용.
+  frequency String
 
-  @@unique([indicatorId, dateKey])
-  @@index([indicatorId, dateKey])
+  value           Float
+  previousValue   Float?
+  change          Float? // 절대값 차이 (value - previousValue)
+  changePercent   Float? // 비율 차이 (%)
+  observationDate String? // 소스측 관측일 "YYYY-MM-DD" (예: FRED CPI 발표월)
+  nextReleaseDate String? // 다음 발표 예정일 ("YYYY-MM-DD"). monthly/weekly/quarterly만 채워짐.
+
+  category    String? // 'inflation' | 'employment' | 'growth' | 'monetary' | 'housing' | 'consumer' | 'business_cycle' | 'market' | 'other'
+  displayMeta Json? // 카드 UI 표시용 메타데이터 (catalog의 indicator.display)
+
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+
+  history IndicatorHistory[]
 }
 
-// FRED / Yahoo Finance 등 외부 소스에서 받아오는 raw 지표 스냅샷.
-// (indicatorId, dateKey) upsert로 누적 방지. Yahoo는 15분마다 호출되지만 하루 1행 유지.
-// 90일 retention: cleanup cron이 createdAt 기준으로 정리.
-model IndicatorSnapshot {
+// daily/realtime 지표의 7일치 시계열 (sparkline/차트용).
+// monthly/weekly/quarterly는 행 없음 (Indicator.previousValue로 충분).
+// (indicatorId, dateKey) unique → realtime 15분 폴링해도 하루 1행만 유지.
+// cleanup cron이 createdAt 기준 7일 초과 행 제거.
+model IndicatorHistory {
   id              String   @id @default(uuid())
-  indicatorId     String   // catalog 내부 ID (예: "vix", "ust_10y")
-  source          String   // "fred" | "yahoo" 등
-  frequency       String   // 우리 시스템 수집 주기: "realtime" (Yahoo 15분 polling) | "daily" (FRED daily batch)
+  indicatorId     String
   dateKey         String   // "YYYY-MM-DD" KST 기준
-  observationDate String?  // 소스 측 관측일 (FRED 시리즈의 date 등)
+  value           Float
+  observationDate String?
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
 
-  value         Float
-  previousValue Float?
-  change        Float?
-  changePercent Float?
-
-  // 카드 UI 표시용 메타데이터 (catalog의 indicator.display를 그대로 반영).
-  // 미정의 indicator는 null. 구조: { iconName, description, marketImpact, valueDecimals, unitSuffix, thresholdGood?, thresholdBad?, invertThreshold?, relationIcon1, relationText1, relationIcon2, relationText2 }
-  displayMeta Json?
-
-  // FRED Release Calendar에서 가져온 다음 발표 예정일 ("YYYY-MM-DD").
-  // monthly/weekly/quarterly FRED indicator만 채워짐. Yahoo / daily FRED는 null.
-  nextReleaseDate String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  indicator Indicator @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
 
   @@unique([indicatorId, dateKey])
-  @@index([indicatorId, dateKey])
-  @@index([createdAt])
+  @@index([indicatorId, createdAt])
 }
 
 model AiLog {

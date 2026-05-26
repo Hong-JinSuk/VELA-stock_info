@@ -29,14 +29,17 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
       },
     });
 
-    console.log('=========== Log Save Success ===========');
+    const nickname = (session.user as { nickname?: string }).nickname;
+    console.log(
+      `[AI_LOG] saved logId=${log.id} nickname=${nickname ?? 'N/A'} ticker=${stockName}`,
+    );
 
     // 규격 적용: message, status, result
     return createResponse('로그가 성공적으로 기록되었습니다.', 201, {
       logId: log.id,
     });
   } catch (error) {
-    console.error('Logging Error:', error);
+    console.error('[AI_LOG] failed:', error);
 
     // 에러 발생 시에도 동일한 규격 유지
     return createResponse(

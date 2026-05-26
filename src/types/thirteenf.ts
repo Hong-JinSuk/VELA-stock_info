@@ -2,15 +2,16 @@
  * 13F filing 관련 타입 (WhaleWisdom 스타일 벤치마킹).
  */
 
-// 리스트 페이지의 한 줄 = 한 13F-HR filing.
+// 리스트 페이지의 한 줄 = 한 13F filer (최신 filing의 accession만 노출).
+// form.idx 기반 batch라 formType/periodEnding/bizLocation은 알 수 없어 옵셔널.
 export type ThirteenFListItem = {
-  accession: string; // "0001067983-25-001234"
+  accession: string; // 최신 13F-HR의 accession ("0001067983-25-001234")
   cik: string; // padded "0001067983"
   filerName: string; // "BERKSHIRE HATHAWAY INC"
-  formType: string; // "13F-HR" | "13F-HR/A" | "13F-NT"
-  fileDate: string; // "YYYY-MM-DD" (SEC 접수일)
-  periodEnding: string; // "YYYY-MM-DD" (보유 기준일, 분기말)
-  bizLocation: string | null; // 예: "Omaha, NE"
+  fileDate: string; // "YYYY-MM-DD" (마지막 13F-HR 접수일)
+  formType?: string;
+  periodEnding?: string;
+  bizLocation?: string | null;
 };
 
 // 페이지네이션된 검색 결과.

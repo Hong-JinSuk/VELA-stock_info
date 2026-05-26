@@ -8,7 +8,6 @@ type IndicatorBatchResult = {
   dateKey: string;
   fred: number;
   yahoo: number;
-  releaseDates: number;
 };
 
 export function useIndicatorBatchMutation() {
@@ -25,12 +24,14 @@ export function useIndicatorBatchMutation() {
       );
       return data;
     },
+
     onSuccess: (data) => {
       toast.success(
         `지표 스냅샷이 갱신되었습니다. (FRED ${data.fred}, Yahoo ${data.yahoo})`,
       );
       queryClient.invalidateQueries({ queryKey: ['indicator-snapshot'] });
     },
+
     meta: {
       ignoreGlobalError: true,
     },

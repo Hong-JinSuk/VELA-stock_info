@@ -168,10 +168,15 @@ export async function GET(
   try {
     const result = await cachedLoadComparison(accession);
     if (!result) {
+      console.warn(`[13F_COMPARISON] not found accession=${accession}`);
       return NextResponse.json({ message: 'not found' }, { status: 404 });
     }
+    console.log(
+      `[13F_COMPARISON] loaded accession=${accession} buys=${result.buys.length} sells=${result.sells.length} holds=${result.holds.length}`,
+    );
     return NextResponse.json(result);
   } catch (e) {
+    console.error(`[13F_COMPARISON] failed accession=${accession}:`, e);
     const message = e instanceof Error ? e.message : 'SEC fetch failed';
     return NextResponse.json({ message }, { status: 502 });
   }

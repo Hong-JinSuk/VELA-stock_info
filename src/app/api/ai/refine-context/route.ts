@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('============ Start Refine Context ============');
+    console.log('[REFINE] start');
 
     const stream = await ai.models.generateContentStream({
       model: 'gemini-2.5-flash',
@@ -27,11 +27,11 @@ export async function POST(request: Request) {
       refinedData += chunk.text;
     }
 
-    console.log('============ End Refine Context ============');
+    console.log('[REFINE] end');
 
     return NextResponse.json({ refinedData });
   } catch (error: any) {
-    console.error('Refine Route Error:', error);
+    console.error('[REFINE] failed:', error);
 
     const status = error.response?.status || error.status || 500;
     const message = errorMessage[status] || '알 수 없는 오류가 발생했습니다.';

@@ -9,7 +9,7 @@ async function fetchMacroIndicators(): Promise<MacroIndicator[]> {
 
 export function useMacroIndicators() {
   return useQuery({
-    queryKey: ['macro-indicators'],
+    queryKey: ['indicator-snapshot'],
     queryFn: fetchMacroIndicators,
     // realtime 지표는 15분 단위로 갱신되므로 그보다 짧게 캐시
     staleTime: 1000 * 60 * 5,

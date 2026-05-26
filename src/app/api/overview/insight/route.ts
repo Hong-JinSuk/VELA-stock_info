@@ -13,25 +13,38 @@ function getInsightDateKey(): string {
 export async function GET() {
   const todayKey = getInsightDateKey();
 
-  let snapshot = await prisma.dailySnapshot.findUnique({
-    where: { type_dateKey: { type: 'AI_INSIGHT', dateKey: todayKey } },
-  });
-
-  // 오늘 스냅샷이 없으면 가장 최신 것으로 fallback (cron 실패 등 대비).
-  if (!snapshot) {
-    snapshot = await prisma.dailySnapshot.findFirst({
-      where: { type: 'AI_INSIGHT' },
-      orderBy: { dateKey: 'desc' },
+  try {
+    let snapshot = await prisma.dailySnapshot.findUnique({
+      where: { type_dateKey: { type: 'AI_INSIGHT', dateKey: todayKey } },
     });
-  }
 
-  if (!snapshot) {
-    return NextResponse.json(null, { status: 404 });
-  }
+    // 오늘 스냅샷이 없으면 가장 최신 것으로 fallback (cron 실패 등 대비).
+    if (!snapshot) {
+      snapshot = await prisma.dailySnapshot.findFirst({
+        where: { type: 'AI_INSIGHT' },
+        orderBy: { dateKey: 'desc' },
+      });
+      if (snapshot) {
+        console.log(
+          `[OVERVIEW_INSIGHT] fallback to latest dateKey=${snapshot.dateKey} (today=${todayKey})`,
+        );
+      }
+    } else {
+      console.log(`[OVERVIEW_INSIGHT] loaded snapshot for dateKey=${todayKey}`);
+    }
 
-  return NextResponse.json({
-    insight: snapshot.payload,
-    dateKey: snapshot.dateKey,
-    isToday: snapshot.dateKey === todayKey,
-  });
+    if (!snapshot) {
+      console.warn('[OVERVIEW_INSIGHT] no snapshot available');
+      return NextResponse.json(null, { status: 404 });
+    }
+
+    return NextResponse.json({
+      insight: snapshot.payload,
+      dateKey: snapshot.dateKey,
+      isToday: snapshot.dateKey === todayKey,
+    });
+  } catch (error) {
+    console.error('[OVERVIEW_INSIGHT] failed:', error);
+    return NextResponse.json({ message: '인사이트 조회 실패' }, { status: 500 });
+  }
 }

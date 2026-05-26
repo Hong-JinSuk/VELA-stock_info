@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('============ Start Predict ============');
+    console.log(`[PREDICT] start userId=${userId} ticker=${stockName}`);
 
     const stream = await ai.models.generateContentStream({
       model: 'gemini-2.5-flash',
@@ -77,7 +77,7 @@ export async function POST(request: Request) {
       fullText += chunk.text;
     }
 
-    console.log('============ End Predict ============');
+    console.log(`[PREDICT] end userId=${userId} ticker=${stockName}`);
 
     const startIndex = fullText.indexOf('{');
     const endIndex = fullText.lastIndexOf('}');
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result);
   } catch (error: any) {
-    console.error('Predict Route Error:', error);
+    console.error('[PREDICT] failed:', error);
 
     const status = error.response?.status || error.status || 500;
     const message = errorMessage[status] || '알 수 없는 오류가 발생했습니다.';

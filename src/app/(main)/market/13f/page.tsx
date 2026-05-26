@@ -204,7 +204,7 @@ export default function Page() {
                       {it.filerName}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {it.formType} · 보유기준 {it.periodEnding} · 접수 {it.fileDate}
+                      마지막 접수 {it.fileDate}
                       {it.bizLocation && ` · ${it.bizLocation}`}
                     </p>
                   </div>

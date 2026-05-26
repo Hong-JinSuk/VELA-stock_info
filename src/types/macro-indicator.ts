@@ -14,11 +14,23 @@ export type IndicatorDisplayMeta = {
   relationText2: string;
 };
 
+// catalog 발표 주기. UI 필터(매일/실시간/분기 등) 용도.
+export type IndicatorFrequency =
+  | 'realtime'
+  | 'daily'
+  | 'weekly'
+  | 'monthly'
+  | 'quarterly'
+  | 'event';
+
+// catalog category. UI 그룹핑 용도.
+export type IndicatorCategory = string;
+
 export type MacroIndicator = {
   indicatorId: string;
   source: string;
-  frequency: 'realtime' | 'daily';
-  dateKey: string;
+  frequency: IndicatorFrequency;
+  category: IndicatorCategory | null;
   observationDate: string | null;
   value: number;
   previousValue: number | null;

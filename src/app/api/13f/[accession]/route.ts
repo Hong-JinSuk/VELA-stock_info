@@ -184,10 +184,15 @@ export async function GET(
   try {
     const detail = await cachedLoadDetail(accession);
     if (!detail) {
+      console.warn(`[13F_DETAIL] not found accession=${accession}`);
       return NextResponse.json({ message: 'not found' }, { status: 404 });
     }
+    console.log(
+      `[13F_DETAIL] loaded accession=${accession} cik=${detail.cik} holdings=${detail.holdings.length}`,
+    );
     return NextResponse.json(detail);
   } catch (e) {
+    console.error(`[13F_DETAIL] failed accession=${accession}:`, e);
     const message = e instanceof Error ? e.message : 'SEC fetch failed';
     return NextResponse.json({ message }, { status: 502 });
   }
