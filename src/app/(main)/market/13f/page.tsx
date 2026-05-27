@@ -1,6 +1,7 @@
 'use client';
 
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   type ThirteenFFiler,
   useThirteenFFilers,
@@ -97,7 +98,7 @@ export default function Page() {
   const hasNext = page < totalPages;
 
   return (
-    <main className="flex flex-col flex-1 min-h-0 overflow-y-auto no-scrollbar p-6">
+    <main className="flex flex-col flex-1 min-h-0 overflow-hidden p-6">
       <header className="mb-4">
         <h1 className="font-serif text-xl tracking-tight">13F Filings</h1>
         <p className="text-sm text-muted-foreground">
@@ -181,41 +182,48 @@ export default function Page() {
         <div className="p-6 text-sm text-muted-foreground">불러오는 중...</div>
       ) : isError ? (
         <div className="p-6 text-sm text-red-500">
-          13F 로드 실패: {error instanceof Error ? error.message : '알 수 없는 오류'}
+          13F 로드 실패:{' '}
+          {error instanceof Error ? error.message : '알 수 없는 오류'}
         </div>
       ) : !data || data.items.length === 0 ? (
         <div className="p-6 text-sm text-muted-foreground">
-          {q ? `"${q}"에 해당하는 filing이 없습니다.` : '조회된 13F filing이 없습니다.'}
+          {q
+            ? `"${q}"에 해당하는 filing이 없습니다.`
+            : '조회된 13F filing이 없습니다.'}
         </div>
       ) : (
-        <ul className={`space-y-2 ${isFetching ? 'opacity-60 transition-opacity' : ''}`}>
-          {data.items.map((it) => (
-            <li
-              key={it.accession}
-              className="border border-border rounded-lg bg-card/40 backdrop-blur-md hover:border-foreground/20 transition-colors"
-            >
-              <Link
-                href={`/market/13f/${it.accession}`}
-                className="block px-4 py-3"
+        <ScrollArea className="flex-1 min-h-0">
+          <ul
+            className={`space-y-2 ${isFetching ? 'opacity-60 transition-opacity overflow-hidden' : ''}`}
+          >
+            {data.items.map((it) => (
+              <li
+                key={it.accession}
+                className="border border-border rounded-lg bg-card/40 backdrop-blur-md hover:border-foreground/20 transition-colors"
               >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">
-                      {it.filerName}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      마지막 접수 {it.fileDate}
-                      {it.bizLocation && ` · ${it.bizLocation}`}
-                    </p>
+                <Link
+                  href={`/market/13f/${it.accession}`}
+                  className="block px-4 py-3"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">
+                        {it.filerName}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        마지막 접수 {it.fileDate}
+                        {it.bizLocation && ` · ${it.bizLocation}`}
+                      </p>
+                    </div>
+                    <code className="text-[10px] text-muted-foreground/70 shrink-0">
+                      {it.accession}
+                    </code>
                   </div>
-                  <code className="text-[10px] text-muted-foreground/70 shrink-0">
-                    {it.accession}
-                  </code>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </ScrollArea>
       )}
 
       {data && data.items.length > 0 && (

@@ -5,6 +5,7 @@ import { useMacroIndicators } from '@/lib/services/stock/use-macro-indicators';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react'; // Hydration 방지용
 import OverviewAiInsight from './components/overview-ai-insight';
+import ReleaseTimeline from './components/release-timeline';
 
 const guest = process.env.NEXT_PUBLIC_GUEST;
 
@@ -27,7 +28,7 @@ export default function Page() {
       } else if (hour >= 18 && hour < 22) {
         return `주식을 분석하기 좋은 밤이에요 ${session?.user.nickname ?? 'GUEST'} 🌙`;
       } else {
-        return `야심한 밤에도 준비하는 ${session?.user.nickname ?? 'GUEST'}님을 위해 준비했어요. ✨`;
+        return `늦은 밤에도 준비하는 ${session?.user.nickname ?? 'GUEST'}님을 위해 준비했어요. ✨`;
       }
     };
     setGreeting(getGreeting());
@@ -39,6 +40,7 @@ export default function Page() {
         <h1 className="font-serif text-xl tracking-tight">{greeting}</h1>
       </header>
       <section className="flex-1 flex flex-col gap-6">
+        <ReleaseTimeline />
         <OverviewAiInsight />
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
           {macroIndicators?.map((indicator) => (

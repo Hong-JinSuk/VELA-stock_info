@@ -26,16 +26,18 @@ const getMacroIndicators = unstable_cache(
         observationDate: r.observationDate,
         value: r.value,
         previousValue: r.previousValue,
+        prevPreviousValue: r.prevPreviousValue,
         change: r.change,
         changePercent: r.changePercent,
         displayMeta: r.displayMeta as unknown as IndicatorDisplayMeta,
         nextReleaseDate: r.nextReleaseDate,
+        releasedAt: r.releasedAt ? r.releasedAt.toISOString() : null,
         updatedAt: r.updatedAt.toISOString(),
       }));
 
     return items;
   },
-  ['macro-indicators-v3'],
+  ['macro-indicators-v4'],
   { revalidate: REVALIDATE_SECONDS, tags: ['macro-indicators'] },
 );
 

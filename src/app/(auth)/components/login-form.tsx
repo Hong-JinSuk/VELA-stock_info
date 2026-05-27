@@ -217,6 +217,7 @@ export function LoginForm({
             className="bg-[#03A94D]"
             type="button"
             onClick={handleNaverSignIn}
+            disabled
           >
             <Image
               src={
@@ -229,7 +230,7 @@ export function LoginForm({
               width={18} // 적절한 너비값
               height={18} // 적절한 높이값
             />
-            Continue with Naver
+            Continue with Naver (검수중)
           </Button>
           {/* <Button
             onClick={() => signIn('github')}

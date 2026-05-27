@@ -113,31 +113,6 @@ export const authOptions: AuthOptions = {
         const { password, ...safeUser } = user;
         return safeUser as any;
       },
-      // async authorize(credentials) {
-      //   if (!credentials?.email || !credentials?.password) return null;
-
-      //   const user = await prisma.user.findUnique({
-      //     where: { email: credentials.email as string },
-      //   });
-
-      //   // 유저가 없거나, 소셜로만 가입해서 비밀번호가 없는 경우 방어
-      //   if (!user || !user.password) {
-      //     return null;
-      //   }
-
-      //   const isValid = await bcrypt.compare(
-      //     credentials.password as string,
-      //     user.password,
-      //   );
-
-      //   // 보안상 비밀번호 제거후 return
-      //   if (isValid) {
-      //     const { password, ...safeUser } = user;
-      //     return safeUser as any;
-      //   }
-
-      //   return null; // 비밀번호가 틀린 경우
-      // },
     }),
   ],
   callbacks: {
@@ -234,51 +209,3 @@ export const authOptions: AuthOptions = {
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };
-
-// callbacks: {
-//   async jwt({ token, user, account }) {
-//     // 특정 데이터만 넘겨주고 싶을 때, 쓰는 방법
-//     // if (user) {
-//     //   token.id = user.id;
-//     //   token.createdAt = user.createdAt;
-//     // }
-
-//     // password를 제외한 데이터를 넘겨줌
-//     if (user) {
-//       const { password, ...safeUser } = user;
-
-//       if (!token.provider) {
-//         // 유저 ID로 Account 테이블을 뒤져서 어떤 소셜인지 알아냅니다.
-//         const dbAccount = await prisma.account.findFirst({
-//           where: { userId: user.id },
-//         });
-
-//         if (dbAccount) {
-//           token.provider = dbAccount.provider; // "google" 등
-//         } else if (user.password) {
-//           token.provider = 'credentials'; // Account가 없는데 비번이 있다? 이메일 로그인!
-//         }
-//       }
-//       return { ...token, ...safeUser };
-//     }
-//     if (account) {
-//       console.log(
-//         '🌟 [JWT 콜백] account 들어옴! provider:',
-//         account.provider,
-//       );
-//       token.provider = account.provider;
-//     }
-//     return token;
-//   },
-//   async session({ session, token }) {
-//     const { iat, exp, jti, sub, ...userData } = token;
-//     if (session.user) {
-//       // 특정 데이터만 넘겨주고 싶을 때, 쓰는 방법
-//       // (session.user as any).id = token.id;
-//       // (session.user as any).role = token.role;
-//       // (session.user as any).createdAt = token.createdAt;
-//       (session.user as any) = { ...session.user, ...userData };
-//     }
-//     return session;
-//   },
-// },

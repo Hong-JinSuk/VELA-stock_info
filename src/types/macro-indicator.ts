@@ -34,9 +34,11 @@ export type MacroIndicator = {
   observationDate: string | null;
   value: number;
   previousValue: number | null;
+  prevPreviousValue: number | null; // 전전 발표 데이터 (scheduled 지표 발표일 당일 표시용)
   change: number | null;
   changePercent: number | null;
   displayMeta: IndicatorDisplayMeta;
   nextReleaseDate: string | null; // "YYYY-MM-DD" | null
+  releasedAt: string | null; // ISO timestamp. scheduled 지표 마지막 release 시각.
   updatedAt: string;
 };

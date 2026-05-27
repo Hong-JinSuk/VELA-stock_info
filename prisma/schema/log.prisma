@@ -26,12 +26,17 @@ model Indicator {
   // History 누적 여부 결정 + UI 필터(매일/실시간/분기 등)에 사용.
   frequency String
 
-  value           Float
-  previousValue   Float?
-  change          Float? // 절대값 차이 (value - previousValue)
-  changePercent   Float? // 비율 차이 (%)
-  observationDate String? // 소스측 관측일 "YYYY-MM-DD" (예: FRED CPI 발표월)
-  nextReleaseDate String? // 다음 발표 예정일 ("YYYY-MM-DD"). monthly/weekly/quarterly만 채워짐.
+  value             Float
+  previousValue     Float?
+  // 전전 발표 데이터 (scheduled 지표 발표일 당일에 3개 값 표시용).
+  // upsertSnapshots에서 value 변경 시 기존 previousValue가 여기로 shift됨.
+  prevPreviousValue Float?
+  change            Float? // 절대값 차이 (value - previousValue)
+  changePercent     Float? // 비율 차이 (%)
+  observationDate   String? // 소스측 관측일 "YYYY-MM-DD" (예: FRED CPI 발표월)
+  nextReleaseDate   String? // 다음 발표 예정일 ("YYYY-MM-DD"). monthly/weekly/quarterly만 채워짐.
+  // 마지막 release(value 변경) 시각. scheduled 지표만 갱신. 프론트에서 "오늘 발표" 감지에 사용.
+  releasedAt        DateTime? @db.Timestamptz(3)
 
   category    String? // 'inflation' | 'employment' | 'growth' | 'monetary' | 'housing' | 'consumer' | 'business_cycle' | 'market' | 'other'
   displayMeta Json? // 카드 UI 표시용 메타데이터 (catalog의 indicator.display)
