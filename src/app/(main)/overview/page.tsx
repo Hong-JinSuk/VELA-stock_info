@@ -34,7 +34,7 @@ export default function Page() {
   }, [session]);
 
   return (
-    <main className="flex flex-col flex-1 min-h-0 overflow-hidden">
+    <main className="flex flex-col flex-1 overflow-y-auto no-scrollbar sm:overflow-hidden sm:min-h-0">
       <header className="flex items-center justify-between mb-5">
         <h1 className="font-serif text-xl tracking-tight">{greeting}</h1>
       </header>
