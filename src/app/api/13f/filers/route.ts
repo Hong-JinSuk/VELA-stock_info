@@ -1,23 +1,43 @@
 import { prisma } from '@/lib/prisma';
-import { NextResponse } from 'next/server';
+import { Prisma } from '@/generated/prisma/client';
+import { type NextRequest, NextResponse } from 'next/server';
 
-// gemini-server cron이 매일 form.idx에서 받아와 ThirteenFFiler 테이블에 upsert.
-// 자동완성 dropdown용 — 클라이언트가 React Query로 받아 캐시한 뒤 substring filter.
-export async function GET() {
+// 자동완성 dropdown용 서버 사이드 검색.
+// 입력 query(q)로 name 또는 krName 부분일치 → 최대 limit개 반환.
+// q 비어있으면 빈 결과 (전체 9k건 통째로 안 보냄).
+
+const DEFAULT_LIMIT = 8;
+const MAX_LIMIT = 20;
+
+export async function GET(req: NextRequest) {
+  const sp = req.nextUrl.searchParams;
+  const q = (sp.get('q') ?? '').trim();
+  const limit = Math.min(
+    MAX_LIMIT,
+    Math.max(1, Number.parseInt(sp.get('limit') ?? `${DEFAULT_LIMIT}`, 10)),
+  );
+
+  if (!q) {
+    return NextResponse.json({ filers: [] });
+  }
+
   try {
+    const where: Prisma.ThirteenFFilerWhereInput = {
+      OR: [
+        { name: { contains: q, mode: 'insensitive' } },
+        { krName: { contains: q, mode: 'insensitive' } },
+      ],
+    };
+
     const filers = await prisma.thirteenFFiler.findMany({
-      select: { cik: true, name: true, lastFiledDate: true },
-      orderBy: { name: 'asc' },
+      where,
+      select: { cik: true, name: true, krName: true, lastFiledDate: true },
+      orderBy: [{ lastFiledDate: 'desc' }, { name: 'asc' }],
+      take: limit,
     });
-    console.log(`[13F_FILERS] loaded ${filers.length} filers`);
-    return NextResponse.json(
-      { filers },
-      {
-        headers: {
-          'Cache-Control': 'public, max-age=3600, s-maxage=86400',
-        },
-      },
-    );
+
+    console.log(`[13F_FILERS] q="${q}" returned=${filers.length}`);
+    return NextResponse.json({ filers });
   } catch (error) {
     console.error('[13F_FILERS] failed:', error);
     return NextResponse.json(

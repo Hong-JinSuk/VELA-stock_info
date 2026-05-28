@@ -25,7 +25,8 @@
       "Bash(lsof -nP -iTCP:3001 -sTCP:LISTEN)"
     ],
     "additionalDirectories": [
-      "/Users/hjs/projects/gemini-server/src"
+      "/Users/hjs/projects/gemini-server/src",
+      "/Users/hjs/projects/gemini-server/supabase"
     ]
   }
 }

@@ -2,6 +2,8 @@ import { api } from '@/lib/api/axios';
 import { useQuery } from '@tanstack/react-query';
 
 export interface SectorInsight {
+  // AI가 reason 작성보다 먼저 결정. 각 섹터의 주도주 2개. "회사명(티커)" 형식 문자열.
+  leading: string[];
   name: string;
   reason: string;
 }

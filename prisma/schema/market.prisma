@@ -3,10 +3,13 @@
 model ThirteenFFiler {
   cik             String   @id @db.VarChar(10)
   name            String
+  // 한국어 매니저명 (옵션). 수동 SQL UPDATE로 채움. cron UPSERT는 이 컬럼을 건드리지 X.
+  krName          String?
   lastFiledDate   String   @db.VarChar(10) // "YYYY-MM-DD"
   latestAccession String?  @db.VarChar(20) // "0001193125-26-217663". batch 직후엔 채워져 있어야 함
   updatedAt       DateTime @default(now())
 
   @@index([name])
+  @@index([krName])
   @@index([lastFiledDate])
 }

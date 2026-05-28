@@ -2,6 +2,7 @@
 
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   type ThirteenFFiler,
   useThirteenFFilers,
@@ -9,43 +10,33 @@ import {
 import { useThirteenFList } from '@/lib/services/market/use-thirteenf-list';
 import { Search, X } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const PAGE_SIZE = 20;
-const MIN_SUGGEST_CHARS = 1;
-const MAX_SUGGESTIONS = 8;
-
-function filterFilers(filers: ThirteenFFiler[], q: string): ThirteenFFiler[] {
-  const needle = q.trim().toLowerCase();
-  if (!needle) return [];
-  const startsWith: ThirteenFFiler[] = [];
-  const contains: ThirteenFFiler[] = [];
-  for (const f of filers) {
-    const lower = f.name.toLowerCase();
-    if (lower.startsWith(needle)) startsWith.push(f);
-    else if (lower.includes(needle)) contains.push(f);
-    if (startsWith.length >= MAX_SUGGESTIONS) break;
-  }
-  return [...startsWith, ...contains].slice(0, MAX_SUGGESTIONS);
-}
+const SUGGEST_DEBOUNCE_MS = 200;
 
 export default function Page() {
   const [input, setInput] = useState('');
+  const [debouncedInput, setDebouncedInput] = useState('');
   const [q, setQ] = useState('');
   const [page, setPage] = useState(1);
-  const [filersEnabled, setFilersEnabled] = useState(false);
   const [showSuggest, setShowSuggest] = useState(false);
   const [highlight, setHighlight] = useState(-1);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const { data: filers } = useThirteenFFilers(filersEnabled);
+  // 입력 → debounce → 서버 사이드 검색.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedInput(input), SUGGEST_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [input]);
 
-  const suggestions = useMemo(() => {
-    if (!filers || input.trim().length < MIN_SUGGEST_CHARS) return [];
-    return filterFilers(filers, input);
-  }, [filers, input]);
+  const { data: filers, isFetching: filersFetching } =
+    useThirteenFFilers(debouncedInput);
+  const suggestions = filers ?? [];
+  const suggestLoading =
+    filersFetching && debouncedInput.trim().length >= 1 && !filers;
 
   // dropdown 바깥 클릭으로 닫기.
   useEffect(() => {
@@ -131,10 +122,7 @@ export default function Page() {
             setShowSuggest(true);
             setHighlight(-1);
           }}
-          onFocus={() => {
-            setFilersEnabled(true);
-            setShowSuggest(true);
-          }}
+          onFocus={() => setShowSuggest(true)}
           onKeyDown={onKeyDown}
           placeholder="매니저 이름으로 검색 (예: Berkshire, Bridgewater, NPS)"
           className="pl-8 pr-8 h-9"
@@ -154,32 +142,64 @@ export default function Page() {
             <X className="size-4" />
           </button>
         )}
-        {showSuggest && suggestions.length > 0 && (
+        {showSuggest && (suggestLoading || suggestions.length > 0) && (
           <ul className="absolute left-0 right-0 top-full mt-1 z-20 max-h-72 overflow-y-auto rounded-md border border-border bg-popover shadow-md">
-            {suggestions.map((f, i) => (
-              <li key={f.cik}>
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => onSelectSuggestion(f)}
-                  onMouseEnter={() => setHighlight(i)}
-                  className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between gap-3 ${
-                    i === highlight ? 'bg-accent' : 'hover:bg-accent/60'
-                  }`}
-                >
-                  <span className="truncate">{f.name}</span>
-                  <code className="text-[10px] text-muted-foreground/70 shrink-0">
-                    {f.cik}
-                  </code>
-                </button>
-              </li>
-            ))}
+            {suggestLoading
+              ? Array.from({ length: 5 }).map((_, i) => (
+                  <li
+                    key={`s-${i}`}
+                    className="px-3 py-2 flex items-center justify-between gap-5"
+                  >
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="h-3 w-16 shrink-0" />
+                  </li>
+                ))
+              : suggestions.map((f, i) => (
+                  <li key={f.cik}>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => onSelectSuggestion(f)}
+                      onMouseEnter={() => setHighlight(i)}
+                      className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between gap-3 ${
+                        i === highlight ? 'bg-accent' : 'hover:bg-accent/60'
+                      }`}
+                    >
+                      <span className="truncate">
+                        {f.name}
+                        {f.krName && (
+                          <span className="text-muted-foreground/70 ml-2">
+                            · {f.krName}
+                          </span>
+                        )}
+                      </span>
+                      <code className="text-[10px] text-muted-foreground/70 shrink-0">
+                        {f.cik}
+                      </code>
+                    </button>
+                  </li>
+                ))}
           </ul>
         )}
       </form>
 
       {isLoading ? (
-        <div className="p-6 text-sm text-muted-foreground">불러오는 중...</div>
+        <ul className="space-y-2">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <li
+              key={`l-${i}`}
+              className="border border-border rounded-lg bg-card/40 backdrop-blur-md px-4 py-3"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1 space-y-2">
+                  <Skeleton className="h-4 w-1/3" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+                <Skeleton className="h-3 w-32 shrink-0" />
+              </div>
+            </li>
+          ))}
+        </ul>
       ) : isError ? (
         <div className="p-6 text-sm text-red-500">
           13F 로드 실패:{' '}

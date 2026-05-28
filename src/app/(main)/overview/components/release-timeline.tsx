@@ -173,16 +173,7 @@ export default function ReleaseTimeline() {
   }
 
   return (
-    <section className="flex flex-col min-h-0">
-      <header className="mb-5">
-        <p className="text-xs text-muted-foreground tracking-wide">
-          UPCOMING · 다음 발표일이 가까운 순
-        </p>
-        <h2 className="text-xl tracking-tight mt-1">
-          시간순 추적 — 다가오는 경제 지표
-        </h2>
-      </header>
-
+    <section className="flex flex-col min-h-0 w-full">
       {items.length === 0 ? (
         <div className="p-6 text-sm text-muted-foreground">
           예정된 발표가 없습니다.
@@ -316,16 +307,12 @@ function TimelineCard({ item }: { item: TimelineItem }) {
           return (
             <div className="flex flex-col gap-1 text-[11px] leading-relaxed border-t border-border/40 pt-2 mt-1">
               <p className="text-foreground/70">
-                <span className="text-red-400/80 font-medium">
-                  ↑ 상승하면
-                </span>{' '}
+                <span className="text-red-400/80 font-medium">↑ 상승하면</span>{' '}
                 <span className="text-muted-foreground/40">—</span>{' '}
                 {scenario.riseMeaning}
               </p>
               <p className="text-foreground/70">
-                <span className="text-blue-400/80 font-medium">
-                  ↓ 하락하면
-                </span>{' '}
+                <span className="text-blue-400/80 font-medium">↓ 하락하면</span>{' '}
                 <span className="text-muted-foreground/40">—</span>{' '}
                 {scenario.fallMeaning}
               </p>

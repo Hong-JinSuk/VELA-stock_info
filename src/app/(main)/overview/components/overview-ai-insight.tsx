@@ -15,6 +15,8 @@ import { Sparkles, TrendingDown, TrendingUp } from 'lucide-react';
 interface SectorCardProps {
   name: string;
   reason: string;
+  leading?: string[];
+  tone: 'emerald' | 'red';
 }
 
 export default function OverviewAiInsight() {
@@ -23,7 +25,7 @@ export default function OverviewAiInsight() {
   const isToday = data?.isToday ?? true;
 
   return (
-    <Card className="border border-border bg-card/40 backdrop-blur-md rounded-2xl p-6 relative overflow-hidden flex flex-col shadow-none ring-0 mt-8">
+    <Card className="border border-border bg-card/40 backdrop-blur-md rounded-2xl p-6 relative overflow-hidden flex flex-col shadow-none ring-0">
       <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-indigo-500/[0.03] to-transparent pointer-events-none" />
       <div className="flex items-center justify-between mb-6 relative z-10">
         <div className="flex items-center gap-3">
@@ -72,6 +74,8 @@ export default function OverviewAiInsight() {
                       key={idx}
                       name={sector.name}
                       reason={sector.reason}
+                      leading={sector.leading}
+                      tone="emerald"
                     />
                   ))}
                 </div>
@@ -87,6 +91,8 @@ export default function OverviewAiInsight() {
                       key={idx}
                       name={sector.name}
                       reason={sector.reason}
+                      leading={sector.leading}
+                      tone="red"
                     />
                   ))}
                 </div>
@@ -99,20 +105,49 @@ export default function OverviewAiInsight() {
   );
 }
 
-function SectorCard({ name, reason }: SectorCardProps) {
+function SectorCard({ name, reason, leading, tone }: SectorCardProps) {
   const { ref, isClamped } = useTextClamp<HTMLParagraphElement>();
   const isMobile = useIsMobile();
+
+  const chipClass =
+    tone === 'emerald'
+      ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-400'
+      : 'border-red-500/25 bg-red-500/10 text-red-400';
 
   return (
     <div className="bg-secondary/30 border border-border rounded-xl p-4 flex-1 flex flex-col">
       <p className="font-semibold text-foreground mb-2 shrink-0">{name}</p>
+      {leading && leading.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-3 shrink-0">
+          {/* {leading.map((s) => (
+            <span
+              key={s}
+              className={cn(
+                'text-[11px] px-2 py-0.5 rounded-md border tabular-nums whitespace-nowrap',
+                chipClass,
+              )}
+            >
+              {s}
+            </span>
+          ))} */}
+          <span
+            className={cn(
+              'text-[11px] px-2 py-0.5 rounded-md border tabular-nums whitespace-nowrap',
+              chipClass,
+            )}
+          >
+            {leading[0]}
+          </span>
+        </div>
+      )}
+      <p>{}</p>
       <Tooltip>
         <TooltipTrigger asChild>
           <p
             ref={ref}
             className={cn(
               'text-sm text-muted-foreground leading-relaxed cursor-default text-left',
-              !isMobile && 'line-clamp-3 ',
+              !isMobile && 'line-clamp-5 ',
             )}
           >
             {reason}
