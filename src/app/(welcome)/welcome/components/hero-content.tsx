@@ -3,10 +3,24 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { StaggerContainer } from '@/motion/stagger-containers';
+import { Session } from 'next-auth';
 import { useRouter } from 'next/navigation';
 
-export default function HeroContent() {
+type Props = {
+  session?: Session | null;
+};
+
+export default function HeroContent({ session }: Props) {
   const router = useRouter();
+
+  const onClickStart = () => {
+    if (session) {
+      router.push('/overview');
+    } else {
+      router.push('/login');
+    }
+  };
+
   return (
     <div className="p-8 lg:p-20 flex flex-col justify-center border-r border-black/10 dark:border-white/10 relative">
       <StaggerContainer delay={0.1}>
@@ -33,7 +47,7 @@ export default function HeroContent() {
         <div className="flex flex-col sm:flex-row gap-4">
           <Button
             className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-6 rounded h-auto text-base font-semibold transition-colors"
-            onClick={() => router.push('/login')}
+            onClick={onClickStart}
           >
             지금 시작하기
           </Button>

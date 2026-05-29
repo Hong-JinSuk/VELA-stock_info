@@ -17,7 +17,7 @@ import useModal from '@/hooks/use-modal';
 import { cn } from '@/lib/utils';
 import { loginSchema, LoginSchema } from '@/schemas/login-schema';
 import { IconUserCircle } from '@tabler/icons-react';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -29,7 +29,6 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<'form'>) {
   const router = useRouter();
-  const { data: session } = useSession();
   const { openSignupModal } = useModal();
   const { resolvedTheme } = useTheme();
   // SSR 시점엔 theme이 undefined여서 서버/클라이언트 src가 갈리며 hydration mismatch 발생
@@ -98,17 +97,6 @@ export function LoginForm({
       error: '연결에 실패했습니다. 다시 시도해 주세요.',
     });
   };
-
-  if (session) {
-    console.log('session : ', session);
-    // session이 있다면 곧바로 메인 페이지로 보내야함.
-  }
-
-  useEffect(() => {
-    if (session?.user) {
-      router.push('/overview');
-    }
-  }, [session, router]);
 
   return (
     <form

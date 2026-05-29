@@ -3,9 +3,18 @@
 import HeroVisual from '@/app/(welcome)/welcome/components/hero-visual';
 import VelaText from '@/components/common/vela-text';
 import { Separator } from '@/components/ui/separator';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { LoginForm } from '../components/login-form';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { data: session } = useSession();
+
+  if (session) {
+    router.push('/overview');
+  }
+
   return (
     <div className="flex flex-col overflow-hidden max-h-svh">
       <div className="w-full mx-auto lg:max-w-[1440px] px-8 min-h-20 flex">

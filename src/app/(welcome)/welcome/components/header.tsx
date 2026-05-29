@@ -1,10 +1,15 @@
 import { ThemeToggleButton } from '@/components/common/theme-button';
 import { VelaLogo } from '@/components/common/vela-logo';
+import { Session } from 'next-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { navLinks } from '../navigation';
 
-export function Header() {
+type Props = {
+  session?: Session | null;
+};
+
+export function Header({ session }: Props) {
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -16,6 +21,14 @@ export function Header() {
     const target = document.getElementById(targetId);
     if (target) {
       target.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const onClickStart = () => {
+    if (session) {
+      router.push('/overview');
+    } else {
+      router.push('/login');
     }
   };
 
@@ -72,7 +85,7 @@ export function Header() {
               }`}
             >
               <button
-                onClick={() => router.push('/login')}
+                onClick={onClickStart}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-semibold transition-colors"
               >
                 지금 시작하기
