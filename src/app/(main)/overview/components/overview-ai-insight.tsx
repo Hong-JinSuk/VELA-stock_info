@@ -1,7 +1,8 @@
 'use client';
 
+import SkeletonCard from '@/components/common/skeleton-card';
+import SkeletonRow from '@/components/common/skeleton-row';
 import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
@@ -49,50 +50,8 @@ export default function OverviewAiInsight() {
       <div className="relative z-10">
         {loading && !insight ? (
           <div className="space-y-6">
-            {/* overview 자리 */}
-            <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4 space-y-2">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-11/12" />
-              <Skeleton className="h-4 w-2/3" />
-            </div>
-
-            {/* sector 2-col grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {(['emerald', 'red'] as const).map((tone) => (
-                <div key={tone} className="flex flex-col gap-4 flex-1">
-                  <h4
-                    className={cn(
-                      'flex items-center gap-2 font-semibold px-1 shrink-0',
-                      tone === 'emerald' ? 'text-emerald-500' : 'text-red-500',
-                    )}
-                  >
-                    {tone === 'emerald' ? (
-                      <TrendingUp className="w-4 h-4" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4" />
-                    )}
-                    {tone === 'emerald' ? '유망 섹터' : '부진 섹터'}
-                  </h4>
-                  <div className="flex flex-col gap-4 flex-1">
-                    {[0, 1].map((i) => (
-                      <div
-                        key={i}
-                        className="bg-secondary/30 border border-border rounded-xl p-4 flex-1 flex flex-col"
-                      >
-                        <Skeleton className="h-5 w-1/3 mb-2" />
-                        <Skeleton className="h-5 w-28 mb-3" />
-                        <div className="space-y-2">
-                          <Skeleton className="h-3 w-full" />
-                          <Skeleton className="h-3 w-11/12" />
-                          <Skeleton className="h-3 w-4/5" />
-                          <Skeleton className="h-3 w-2/3" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <SkeletonRow count={1} />
+            <SkeletonCard rows={2} cols={2} />
           </div>
         ) : error ? (
           <div className="py-8 text-center text-red-400 text-sm">{error}</div>
@@ -157,30 +116,21 @@ function SectorCard({ name, reason, leading, tone }: SectorCardProps) {
 
   return (
     <div className="bg-secondary/30 border border-border rounded-xl p-4 flex-1 flex flex-col">
-      <p className="font-semibold text-foreground mb-2 shrink-0">{name}</p>
-      {leading && leading.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-3 shrink-0">
-          {/* {leading.map((s) => (
+      <div className="flex items-center gap-2 mb-2">
+        <p className="font-semibold text-foreground shrink-0">{name}</p>
+        {leading && leading.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 shrink-0">
             <span
-              key={s}
               className={cn(
                 'text-[11px] px-2 py-0.5 rounded-md border tabular-nums whitespace-nowrap',
                 chipClass,
               )}
             >
-              {s}
+              {leading[0]}
             </span>
-          ))} */}
-          <span
-            className={cn(
-              'text-[11px] px-2 py-0.5 rounded-md border tabular-nums whitespace-nowrap',
-              chipClass,
-            )}
-          >
-            {leading[0]}
-          </span>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
       <p>{}</p>
       <Tooltip>
         <TooltipTrigger asChild>

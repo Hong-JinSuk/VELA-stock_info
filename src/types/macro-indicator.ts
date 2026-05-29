@@ -1,3 +1,10 @@
+export type IndicatorState = {
+  icon: string;
+  label: string;
+  resultIcon: string;
+  resultLabel: string;
+};
+
 export type IndicatorDisplayMeta = {
   cardName: string; // 카드 헤더에 표시되는 한국어 이름 (gemini-server에서 indicator.name 자동 주입)
   iconName: string;
@@ -8,10 +15,14 @@ export type IndicatorDisplayMeta = {
   thresholdGood?: number;
   thresholdBad?: number;
   invertThreshold?: boolean;
-  relationIcon1: string;
-  relationText1: string;
-  relationIcon2: string;
-  relationText2: string;
+  trendGood?: number;
+  trendBad?: number;
+  invertTrend?: boolean;
+  states: {
+    good?: IndicatorState;
+    neutral: IndicatorState;
+    bad?: IndicatorState;
+  };
 };
 
 // catalog 발표 주기. UI 필터(매일/실시간/분기 등) 용도.

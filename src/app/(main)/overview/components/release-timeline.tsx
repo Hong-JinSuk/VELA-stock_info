@@ -1,7 +1,6 @@
 'use client';
 
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Skeleton } from '@/components/ui/skeleton';
+import SkeletonCard from '@/components/common/skeleton-card';
 import { getIndicatorScenario } from '@/constants/indicator-scenarios';
 import { useMacroIndicators } from '@/lib/services/stock/use-macro-indicators';
 import type {
@@ -162,34 +161,7 @@ export default function ReleaseTimeline() {
   return (
     <section className="flex flex-col w-full sm:min-h-0">
       {isLoading ? (
-        <ol className="relative pl-6">
-          <span
-            aria-hidden
-            className="absolute left-[7px] top-1 bottom-1 w-px bg-border"
-          />
-          {Array.from({ length: 6 }).map((_, i) => (
-            <li key={`tl-${i}`} className="relative mb-3 last:mb-0">
-              <span
-                aria-hidden
-                className="absolute -left-[18px] top-3 size-2 rounded-full bg-foreground/20 ring-2 ring-background"
-              />
-              <article className="rounded-lg border border-border bg-card/40 backdrop-blur-md px-4 py-3">
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <Skeleton className="h-4 w-14" />
-                    <Skeleton className="h-4 w-32" />
-                  </div>
-                  <Skeleton className="h-3 w-20 shrink-0" />
-                </div>
-                <Skeleton className="h-3 w-2/3 mb-2" />
-                <div className="border-t border-border/40 pt-2 mt-1 space-y-1.5">
-                  <Skeleton className="h-3 w-3/4" />
-                  <Skeleton className="h-3 w-2/3" />
-                </div>
-              </article>
-            </li>
-          ))}
-        </ol>
+        <SkeletonCard rows={6} cols={1} />
       ) : isError ? (
         <div className="p-6 text-sm text-red-500">발표 캘린더 로드 실패</div>
       ) : items.length === 0 ? (
@@ -197,7 +169,7 @@ export default function ReleaseTimeline() {
           예정된 발표가 없습니다.
         </div>
       ) : (
-        <ScrollArea className="sm:flex-1 sm:min-h-0">
+        <section className="sm:flex-1 sm:min-h-0 no-scrollbar overflow-y-auto">
           <ol className="relative pl-6">
             <span
               aria-hidden
@@ -207,7 +179,7 @@ export default function ReleaseTimeline() {
               <TimelineCard key={item.indicatorId} item={item} />
             ))}
           </ol>
-        </ScrollArea>
+        </section>
       )}
     </section>
   );

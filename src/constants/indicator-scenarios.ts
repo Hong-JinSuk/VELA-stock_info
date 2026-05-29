@@ -20,10 +20,6 @@ export const INDICATOR_SCENARIOS: Record<string, IndicatorScenario> = {
     riseMeaning: 'FOMC 점도표 상향 확률 ↑, 채권 약세·달러 강세',
     fallMeaning: '점도표 하향 확률 ↑, 주식·채권 동반 강세',
   },
-  ppi: {
-    riseMeaning: '1~3개월 뒤 CPI 상승 확률 ↑, 인플레 재가속 우려',
-    fallMeaning: 'CPI 하방 압력 선행, 인플레 안정 기대 ↑',
-  },
   avg_hourly_wage: {
     riseMeaning: '서비스 인플레 끈끈 → Fed 긴축 유지 확률 ↑',
     fallMeaning: '인플레 압력 완화 → 인하 기대 ↑',
@@ -38,21 +34,13 @@ export const INDICATOR_SCENARIOS: Record<string, IndicatorScenario> = {
     riseMeaning: '노동시장 둔화 → 샴 법칙 발동 시 침체 공포 ↑',
     fallMeaning: '고용 회복 → 연착륙 시나리오 우호',
   },
-  labor_participation: {
-    riseMeaning: '노동력 풀 회복 → 임금 인플레 압력 완화 확률 ↑',
-    fallMeaning: '구조적 노동력 부족 → 임금 상방 압력 지속',
+  u6_unemployment: {
+    riseMeaning: 'U-3 대비 격차 확대 → 실질 고용 둔화 시그널',
+    fallMeaning: '고용 질 개선 → 임금 압력은 유지될 수 있음',
   },
   initial_claims: {
     riseMeaning: '해고 증가 → 노동시장 둔화 조기 시그널',
     fallMeaning: '고용 견조 → 채권 약세, 위험자산 우호',
-  },
-  continuing_claims: {
-    riseMeaning: '재취업 난조 → 침체 진입 신호 확률 ↑',
-    fallMeaning: '노동시장 유연성 회복 → 고용 정상화',
-  },
-  jolts: {
-    riseMeaning: '노동 수요 견조 → 임금 인플레 지속 확률 ↑',
-    fallMeaning: '구인 둔화 → 노동시장 균형 회복, 임금 압력 완화',
   },
 
   // ---------- 성장 ----------
@@ -60,12 +48,8 @@ export const INDICATOR_SCENARIOS: Record<string, IndicatorScenario> = {
     riseMeaning: '성장 견조 → 채권 약세·달러 강세 확률 ↑',
     fallMeaning: '성장 둔화 → 침체 우려 ↑, 위험자산 약세 압력',
   },
-  consumer_spending: {
-    riseMeaning: '내수 견조 → 침체 우려 완화, GDP 엔진 살아있음',
-    fallMeaning: '소비 둔화 → GDP 하방 압력, 경기 모멘텀 약화',
-  },
 
-  // ---------- Fed ----------
+  // ---------- Fed / 유동성 ----------
   fed_balance_sheet: {
     riseMeaning: 'QE/유동성 공급 → 위험자산 강세 확률 ↑',
     fallMeaning: 'QT/유동성 흡수 → 위험자산 부담 확률 ↑',
@@ -74,15 +58,13 @@ export const INDICATOR_SCENARIOS: Record<string, IndicatorScenario> = {
     riseMeaning: '금융여건 긴축 → 시장 스트레스 누적, 리스크 자산 부담',
     fallMeaning: '여건 완화 → 리스크 자산 강세 환경 조성',
   },
-  m2: {
-    riseMeaning: '통화량 확대 → 자산가격 상방 압력 확률 ↑',
-    fallMeaning: '통화량 축소 → 유동성 위축, 자산가격 하방 압력',
+  tga: {
+    riseMeaning: '재무부 유동성 흡수 → 위험자산 부담',
+    fallMeaning: 'TGA 방출 → 시중 유동성 ↑, 위험자산 우호',
   },
-
-  // ---------- 경기 ----------
-  cfnai: {
-    riseMeaning: '추세 이상 성장 → 경기 확장 시그널',
-    fallMeaning: '성장 둔화 → -0.7 하향 시 침체 진입 확률 ↑',
+  net_liquidity: {
+    riseMeaning: '순유동성 확대 → S&P 500 6개월 시차 양의 상관',
+    fallMeaning: '순유동성 위축 → 멀티플 압박, 성장주에 특히 부담',
   },
 
   // ---------- 소비자 ----------
@@ -94,36 +76,34 @@ export const INDICATOR_SCENARIOS: Record<string, IndicatorScenario> = {
     riseMeaning: '내수 견조 → 침체 우려 완화, 소비주 강세',
     fallMeaning: '소비 둔화 → GDP 70% 엔진 약화 우려',
   },
-  consumer_credit: {
-    riseMeaning: '가계 빚 의존 소비 → 연체율·소비 감속 선행 신호',
-    fallMeaning: '신용 균형 회복 → 소비 지속 가능성 ↑',
-  },
-  savings_rate: {
-    riseMeaning: '가계 여력 회복 → 소비 지속력 확보',
-    fallMeaning: '여력 부족 → 향후 소비 감속 예고',
-  },
 
   // ---------- 주택 ----------
   housing_starts: {
     riseMeaning: '건설 모멘텀 ↑ → 건자재·내구재 섹터 우호',
     fallMeaning: '건설 둔화 → 경기 둔화 시그널',
   },
-  building_permits: {
-    riseMeaning: '1~3개월 뒤 착공 증가 예고 → 주택 모멘텀 ↑',
-    fallMeaning: '주택 사이클 둔화 선행 신호',
-  },
   existing_home_sales: {
     riseMeaning: '주택시장 유동성 회복 → 모기지 부담 완화',
     fallMeaning: '주택시장 빙결 → 모기지 부담 지속',
-  },
-  case_shiller: {
-    riseMeaning: '가계 자산효과 확대 → 소비 우호',
-    fallMeaning: '주택가격 조정 → 가계 자산 위축, 소비 부담',
   },
   mortgage_30y: {
     riseMeaning: '주택 거래 빙결 → 부동산·건설 섹터 부담',
     fallMeaning: '주택 수요 회복 → 부동산·내구재 섹터 우호',
   },
+
+  // ---------- 금리 / 인플레 기대 ----------
+  spread_10y_3m: {
+    riseMeaning: '스프레드 정상화 → 침체 확률 ↓, 은행주 우호',
+    fallMeaning: '역전 심화 → NY Fed 침체확률 ↑, 위험자산 부담',
+  },
+  breakeven_5y: {
+    riseMeaning: '인플레 기대 상승 → 명목금리 상승 압력, 멀티플 압박',
+    fallMeaning: '기대 인플레 안정 → Fed 인하 명분 확보',
+  },
+
+  // ---------- Yahoo realtime — daily 그룹은 보통 시나리오 X (실시간 가격이라 발표 개념 없음) ----------
+  // VXN, USD/JPY, USD/KRW, BTC, Fear & Greed 등은 release timeline에 안 뜸.
+  // (release timeline은 scheduled 그룹 위주)
 };
 
 export function getIndicatorScenario(

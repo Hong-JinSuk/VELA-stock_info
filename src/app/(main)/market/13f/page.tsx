@@ -172,6 +172,11 @@ export default function Page() {
                             · {f.krName}
                           </span>
                         )}
+                        {f.krNickname && (
+                          <span className="text-muted-foreground/60 ml-2">
+                            · {f.krNickname}
+                          </span>
+                        )}
                       </span>
                       <code className="text-[10px] text-muted-foreground/70 shrink-0">
                         {f.cik}

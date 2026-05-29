@@ -5,6 +5,7 @@ export type ThirteenFFiler = {
   cik: string;
   name: string;
   krName?: string | null;
+  krNickname?: string | null;
   lastFiledDate: string;
 };
 

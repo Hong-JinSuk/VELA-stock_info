@@ -17,7 +17,12 @@ const getMacroIndicators = unstable_cache(
     });
 
     const items: MacroIndicator[] = rows
-      .filter((r) => r.displayMeta !== null)
+      .filter((r) => {
+        if (r.displayMeta === null) return false;
+        // catalog에서 제거된 지표(옛 구조 = states 없음)는 노출 X. 다음 batch에서도 갱신 안 됨.
+        const meta = r.displayMeta as { states?: unknown };
+        return meta.states !== undefined;
+      })
       .map((r) => ({
         indicatorId: r.id,
         source: r.source,
@@ -37,7 +42,7 @@ const getMacroIndicators = unstable_cache(
 
     return items;
   },
-  ['macro-indicators-v4'],
+  ['macro-indicators-v7'],
   { revalidate: REVALIDATE_SECONDS, tags: ['macro-indicators'] },
 );
 

@@ -26,12 +26,19 @@ export async function GET(req: NextRequest) {
       OR: [
         { name: { contains: q, mode: 'insensitive' } },
         { krName: { contains: q, mode: 'insensitive' } },
+        { krNickname: { contains: q, mode: 'insensitive' } },
       ],
     };
 
     const filers = await prisma.thirteenFFiler.findMany({
       where,
-      select: { cik: true, name: true, krName: true, lastFiledDate: true },
+      select: {
+        cik: true,
+        name: true,
+        krName: true,
+        krNickname: true,
+        lastFiledDate: true,
+      },
       orderBy: [{ lastFiledDate: 'desc' }, { name: 'asc' }],
       take: limit,
     });
