@@ -22,7 +22,9 @@
       "Bash(curl -i -s -X POST 'http://localhost:3001/ai/indicator-batch' --max-time 5)",
       "Bash(MIGRATE_MODE=true npx prisma migrate dev --name add_indicator_display_meta --create-only)",
       "Bash(MIGRATE_MODE=true npx prisma migrate deploy)",
-      "Bash(lsof -nP -iTCP:3001 -sTCP:LISTEN)"
+      "Bash(lsof -nP -iTCP:3001 -sTCP:LISTEN)",
+      "Bash(curl -s -X POST http://localhost:3001/ai/indicator-batch -w \"\\\\nHTTP: %{http_code}\\\\n\")",
+      "Bash(curl -s -X POST http://localhost:3000/vela/api/debug-cleanup/reset-released-at -w \"\\\\nHTTP: %{http_code}\\\\n\")"
     ],
     "additionalDirectories": [
       "/Users/hjs/projects/gemini-server/src",

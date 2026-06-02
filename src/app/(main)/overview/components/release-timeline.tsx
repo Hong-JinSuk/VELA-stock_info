@@ -6,13 +6,52 @@ import { useMacroIndicators } from '@/lib/services/stock/use-macro-indicators';
 import type {
   IndicatorCategory,
   MacroIndicator,
+  SignalThresholds,
 } from '@/types/macro-indicator';
 import { useMemo } from 'react';
+
+type ChangeDirection = 'up' | 'down' | 'flat';
+type ChangeMagnitude = 'minor' | 'notable' | 'clear';
+
+// 이전값 대비 변화량을 catalog 임계값으로 분류.
+function classifyChange(
+  current: number,
+  previous: number | null,
+  thresholds: SignalThresholds | undefined,
+): { direction: ChangeDirection; magnitude: ChangeMagnitude } {
+  if (previous === null || !thresholds) {
+    return { direction: 'flat', magnitude: 'minor' };
+  }
+  const diff = current - previous;
+  if (diff === 0) return { direction: 'flat', magnitude: 'minor' };
+
+  let metric: number;
+  switch (thresholds.unit) {
+    case 'mom_pct':
+    case 'qoq_pct':
+      metric = previous !== 0 ? (diff / previous) * 100 : 0;
+      break;
+    case 'abs_change':
+    case 'abs_pp':
+    case 'level_change':
+      metric = diff;
+      break;
+  }
+
+  const abs = Math.abs(metric);
+  const direction: ChangeDirection = metric > 0 ? 'up' : 'down';
+  let magnitude: ChangeMagnitude = 'minor';
+  if (abs >= thresholds.clear) magnitude = 'clear';
+  else if (abs >= thresholds.notable) magnitude = 'notable';
+
+  return { direction, magnitude };
+}
 
 type TimelineItem = MacroIndicator & {
   nextReleaseDate: string;
   daysUntil: number;
-  releasedToday: boolean;
+  releasedRecently: boolean;
+  daysSinceRelease: number | null;
 };
 
 const CATEGORY_STYLE: Record<string, { label: string; pill: string }> = {
@@ -100,16 +139,26 @@ function getDaysUntil(dateStr: string): number {
   return Math.round((target.getTime() - today.getTime()) / 86400000);
 }
 
-// releasedAt (ISO timestamp)이 오늘 KST와 같은 날짜인지.
-function isReleasedToday(releasedAt: string | null): boolean {
-  if (!releasedAt) return false;
+// releasedAt 기준 KST로 며칠 전 발표인지 계산. 오늘=0, 어제=1, 그저께=2, ...
+// 윈도우 밖(3일 이상 또는 미발표)이면 null.
+function getDaysSinceRelease(releasedAt: string | null): number | null {
+  if (!releasedAt) return null;
   const released = new Date(releasedAt);
-  if (Number.isNaN(released.getTime())) return false;
+  if (Number.isNaN(released.getTime())) return null;
   const kstReleased = new Date(released.getTime() + 9 * 60 * 60 * 1000);
   const kstNow = new Date(Date.now() + 9 * 60 * 60 * 1000);
-  return (
-    kstReleased.toISOString().slice(0, 10) === kstNow.toISOString().slice(0, 10)
+  const releasedDay = new Date(kstReleased.toISOString().slice(0, 10));
+  const nowDay = new Date(kstNow.toISOString().slice(0, 10));
+  const diff = Math.round(
+    (nowDay.getTime() - releasedDay.getTime()) / 86400000,
   );
+  return diff >= 0 ? diff : null;
+}
+
+// 발표 후 2일 이내(D-day / D+1 / D+2)면 강조 카드로 취급.
+function isReleasedRecently(releasedAt: string | null): boolean {
+  const daysSince = getDaysSinceRelease(releasedAt);
+  return daysSince !== null && daysSince <= 2;
 }
 
 function formatMonthDay(dateStr: string): string {
@@ -117,10 +166,18 @@ function formatMonthDay(dateStr: string): string {
   return `${m}/${d}`;
 }
 
-function formatDDay(days: number): string {
-  if (days === 0) return 'D-DAY';
-  if (days > 0) return `D-${days}`;
-  return `D+${Math.abs(days)}`;
+// 카드 우상단 D-N 표시. 강조 카드(D-day~D+2)는 발표 후 일수 기준, 그 외는 다음 발표까지.
+function formatDDay(
+  daysUntil: number,
+  daysSinceRelease: number | null,
+): string {
+  if (daysSinceRelease !== null && daysSinceRelease <= 2) {
+    if (daysSinceRelease === 0) return 'D-DAY';
+    return `D+${daysSinceRelease}`;
+  }
+  if (daysUntil === 0) return 'D-DAY';
+  if (daysUntil > 0) return `D-${daysUntil}`;
+  return `D+${Math.abs(daysUntil)}`;
 }
 
 function formatValue(
@@ -146,13 +203,14 @@ export default function ReleaseTimeline() {
       .map((i) => ({
         ...i,
         daysUntil: getDaysUntil(i.nextReleaseDate),
-        releasedToday: isReleasedToday(i.releasedAt),
+        daysSinceRelease: getDaysSinceRelease(i.releasedAt),
+        releasedRecently: isReleasedRecently(i.releasedAt),
       }))
-      .filter((i) => i.daysUntil >= 0 || i.releasedToday)
+      .filter((i) => i.daysUntil >= 0 || i.releasedRecently)
       .sort((a, b) => {
         // 오늘 발표된 카드는 최상단에 띄우기.
-        if (a.releasedToday !== b.releasedToday) {
-          return a.releasedToday ? -1 : 1;
+        if (a.releasedRecently !== b.releasedRecently) {
+          return a.releasedRecently ? -1 : 1;
         }
         return a.daysUntil - b.daysUntil;
       });
@@ -194,29 +252,42 @@ function TimelineCard({ item }: { item: TimelineItem }) {
     value,
     nextReleaseDate,
     daysUntil,
-    releasedToday,
+    daysSinceRelease,
+    releasedRecently,
   } = item;
   const decimals = displayMeta.valueDecimals;
   const unit = displayMeta.unitSuffix;
+  // 강조 카드 라벨: 오늘 발표 → "오늘 발표", 어제/그저께 발표 → "최근 발표".
+  const releasedLabel = daysSinceRelease === 0 ? '오늘 발표' : '최근 발표';
 
   // 발표 당일에는 prev-prev → prev → 오늘 발표(value) 순으로 3개 표시.
   // value 변경 시 SQL이 shift시켰으므로:
   //   value          = 오늘 발표
   //   previousValue  = 그전 (어제까지 "현재"였던 값)
   //   prevPreviousValue = 전전 (어제까지 "이전"이었던 값)
-  const showThreeValues = releasedToday && prevPreviousValue !== null;
+  const showThreeValues = releasedRecently && prevPreviousValue !== null;
+
+  // 오늘 발표 카드에서 catalog 임계값으로 변화 강도 분류. 시나리오 줄 강조에 사용.
+  const { direction, magnitude } = releasedRecently
+    ? classifyChange(value, previousValue, displayMeta.signalThresholds)
+    : {
+        direction: 'flat' as ChangeDirection,
+        magnitude: 'minor' as ChangeMagnitude,
+      };
+  const isClearRise = direction === 'up' && magnitude === 'clear';
+  const isClearFall = direction === 'down' && magnitude === 'clear';
 
   return (
     <li className="relative mb-3 last:mb-0">
       <span
         aria-hidden
         className={`absolute -left-[18px] top-3 size-2 rounded-full ring-2 ring-background ${
-          releasedToday ? 'bg-emerald-400' : 'bg-foreground/40'
+          releasedRecently ? 'bg-emerald-400' : 'bg-foreground/40'
         }`}
       />
       <article
         className={`rounded-lg border bg-card/40 backdrop-blur-md px-4 py-3 transition-colors ${
-          releasedToday
+          releasedRecently
             ? 'border-emerald-500/30 hover:border-emerald-500/50'
             : 'border-border hover:border-foreground/20'
         }`}
@@ -231,14 +302,15 @@ function TimelineCard({ item }: { item: TimelineItem }) {
             <h3 className="text-sm font-semibold text-foreground truncate">
               {displayMeta.cardName}
             </h3>
-            {releasedToday && (
+            {releasedRecently && (
               <span className="text-[10px] font-medium tracking-wide px-1.5 py-0.5 rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shrink-0">
-                🆕 오늘 발표
+                🆕 {releasedLabel}
               </span>
             )}
           </div>
           <div className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
-            {formatDDay(daysUntil)} · {formatMonthDay(nextReleaseDate)}
+            {formatDDay(daysUntil, daysSinceRelease)} ·{' '}
+            {formatMonthDay(nextReleaseDate)}
           </div>
         </header>
 
@@ -257,7 +329,7 @@ function TimelineCard({ item }: { item: TimelineItem }) {
                   : '—'}
               </span>
               <span className="mx-1.5 text-muted-foreground/40">→</span>
-              <span className="text-emerald-400/90">오늘 발표</span>{' '}
+              <span className="text-emerald-400/90">{releasedLabel}</span>{' '}
               <span className="text-emerald-300 tabular-nums font-semibold">
                 {formatValue(value, decimals, unit)}
               </span>
@@ -273,16 +345,16 @@ function TimelineCard({ item }: { item: TimelineItem }) {
               <span className="mx-1.5 text-muted-foreground/40">→</span>
               <span
                 className={
-                  releasedToday
+                  releasedRecently
                     ? 'text-emerald-400/90'
                     : 'text-muted-foreground/70'
                 }
               >
-                {releasedToday ? '오늘 발표' : '현재'}
+                {releasedRecently ? releasedLabel : '현재'}
               </span>{' '}
               <span
                 className={`tabular-nums font-medium ${
-                  releasedToday ? 'text-emerald-300' : 'text-foreground'
+                  releasedRecently ? 'text-emerald-300' : 'text-foreground'
                 }`}
               >
                 {formatValue(value, decimals, unit)}
@@ -296,12 +368,20 @@ function TimelineCard({ item }: { item: TimelineItem }) {
           if (!scenario) return null;
           return (
             <div className="flex flex-col gap-1 text-[11px] leading-relaxed border-t border-border/40 pt-2 mt-1">
-              <p className="text-foreground/70">
+              <p
+                className={
+                  isClearRise ? 'text-foreground font-bold' : 'text-foreground/70'
+                }
+              >
                 <span className="text-red-400/80 font-medium">↑ 상승하면</span>{' '}
                 <span className="text-muted-foreground/40">—</span>{' '}
                 {scenario.riseMeaning}
               </p>
-              <p className="text-foreground/70">
+              <p
+                className={
+                  isClearFall ? 'text-foreground font-bold' : 'text-foreground/70'
+                }
+              >
                 <span className="text-blue-400/80 font-medium">↓ 하락하면</span>{' '}
                 <span className="text-muted-foreground/40">—</span>{' '}
                 {scenario.fallMeaning}

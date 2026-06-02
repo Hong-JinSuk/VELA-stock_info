@@ -5,6 +5,21 @@ export type IndicatorState = {
   resultLabel: string;
 };
 
+// 발표일 당일 release timeline UI에서 시그널 강도를 분류하는 임계값.
+// gemini-server catalog의 SignalThresholds와 동일 구조.
+export type SignalThresholdUnit =
+  | 'mom_pct'
+  | 'qoq_pct'
+  | 'abs_change'
+  | 'abs_pp'
+  | 'level_change';
+
+export type SignalThresholds = {
+  unit: SignalThresholdUnit;
+  notable: number;
+  clear: number;
+};
+
 export type IndicatorDisplayMeta = {
   cardName: string; // 카드 헤더에 표시되는 한국어 이름 (gemini-server에서 indicator.name 자동 주입)
   iconName: string;
@@ -18,6 +33,7 @@ export type IndicatorDisplayMeta = {
   trendGood?: number;
   trendBad?: number;
   invertTrend?: boolean;
+  signalThresholds?: SignalThresholds;
   states: {
     good?: IndicatorState;
     neutral: IndicatorState;
