@@ -19,7 +19,7 @@ export function useIndicatorBatchMutation() {
       // gemini-server가 FRED + Yahoo fetch + IndicatorSnapshot upsert까지 단일 책임으로 처리.
       const { data } = await api.post<IndicatorBatchResult>(
         `${GEMINI_SERVER}/indicator-batch`,
-        undefined,
+        { trigger: 'MANUAL' },
         { timeout: 120_000 },
       );
       return data;

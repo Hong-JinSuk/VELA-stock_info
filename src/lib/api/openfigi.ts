@@ -5,10 +5,14 @@
  * 무료 한도: 25 req/min, 100 ids/batch. 13F 하나 파싱하면 1~5번 batch 호출이라 여유 있음.
  *
  * 응답 name은 대문자(예: "APPLE INC")라 우리 쪽에서 title-case로 정규화한다.
- * 결과는 module-scope Map에 캐시 (서버 lifetime). filing 단위 unstable_cache가
- * 24h~30day로 detail/comparison 결과를 또 한 번 감싸므로, 실제 OpenFIGI 호출은
- * 새 filing이 cold-load될 때만 발생.
+ *
+ * 캐시 3단: L1 module Map(서버 lifetime) → L2 DB(CusipTicker, 영구) → OpenFIGI.
+ * CusipTicker는 gemini-server 요약 배치와 공유하는 테이블이라, 배치가 채워둔 매핑을
+ * detail 뷰가 그대로 재활용 → OpenFIGI 실호출은 어디에도 없던 신규 CUSIP일 때만.
+ * (filing 단위 unstable_cache가 detail/comparison 결과를 또 24h~30day 감쌈.)
  */
+
+import prisma from '@/lib/prisma';
 
 const OPENFIGI_URL = 'https://api.openfigi.com/v3/mapping';
 // 무인증: batch당 10개, 25 req/min. API key 발급하면 100개, 250 req/min로 확장 가능.
@@ -35,11 +39,15 @@ function toTitleCase(s: string): string {
   return s.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
 }
 
+// letter로 시작하면 CINS(외국 발행사, 예: 처브 H1467J104) → ID_CINS, 아니면 일반 US CUSIP.
+// ID_CUSIP로는 CINS가 "No identifier found"로 빠져 티커가 안 떠서 분기 처리.
+const idTypeFor = (id: string) => (/^[A-Za-z]/.test(id) ? 'ID_CINS' : 'ID_CUSIP');
+
 async function fetchBatch(
   cusips: string[],
 ): Promise<Map<string, CusipMapping> | null> {
   const body = cusips.map((cusip) => ({
-    idType: 'ID_CUSIP',
+    idType: idTypeFor(cusip),
     idValue: cusip,
     exchCode: 'US',
   }));
@@ -76,10 +84,41 @@ async function fetchBatch(
   }
 }
 
+// DB(CusipTicker) 영구 캐시 조회 → L1(module Map)에도 적재.
+async function loadFromDb(cusips: string[]): Promise<void> {
+  if (cusips.length === 0) return;
+  try {
+    const rows = await prisma.cusipTicker.findMany({
+      where: { cusip: { in: cusips } },
+      select: { cusip: true, ticker: true, name: true },
+    });
+    for (const r of rows) cusipCache.set(r.cusip, { ticker: r.ticker, name: r.name });
+  } catch (e) {
+    console.error('[OpenFIGI] DB cache read failed:', e);
+  }
+}
+
+// 신규 OpenFIGI 매핑을 DB에 박제 (null 포함 — "US 라인 없음" 재조회 방지). 이미 있으면 유지.
+async function saveToDb(entries: Array<[string, CusipMapping]>): Promise<void> {
+  if (entries.length === 0) return;
+  try {
+    await prisma.cusipTicker.createMany({
+      data: entries.map(([cusip, v]) => ({ cusip, ticker: v.ticker, name: v.name })),
+      skipDuplicates: true,
+    });
+  } catch (e) {
+    console.error('[OpenFIGI] DB cache write failed:', e);
+  }
+}
+
 export async function mapCusipsToInfo(
   cusips: string[],
 ): Promise<Map<string, CusipMapping>> {
   const unique = Array.from(new Set(cusips.filter((c) => c)));
+
+  // L1(module) 미스 → L2(DB) 조회 → 그래도 미스만 OpenFIGI.
+  const l1Missing = unique.filter((c) => !cusipCache.has(c));
+  await loadFromDb(l1Missing);
   const missing = unique.filter((c) => !cusipCache.has(c));
 
   for (let i = 0; i < missing.length; i += BATCH_SIZE) {
@@ -87,6 +126,7 @@ export async function mapCusipsToInfo(
     const partial = await fetchBatch(chunk);
     if (partial) {
       for (const [k, v] of partial) cusipCache.set(k, v);
+      await saveToDb(Array.from(partial)); // 신규 조회분만 DB 박제
     }
   }
 

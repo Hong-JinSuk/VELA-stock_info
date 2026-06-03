@@ -64,6 +64,42 @@ model IndicatorHistory {
   @@index([indicatorId, createdAt])
 }
 
+// 배치 잡 실행 로그. gemini-server의 Edge(cron + 프로덕션 수동) / Express(로컬 수동)가 raw SQL로 1행 기록.
+// job: "thirteenf-summary" | "fred-daily" | "overview-snapshot" | "update-13f-filers"
+// trigger: "CRON" | "MANUAL", status: "SUCCESS" | "ERROR"
+model BatchLog {
+  id         String   @id @default(uuid())
+  job        String
+  trigger    String
+  status     String
+  startedAt  DateTime
+  finishedAt DateTime
+  durationMs Int
+  result     Json? // 잡별 결과 (processed/failed/count 등)
+  message    String? // 에러 메시지 (status=ERROR)
+  createdAt  DateTime @default(now())
+
+  items BatchLogItem[]
+
+  @@index([job, createdAt(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
+}
+
+// 배치 항목별 상세 로그. env BATCH_LOG_DETAIL=true일 때만 적재 (예: 지표별/filer별 1행).
+model BatchLogItem {
+  id         String   @id @default(uuid())
+  batchLogId String
+  key        String // 항목 식별자 (indicatorId, filer cik 등)
+  label      String? // 사람이 읽을 라벨 (지표명, filer명 등)
+  status     String // "SUCCESS" | "ERROR"
+  data       Json? // 항목별 값/결과
+  createdAt  DateTime @default(now())
+
+  batchLog BatchLog @relation(fields: [batchLogId], references: [id], onDelete: Cascade)
+
+  @@index([batchLogId])
+}
+
 model AiLog {
   id     String @id @default(uuid())
   userId String

@@ -11,6 +11,7 @@ import {
 import { useIndicatorBatchMutation } from '@/lib/services/admin/use-indicator-batch-mutation';
 import { useOverviewSnapshotMutation } from '@/lib/services/admin/use-overview-snapshot-mutation';
 import { useThirteenFFilersBatchMutation } from '@/lib/services/admin/use-thirteenf-filers-batch-mutation';
+import { useThirteenFSummaryBatchMutation } from '@/lib/services/admin/use-thirteenf-summary-batch-mutation';
 import { IconLoader2, IconRefresh } from '@tabler/icons-react';
 import { useSession } from 'next-auth/react';
 
@@ -20,12 +21,14 @@ export function NavAdmin() {
   const overviewMutation = useOverviewSnapshotMutation();
   const indicatorMutation = useIndicatorBatchMutation();
   const thirteenFFilersMutation = useThirteenFFilersBatchMutation();
+  const thirteenFSummaryMutation = useThirteenFSummaryBatchMutation();
 
   if (session?.user?.role !== 'ADMIN') return null;
 
   const isOverviewPending = overviewMutation.isPending;
   const isIndicatorPending = indicatorMutation.isPending;
   const isThirteenFFilersPending = thirteenFFilersMutation.isPending;
+  const isThirteenFSummaryPending = thirteenFSummaryMutation.isPending;
 
   return (
     <SidebarGroup className="mt-auto">
@@ -82,6 +85,25 @@ export function NavAdmin() {
                 {isThirteenFFilersPending
                   ? '13F 명단 배치 실행 중...'
                   : '13F 명단 수동 배치'}
+              </span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="13F 펀드 요약(AUM/섹터/매매) 수동 배치 — 클릭당 5개 filer"
+              disabled={isThirteenFSummaryPending}
+              onClick={() => thirteenFSummaryMutation.mutate()}
+              className="w-full flex items-center py-4 px-3 rounded-xl transition-all text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent dark:text-white dark:hover:text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isThirteenFSummaryPending ? (
+                <IconLoader2 className="animate-spin" />
+              ) : (
+                <IconRefresh />
+              )}
+              <span>
+                {isThirteenFSummaryPending
+                  ? '13F 요약 배치 실행 중...'
+                  : '13F 요약 수동 배치'}
               </span>
             </SidebarMenuButton>
           </SidebarMenuItem>

@@ -4,11 +4,70 @@ import { useThirteenFComparison } from '@/lib/services/market/use-thirteenf-comp
 import type { ThirteenFChangeRow } from '@/types/thirteenf';
 import { useParams } from 'next/navigation';
 
+export default function Page() {
+  const { accession } = useParams<{ accession: string }>();
+  const { data, isLoading, isError, error } = useThirteenFComparison(accession);
+
+  if (isLoading) {
+    return (
+      <div className="p-6 text-sm text-muted-foreground">
+        13F 비교 데이터를 불러오는 중...
+      </div>
+    );
+  }
+  if (isError) {
+    return (
+      <div className="p-6 text-sm text-red-500">
+        로드 실패: {error instanceof Error ? error.message : '알 수 없는 오류'}
+      </div>
+    );
+  }
+  if (!data) {
+    return <div className="p-6 text-sm text-muted-foreground">데이터 없음</div>;
+  }
+
+  return (
+    <main className="flex flex-col flex-1 min-h-0 overflow-y-auto no-scrollbar p-6 gap-6">
+      <header>
+        <h1 className="font-serif text-xl tracking-tight">{data.filerName}</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          현재 분기 {data.current.periodEnding} (접수 {data.current.fileDate}) ·
+          {data.previous
+            ? ` 비교 분기 ${data.previous.periodEnding} (접수 ${data.previous.fileDate})`
+            : ' 이전 분기 13F 없음 — 모두 신규 매수로 표시됩니다.'}
+        </p>
+      </header>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <Section
+          title="🟢 Top Buy"
+          rows={data.buys}
+          mode="buy"
+          emptyText="이번 분기에 새로 매수하거나 비중을 늘린 종목이 없습니다."
+        />
+        <Section
+          title="🔴 Top Sell"
+          rows={data.sells}
+          mode="sell"
+          emptyText="이번 분기에 매도/축소한 종목이 없습니다."
+        />
+        <Section
+          title="🔵 Top Hold"
+          rows={data.holds}
+          mode="hold"
+          emptyText="보유 종목이 없습니다."
+        />
+      </div>
+    </main>
+  );
+}
+
 // 큰 숫자 표시. >= 1B → "1.23B$", >= 1M → "12.3M$", 그 외 콤마.
 function formatUsd(v: number): string {
   const abs = Math.abs(v);
   const sign = v < 0 ? '-' : '';
-  if (abs >= 1_000_000_000) return `${sign}$${(abs / 1_000_000_000).toFixed(2)}B`;
+  if (abs >= 1_000_000_000)
+    return `${sign}$${(abs / 1_000_000_000).toFixed(2)}B`;
   if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(2)}M`;
   return `${sign}$${abs.toLocaleString()}`;
 }
@@ -73,7 +132,8 @@ function ChangeRow({
               {formatUsd(row.deltaValueUsd)}
             </p>
             <p className="text-[11px] text-muted-foreground/70">
-              {formatUsd(row.previousValueUsd)} → {formatUsd(row.currentValueUsd)}
+              {formatUsd(row.previousValueUsd)} →{' '}
+              {formatUsd(row.currentValueUsd)}
             </p>
           </>
         )}
@@ -124,65 +184,5 @@ function Section({
         </>
       )}
     </section>
-  );
-}
-
-export default function Page() {
-  const { accession } = useParams<{ accession: string }>();
-  const { data, isLoading, isError, error } = useThirteenFComparison(accession);
-
-  if (isLoading) {
-    return (
-      <div className="p-6 text-sm text-muted-foreground">
-        13F 비교 데이터를 불러오는 중...
-      </div>
-    );
-  }
-  if (isError) {
-    return (
-      <div className="p-6 text-sm text-red-500">
-        로드 실패: {error instanceof Error ? error.message : '알 수 없는 오류'}
-      </div>
-    );
-  }
-  if (!data) {
-    return (
-      <div className="p-6 text-sm text-muted-foreground">데이터 없음</div>
-    );
-  }
-
-  return (
-    <main className="flex flex-col flex-1 min-h-0 overflow-y-auto no-scrollbar p-6 gap-6">
-      <header>
-        <h1 className="font-serif text-xl tracking-tight">{data.filerName}</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          현재 분기 {data.current.periodEnding} (접수 {data.current.fileDate}) ·
-          {data.previous
-            ? ` 비교 분기 ${data.previous.periodEnding} (접수 ${data.previous.fileDate})`
-            : ' 이전 분기 13F 없음 — 모두 신규 매수로 표시됩니다.'}
-        </p>
-      </header>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Section
-          title="🟢 Top Buy"
-          rows={data.buys}
-          mode="buy"
-          emptyText="이번 분기에 새로 매수하거나 비중을 늘린 종목이 없습니다."
-        />
-        <Section
-          title="🔴 Top Sell"
-          rows={data.sells}
-          mode="sell"
-          emptyText="이번 분기에 매도/축소한 종목이 없습니다."
-        />
-        <Section
-          title="🔵 Top Hold"
-          rows={data.holds}
-          mode="hold"
-          emptyText="보유 종목이 없습니다."
-        />
-      </div>
-    </main>
   );
 }

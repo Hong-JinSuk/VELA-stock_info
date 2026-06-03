@@ -24,14 +24,43 @@ type SubmissionsJson = {
   };
 };
 
+export async function GET(
+  _req: NextRequest,
+  ctx: { params: Promise<{ accession: string }> },
+) {
+  const { accession } = await ctx.params;
+  if (!/^\d{10}-\d{2}-\d{6}$/.test(accession)) {
+    return NextResponse.json({ message: 'invalid accession' }, { status: 400 });
+  }
+  try {
+    const result = await cachedLoadComparison(accession);
+    if (!result) {
+      console.warn(`[13F_COMPARISON] not found accession=${accession}`);
+      return NextResponse.json({ message: 'not found' }, { status: 404 });
+    }
+    console.log(
+      `[13F_COMPARISON] loaded accession=${accession} buys=${result.buys.length} sells=${result.sells.length} holds=${result.holds.length}`,
+    );
+    return NextResponse.json(result);
+  } catch (e) {
+    console.error(`[13F_COMPARISON] failed accession=${accession}:`, e);
+    const message = e instanceof Error ? e.message : 'SEC fetch failed';
+    return NextResponse.json({ message }, { status: 502 });
+  }
+}
+
 async function fetchSubmissions(cik: string): Promise<SubmissionsJson> {
   const url = `https://data.sec.gov/submissions/CIK${cik}.json`;
   return secFetchJson<SubmissionsJson>(url);
 }
 
-const cachedSubmissions = unstable_cache(fetchSubmissions, ['13f-submissions-v1'], {
-  revalidate: SUBMISSIONS_CACHE,
-});
+const cachedSubmissions = unstable_cache(
+  fetchSubmissions,
+  ['13f-submissions-v1'],
+  {
+    revalidate: SUBMISSIONS_CACHE,
+  },
+);
 
 // 같은 CIK의 13F-HR 중 currentAccession 직전 filing (file date 기준 바로 이전).
 async function findPreviousAccession(
@@ -54,10 +83,9 @@ async function findPreviousAccession(
 }
 
 // CUSIP 기준으로 join (같은 종목의 multi-row는 사전 합산).
-function aggregateByCusip(holdings: ThirteenFHolding[]): Map<
-  string,
-  { name: string; ticker: string | null; valueUsd: number }
-> {
+function aggregateByCusip(
+  holdings: ThirteenFHolding[],
+): Map<string, { name: string; ticker: string | null; valueUsd: number }> {
   const map = new Map<
     string,
     { name: string; ticker: string | null; valueUsd: number }
@@ -82,10 +110,17 @@ function aggregateByCusip(holdings: ThirteenFHolding[]): Map<
 function buildComparisonRows(
   current: ThirteenFDetail,
   previous: ThirteenFDetail | null,
-): { buys: ThirteenFChangeRow[]; sells: ThirteenFChangeRow[]; holds: ThirteenFChangeRow[] } {
+): {
+  buys: ThirteenFChangeRow[];
+  sells: ThirteenFChangeRow[];
+  holds: ThirteenFChangeRow[];
+} {
   const currMap = aggregateByCusip(current.holdings);
   const prevMap = previous ? aggregateByCusip(previous.holdings) : new Map();
-  const currTotal = Array.from(currMap.values()).reduce((s, v) => s + v.valueUsd, 0);
+  const currTotal = Array.from(currMap.values()).reduce(
+    (s, v) => s + v.valueUsd,
+    0,
+  );
 
   const allCusips = new Set([...currMap.keys(), ...prevMap.keys()]);
   const rows: ThirteenFChangeRow[] = Array.from(allCusips).map((cusip) => {
@@ -121,7 +156,9 @@ function buildComparisonRows(
   return { buys, sells, holds };
 }
 
-async function loadComparison(accession: string): Promise<ThirteenFComparison | null> {
+async function loadComparison(
+  accession: string,
+): Promise<ThirteenFComparison | null> {
   const current = await cachedLoadDetail(accession);
   if (!current) return null;
 
@@ -156,28 +193,3 @@ const cachedLoadComparison = unstable_cache(
   ['13f-comparison-v9'],
   { revalidate: COMPARISON_CACHE, tags: ['13f-comparison'] },
 );
-
-export async function GET(
-  _req: NextRequest,
-  ctx: { params: Promise<{ accession: string }> },
-) {
-  const { accession } = await ctx.params;
-  if (!/^\d{10}-\d{2}-\d{6}$/.test(accession)) {
-    return NextResponse.json({ message: 'invalid accession' }, { status: 400 });
-  }
-  try {
-    const result = await cachedLoadComparison(accession);
-    if (!result) {
-      console.warn(`[13F_COMPARISON] not found accession=${accession}`);
-      return NextResponse.json({ message: 'not found' }, { status: 404 });
-    }
-    console.log(
-      `[13F_COMPARISON] loaded accession=${accession} buys=${result.buys.length} sells=${result.sells.length} holds=${result.holds.length}`,
-    );
-    return NextResponse.json(result);
-  } catch (e) {
-    console.error(`[13F_COMPARISON] failed accession=${accession}:`, e);
-    const message = e instanceof Error ? e.message : 'SEC fetch failed';
-    return NextResponse.json({ message }, { status: 502 });
-  }
-}

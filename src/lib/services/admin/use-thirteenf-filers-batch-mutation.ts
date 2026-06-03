@@ -15,7 +15,7 @@ export function useThirteenFFilersBatchMutation() {
       // gemini-server가 SEC form.idx fetch + ThirteenFFiler TRUNCATE/INSERT까지 단일 책임으로 처리.
       const { data } = await api.post<ThirteenFFilersBatchResult>(
         `${GEMINI_SERVER}/thirteenf-filers-batch`,
-        undefined,
+        { trigger: 'MANUAL' },
         { timeout: 120_000 },
       );
       return data;

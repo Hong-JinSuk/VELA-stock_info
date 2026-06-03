@@ -11,8 +11,63 @@ model ThirteenFFiler {
   latestAccession String?  @db.VarChar(20) // "0001193125-26-217663". batch 직후엔 채워져 있어야 함
   updatedAt       DateTime @default(now())
 
+  summaries ThirteenFSummary[]
+
   @@index([name])
   @@index([krName])
   @@index([krNickname])
   @@index([lastFiledDate])
+}
+
+// 펀드 × 현재 분기 풀요약. filer당 1행(분기마다 upsert) → 13F 리스트 한 행을 그린다.
+// detail(개별 보유종목)은 저장하지 않고 이 요약만 박제. gemini-server 배치가 raw SQL로 write.
+model ThirteenFSummary {
+  id           String   @id @default(uuid()) @db.Uuid
+  cik          String   @db.VarChar(10)
+  accession    String   @db.VarChar(20)
+  periodEnding String   @db.VarChar(10) // 분기말 "YYYY-MM-DD"
+  fileDate     String   @db.VarChar(10) // REPORTED
+  aumUsd       BigInt // 표지 tableValueTotal (단위 보정 적용)
+  qoqPercent   Float? // 직전 분기 AUM 대비 %. 직전 없으면 null
+  holdingCount Int
+  topSectors   Json // [{ sector, weightPercent }]
+  topHoldings  Json // [{ ticker, name, weightPercent }]
+  topBuys      Json // [{ ticker, name, tradeUsd }] (주식수 델타 기준)
+  topSells     Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  filer ThirteenFFiler @relation(fields: [cik], references: [cik], onDelete: Cascade)
+
+  @@unique([cik, periodEnding])
+  @@index([fileDate(sort: Desc)])
+}
+
+// sparkline(TREND)용 얇은 AUM 시계열. 과거 분기는 표지(primary_doc.xml)만으로 백필.
+model ThirteenFAumPoint {
+  cik          String @db.VarChar(10)
+  periodEnding String @db.VarChar(10)
+  aumUsd       BigInt
+  holdingCount Int
+
+  @@id([cik, periodEnding])
+  @@index([cik, periodEnding(sort: Desc)])
+}
+
+// ticker → 섹터 캐시. Finnhub raw 라벨(finnhubIndustry)을 저장, GICS 버킷화는 코드(sector-bucket).
+// finnhubIndustry=null은 "조회했으나 섹터 없음"(ETF/지수 등) → 재조회 방지용으로도 행 유지.
+model TickerSector {
+  ticker          String   @id
+  finnhubIndustry String?
+  updatedAt       DateTime @updatedAt
+}
+
+// CUSIP/CINS → ticker·name 영구 캐시. OpenFIGI 매핑 결과를 박제해 배치마다 재호출 방지.
+// 거의 불변(상장폐지/티커변경 시에만 갱신). ticker=null은 "OpenFIGI에 US 라인 없음"(조회 완료)
+// → 재조회 방지용으로도 행 유지. gemini-server 배치가 raw SQL로 read/upsert.
+model CusipTicker {
+  cusip     String   @id @db.VarChar(9)
+  ticker    String?
+  name      String?
+  updatedAt DateTime @updatedAt
 }

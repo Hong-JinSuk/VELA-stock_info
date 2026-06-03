@@ -28,7 +28,8 @@
     ],
     "additionalDirectories": [
       "/Users/hjs/projects/gemini-server/src",
-      "/Users/hjs/projects/gemini-server/supabase"
+      "/Users/hjs/projects/gemini-server/supabase",
+      "/Users/hjs/projects/gemini-server"
     ]
   }
 }

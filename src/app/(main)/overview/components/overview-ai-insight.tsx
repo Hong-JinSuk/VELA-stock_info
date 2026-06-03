@@ -138,7 +138,7 @@ function SectorCard({ name, reason, leading, tone }: SectorCardProps) {
             ref={ref}
             className={cn(
               'text-sm text-muted-foreground leading-relaxed cursor-default text-left',
-              !isMobile && 'line-clamp-5 ',
+              !isMobile && 'line-clamp-10 ',
             )}
           >
             {reason}

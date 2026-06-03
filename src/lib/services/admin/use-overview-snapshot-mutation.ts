@@ -13,7 +13,7 @@ export function useOverviewSnapshotMutation() {
       // gemini-server가 인사이트 생성 + DailySnapshot upsert까지 단일 책임으로 처리.
       const { data } = await api.post(
         `${GEMINI_SERVER}/overview-snapshot`,
-        undefined,
+        { trigger: 'MANUAL' },
         { timeout: 120_000 },
       );
       return data;
