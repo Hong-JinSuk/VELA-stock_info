@@ -47,9 +47,9 @@ export default function Page() {
         </h2>
       </header>
 
-      <section className="flex-1 flex flex-col sm:flex-row  gap-6 min-h-0">
+      <section className="flex flex-col gap-6 sm:flex-1 sm:flex-row sm:min-h-0">
         <ReleaseTimeline />
-        <div className="max-w-[600px] size-full flex flex-col">
+        <div className="max-w-[600px] w-full sm:h-full flex flex-col">
           <OverviewAiInsight />
         </div>
       </section>

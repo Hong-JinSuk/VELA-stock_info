@@ -3,16 +3,10 @@
 import SkeletonCard from '@/components/common/skeleton-card';
 import SkeletonRow from '@/components/common/skeleton-row';
 import { Card } from '@/components/ui/card';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useTextClamp } from '@/hooks/use-text-clamp';
 import { useOverviewInsight } from '@/lib/services/stock/use-overview-insight';
 import { cn } from '@/lib/utils';
 import { Sparkles, TrendingDown, TrendingUp } from 'lucide-react';
+import { type CSSProperties } from 'react';
 
 interface SectorCardProps {
   name: string;
@@ -25,11 +19,16 @@ export default function OverviewAiInsight() {
   const { data, isLoading: loading, isError: error } = useOverviewInsight();
   const insight = data?.insight;
   const isToday = data?.isToday ?? true;
+  // subgrid 행 개수 = 두 컬럼 중 더 많은 섹터 수 (헤더 행은 별도). 같은 행 카드 높이 정렬용.
+  const rowCount = Math.max(
+    insight?.promisingSectors.length ?? 0,
+    insight?.poorSectors.length ?? 0,
+  );
 
   return (
-    <Card className="border border-border bg-card/40 backdrop-blur-md rounded-2xl p-6 relative overflow-hidden flex flex-col shadow-none ring-0">
+    <Card className="border border-border bg-card/40 backdrop-blur-md rounded-2xl p-6 relative overflow-hidden flex flex-col shadow-none ring-0 sm:h-full sm:min-h-0">
       <div className="absolute right-0 top-0 bottom-0 w-1/2 bg-gradient-to-l from-indigo-500/[0.03] to-transparent pointer-events-none" />
-      <div className="flex items-center justify-between mb-6 relative z-10">
+      <div className="flex items-center justify-between mb-6 relative z-10 shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 shadow-sm text-indigo-500">
             <Sparkles className="w-5 h-5" />
@@ -47,7 +46,8 @@ export default function OverviewAiInsight() {
         </div>
       </div>
 
-      <div className="relative z-10">
+      {/* 데스크톱: 카드(고정높이 박스) 안에서 본문만 스크롤. 모바일: 페이지가 스크롤하므로 그대로 */}
+      <div className="relative z-10 sm:flex-1 sm:min-h-0 sm:overflow-y-auto no-scrollbar sm:pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
         {loading && !insight ? (
           <div className="space-y-6">
             <SkeletonRow count={1} />
@@ -56,46 +56,50 @@ export default function OverviewAiInsight() {
         ) : error ? (
           <div className="py-8 text-center text-red-400 text-sm">{error}</div>
         ) : insight ? (
-          <div className="space-y-6">
+          <div className="@container space-y-6">
             <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4">
               <p className="text-foreground font-medium leading-relaxed">
                 "{insight.overview}"
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex flex-col gap-4 flex-1">
+            {/*
+              카드(컨테이너) 폭 기준: 500px 미만 1열(세로), 이상 2열.
+              데스크톱은 각 컬럼을 subgrid로 만들어 부모의 행 트랙을 공유 → 같은 행의
+              유망/부진 카드 높이가 더 큰 쪽 기준으로 정렬됨. (모바일은 그룹별 세로 스택)
+            */}
+            <div
+              className="grid grid-cols-1 gap-6 @[500px]:grid-cols-2 @[500px]:gap-x-6 @[500px]:gap-y-4 @[500px]:[grid-template-rows:auto_repeat(var(--rows),auto)]"
+              style={{ '--rows': rowCount } as CSSProperties}
+            >
+              <div className="flex flex-col gap-4 @[500px]:grid @[500px]:grid-rows-subgrid @[500px]:row-span-full">
                 <h4 className="flex items-center gap-2 text-emerald-500 font-semibold px-1 shrink-0">
                   <TrendingUp className="w-4 h-4" /> 유망 섹터
                 </h4>
-                <div className="flex flex-col gap-4 flex-1">
-                  {insight.promisingSectors.map((sector, idx) => (
-                    <SectorCard
-                      key={idx}
-                      name={sector.name}
-                      reason={sector.reason}
-                      leading={sector.leading}
-                      tone="emerald"
-                    />
-                  ))}
-                </div>
+                {insight.promisingSectors.map((sector, idx) => (
+                  <SectorCard
+                    key={idx}
+                    name={sector.name}
+                    reason={sector.reason}
+                    leading={sector.leading}
+                    tone="emerald"
+                  />
+                ))}
               </div>
 
-              <div className="flex flex-col gap-4 flex-1">
+              <div className="flex flex-col gap-4 @[500px]:grid @[500px]:grid-rows-subgrid @[500px]:row-span-full">
                 <h4 className="flex items-center gap-2 text-red-500 font-semibold px-1 shrink-0">
                   <TrendingDown className="w-4 h-4" /> 부진 섹터
                 </h4>
-                <div className="flex flex-col gap-4 flex-1">
-                  {insight.poorSectors.map((sector, idx) => (
-                    <SectorCard
-                      key={idx}
-                      name={sector.name}
-                      reason={sector.reason}
-                      leading={sector.leading}
-                      tone="red"
-                    />
-                  ))}
-                </div>
+                {insight.poorSectors.map((sector, idx) => (
+                  <SectorCard
+                    key={idx}
+                    name={sector.name}
+                    reason={sector.reason}
+                    leading={sector.leading}
+                    tone="red"
+                  />
+                ))}
               </div>
             </div>
           </div>
@@ -106,9 +110,6 @@ export default function OverviewAiInsight() {
 }
 
 function SectorCard({ name, reason, leading, tone }: SectorCardProps) {
-  const { ref, isClamped } = useTextClamp<HTMLParagraphElement>();
-  const isMobile = useIsMobile();
-
   const chipClass =
     tone === 'emerald'
       ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-400'
@@ -116,10 +117,10 @@ function SectorCard({ name, reason, leading, tone }: SectorCardProps) {
 
   return (
     <div className="bg-secondary/30 border border-border rounded-xl p-4 flex-1 flex flex-col">
-      <div className="flex items-center gap-2 mb-2">
-        <p className="font-semibold text-foreground shrink-0">{name}</p>
+      <div className="mb-2">
+        <p className="font-semibold text-foreground">{name}</p>
         {leading && leading.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 shrink-0">
+          <div className="flex flex-wrap gap-1.5 mt-1.5">
             <span
               className={cn(
                 'text-[11px] px-2 py-0.5 rounded-md border tabular-nums whitespace-nowrap',
@@ -131,25 +132,10 @@ function SectorCard({ name, reason, leading, tone }: SectorCardProps) {
           </div>
         )}
       </div>
-      <p>{}</p>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <p
-            ref={ref}
-            className={cn(
-              'text-sm text-muted-foreground leading-relaxed cursor-default text-left',
-              !isMobile && 'line-clamp-10 ',
-            )}
-          >
-            {reason}
-          </p>
-        </TooltipTrigger>
-        {isClamped && (
-          <TooltipContent className="max-w-xs">
-            <p>{reason}</p>
-          </TooltipContent>
-        )}
-      </Tooltip>
+      {/* 전체 텍스트 표시 — 넘치면 카드 본문(상위 컨테이너)이 스크롤 */}
+      <p className="text-sm text-muted-foreground leading-relaxed text-left">
+        {reason}
+      </p>
     </div>
   );
 }
