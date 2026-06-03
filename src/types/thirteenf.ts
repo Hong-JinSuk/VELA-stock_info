@@ -75,8 +75,12 @@ export type ThirteenFComparison = {
   } | null;
   filerName: string;
   cik: string;
-  // 클라이언트에서 자유롭게 slice/페이지네이션 가능하도록 전체 정렬된 배열 반환.
-  buys: ThirteenFChangeRow[]; // delta > 0 인 모든 종목, delta value desc
-  sells: ThirteenFChangeRow[]; // delta < 0 인 모든 종목, delta value asc (가장 negative 먼저)
-  holds: ThirteenFChangeRow[]; // 현재 보유 중인 모든 종목, currentValueUsd desc
+  // 대형 filer(예: JP모건 7천여 종목) payload 방지를 위해 각 배열은 상위 N개로 cap.
+  // 진짜 전체 개수는 *Count 필드로 별도 제공 (화면의 "N건" 표시용).
+  buys: ThirteenFChangeRow[]; // delta > 0, delta value desc (상위 N개)
+  sells: ThirteenFChangeRow[]; // delta < 0, delta value asc (상위 N개)
+  holds: ThirteenFChangeRow[]; // 현재 보유, currentValueUsd desc (상위 N개)
+  buysCount: number; // delta > 0 종목 전체 수
+  sellsCount: number; // delta < 0 종목 전체 수
+  holdsCount: number; // 현재 보유 종목 전체 수
 };

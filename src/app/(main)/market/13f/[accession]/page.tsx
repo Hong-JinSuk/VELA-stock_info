@@ -42,18 +42,21 @@ export default function Page() {
         <Section
           title="🟢 Top Buy"
           rows={data.buys}
+          count={data.buysCount}
           mode="buy"
           emptyText="이번 분기에 새로 매수하거나 비중을 늘린 종목이 없습니다."
         />
         <Section
           title="🔴 Top Sell"
           rows={data.sells}
+          count={data.sellsCount}
           mode="sell"
           emptyText="이번 분기에 매도/축소한 종목이 없습니다."
         />
         <Section
           title="🔵 Top Hold"
           rows={data.holds}
+          count={data.holdsCount}
           mode="hold"
           emptyText="보유 종목이 없습니다."
         />
@@ -147,16 +150,18 @@ const PREVIEW_LIMIT = 5;
 function Section({
   title,
   rows,
+  count,
   mode,
   emptyText,
 }: {
   title: string;
   rows: ThirteenFChangeRow[];
+  count: number; // 전체 개수 (rows는 상위 N개로 cap되어 있어 별도로 받음)
   mode: 'buy' | 'sell' | 'hold';
   emptyText: string;
 }) {
   const preview = rows.slice(0, PREVIEW_LIMIT);
-  const remaining = Math.max(0, rows.length - PREVIEW_LIMIT);
+  const remaining = Math.max(0, count - PREVIEW_LIMIT);
   return (
     <section className="border border-border rounded-xl p-5 bg-card/40 backdrop-blur-md">
       <div className="flex items-baseline justify-between mb-3">
@@ -164,7 +169,7 @@ function Section({
           {title}
         </h2>
         <span className="text-[11px] text-muted-foreground/70 tabular-nums">
-          {rows.length}건
+          {count}건
         </span>
       </div>
       {preview.length === 0 ? (

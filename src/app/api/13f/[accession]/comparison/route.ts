@@ -13,6 +13,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 const SUBMISSIONS_CACHE = 60 * 60 * 6;
 // 비교 결과는 두 filing 모두 immutable이라 길게 (24시간).
 const COMPARISON_CACHE = 60 * 60 * 24;
+// 각 buys/sells/holds 배열 전송 상한. 화면은 top-5 미리보기 + 개수만 쓰므로 넉넉히 50.
+const COMPARISON_ROW_CAP = 50;
 
 type SubmissionsJson = {
   filings: {
@@ -182,14 +184,18 @@ async function loadComparison(
       : null,
     filerName: current.filerName,
     cik: current.cik,
-    buys,
-    sells,
-    holds,
+    // 전체 개수는 보존하고 배열은 상위 N개만 전송 (대형 filer payload 방지).
+    buysCount: buys.length,
+    sellsCount: sells.length,
+    holdsCount: holds.length,
+    buys: buys.slice(0, COMPARISON_ROW_CAP),
+    sells: sells.slice(0, COMPARISON_ROW_CAP),
+    holds: holds.slice(0, COMPARISON_ROW_CAP),
   };
 }
 
 const cachedLoadComparison = unstable_cache(
   loadComparison,
-  ['13f-comparison-v9'],
+  ['13f-comparison-v10'],
   { revalidate: COMPARISON_CACHE, tags: ['13f-comparison'] },
 );
