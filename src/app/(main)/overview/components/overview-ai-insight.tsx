@@ -3,6 +3,17 @@
 import SkeletonCard from '@/components/common/skeleton-card';
 import SkeletonRow from '@/components/common/skeleton-row';
 import { Card } from '@/components/ui/card';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useOverviewInsight } from '@/lib/services/stock/use-overview-insight';
 import { cn } from '@/lib/utils';
 import { Sparkles, TrendingDown, TrendingUp } from 'lucide-react';
@@ -15,8 +26,12 @@ interface SectorCardProps {
   tone: 'emerald' | 'red';
 }
 
+const descriptionInsight =
+  'Today Insight는 최근 2주 데이터 기반으로 제공하고 있습니다.';
+
 export default function OverviewAiInsight() {
   const { data, isLoading: loading, isError: error } = useOverviewInsight();
+  const isMobile = useIsMobile();
   const insight = data?.insight;
   const isToday = data?.isToday ?? true;
   // subgrid 행 개수 = 두 컬럼 중 더 많은 섹터 수 (헤더 행은 별도). 같은 행 카드 높이 정렬용.
@@ -44,6 +59,29 @@ export default function OverviewAiInsight() {
             </p>
           </div>
         </div>
+        {isMobile ? (
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full border border-muted-foreground/40 text-muted-foreground text-[9px] font-bold cursor-default shrink-0">
+                ?
+              </button>
+            </PopoverTrigger>
+            <PopoverContent side="bottom" className="w-auto p-2 px-3 text-sm">
+              <p>{descriptionInsight}</p>
+            </PopoverContent>
+          </Popover>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full border border-muted-foreground/40 text-muted-foreground text-[9px] font-bold cursor-default shrink-0">
+                ?
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              <p>{descriptionInsight}</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
 
       {/* 데스크톱: 카드(고정높이 박스) 안에서 본문만 스크롤. 모바일: 페이지가 스크롤하므로 그대로 */}

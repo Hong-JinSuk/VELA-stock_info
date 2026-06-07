@@ -43,3 +43,5 @@ next-env.d.ts
 /src/generated/prisma
 /check_models.js
 .claude
+# VSCode 로컬 설정 (머신별 경로 포함)
+.vscode/
