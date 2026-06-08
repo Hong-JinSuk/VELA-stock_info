@@ -98,10 +98,13 @@ npx prisma generate           # Prisma 클라이언트 재생성 (스키마 변�
 - 레이아웃을 건드려야 할 경우 먼저 확인 후 진행할 것.
 - 컴포넌트를 만들 때는 모바일 환경도 고려할 것.
 
-## Mobile Considerations
+## Mobile Considerations — ⚠️ CRITICAL
 
+- **UI(컴포넌트/페이지)를 추가하거나 수정하면 모바일 폭(< 640px) 검증은 필수.** 데스크톱만 확인하고 끝내지 말 것.
+  - 새 컴포넌트는 처음부터 `grid-cols-1`/`flex-col` 기본 + `sm:`·`lg:`로 확장하는 mobile-first로 작성.
+  - 좁은 폭에서 깨지기 쉬운 곳을 항상 점검: 가로 배치(`justify-between`) 카드, 버튼 토글 그룹, 제목+칩 한 줄, 긴 라벨 → 필요하면 `flex-wrap`·`break-keep`·세로 스택(`flex-col sm:flex-row`)으로 처리.
+  - 작업 완료 보고 시 "모바일 폭에서 확인함"을 명시할 것.
 - 터치 환경에서는 hover가 동작하지 않으므로 **Tooltip 대신 Popover** 사용.
-- 반응형 검증 시 모바일 폭(< 640px)에서도 동작 확인.
 
 ## Static Fallback Policy — ⚠️ CRITICAL
 

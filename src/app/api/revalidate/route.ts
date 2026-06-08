@@ -9,6 +9,11 @@ const ALLOWED_TAGS = new Set([
   'overview-insight',
   '13f-detail',
   '13f-comparison',
+  'stock-detail',
+  'stock-insider',
+  'stock-news',
+  'stock-candle',
+  'stock-search',
 ]);
 
 export async function POST(req: NextRequest) {

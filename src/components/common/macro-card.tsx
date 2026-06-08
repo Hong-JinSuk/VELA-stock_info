@@ -121,15 +121,15 @@ export function MacroCard({ indicator }: MacroCardProps) {
             <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center border border-border shadow-sm shrink-0">
               <Icon className="w-4 h-4 text-foreground/70" />
             </div>
-            <p className="text-sm font-semibold text-foreground tracking-wide truncate">
+            <p className="text-sm font-semibold text-foreground tracking-wide break-keep line-clamp-2 min-w-0">
               {name}
             </p>
           </div>
-          {nextRelease && (
+          {nextRelease && nextRelease.daysUntil >= 0 && (
             <div className="text-[10px] text-muted-foreground/70 tracking-wide whitespace-nowrap">
               다음 발표 {nextRelease.mmdd}
               <span className="ml-1 text-muted-foreground/50">
-                (D-{nextRelease.daysUntil})
+                ({formatDday(nextRelease.daysUntil)})
               </span>
             </div>
           )}
@@ -278,15 +278,15 @@ export function MacroCard({ indicator }: MacroCardProps) {
         </div>
 
         <div className="relative z-10 mt-auto">
-          <div className="inline-flex items-center gap-1.5 text-[11px] font-medium tracking-wide bg-secondary/50 border border-border/40 px-2.5 py-1.5 rounded-lg max-w-full">
+          <div className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px] font-medium tracking-wide bg-secondary/50 border border-border/40 px-2.5 py-1.5 rounded-lg max-w-full">
             <span className="shrink-0">{currentState.icon}</span>
-            <span className="font-semibold text-foreground/90 whitespace-nowrap">
+            <span className="font-semibold text-foreground/90 break-keep">
               {currentState.label}
             </span>
             <ArrowRight className="w-3 h-3 text-muted-foreground/40 mx-0.5 shrink-0" />
             <span className="shrink-0">{currentState.resultIcon}</span>
             <span
-              className={`font-semibold whitespace-nowrap ${
+              className={`font-semibold break-keep ${
                 status === 'Bad' ? 'text-red-400' : 'text-foreground/90'
               }`}
             >
@@ -450,6 +450,11 @@ function formatNextRelease(
   );
   const mmdd = `${target.getMonth() + 1}/${target.getDate()}`;
   return { mmdd, daysUntil: diff };
+}
+
+// D-day 라벨: 당일은 D-DAY, 미래는 D-N. (과거 = 음수는 호출 측에서 줄 자체를 미표시)
+function formatDday(daysUntil: number): string {
+  return daysUntil === 0 ? 'D-DAY' : `D-${daysUntil}`;
 }
 
 function pickState(

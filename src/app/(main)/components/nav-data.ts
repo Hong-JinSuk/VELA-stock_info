@@ -16,6 +16,7 @@ export const navMain: NavItemProps[] = [
     items: [
       { title: '섹터·경제 지표', url: '/indicators', disabled: false },
       { title: '13F', url: '/13f', disabled: false },
+      { title: '주식데이터', url: '/stocks', disabled: false },
     ],
   },
   {
