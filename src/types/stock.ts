@@ -29,6 +29,7 @@ export type StockProfile = {
   currency: string;
   marketCap: number | null; // 시가총액 (백만 단위, Finnhub 원본)
   country: string;
+  isFund?: boolean; // ETF/펀드 — Finnhub 회사 프로필이 없어 StockSymbol로 fallback한 경우 true
 };
 
 // 카드 "주요 지표" 영역. 값이 없으면 null → UI에서 "–" 표시.

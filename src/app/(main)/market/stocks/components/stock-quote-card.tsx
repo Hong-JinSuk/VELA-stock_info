@@ -21,7 +21,7 @@ export default function StockQuoteCard({
   profile: StockProfile;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card/40 p-5 lg:p-6">
+    <div className="rounded-2xl border border-border bg-card/40 p-5 lg:p-6 h-full">
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
         <Activity className="w-4 h-4" />
         현재가 정보

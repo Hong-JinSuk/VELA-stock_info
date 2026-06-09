@@ -5,15 +5,18 @@ import VelaText from '@/components/common/vela-text';
 import { Separator } from '@/components/ui/separator';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { LoginForm } from '../components/login-form';
 
 export default function LoginPage() {
   const router = useRouter();
   const { data: session } = useSession();
 
-  if (session) {
-    router.push('/overview');
-  }
+  useEffect(() => {
+    if (session) {
+      router.push('/overview');
+    }
+  }, [session, router]);
 
   return (
     <div className="flex flex-col overflow-hidden max-h-svh">

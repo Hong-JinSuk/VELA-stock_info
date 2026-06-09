@@ -4,6 +4,28 @@ import { fmtNum, shortExchange } from '@/lib/stock/format';
 import type { StockProfile, StockQuote } from '@/types/stock';
 import { ExternalLink, TrendingDown, TrendingUp } from 'lucide-react';
 
+// 로고가 없을 때(ETF·로고없는 주식) 대체할 티커 이니셜 모노그램.
+// 심볼 해시로 색을 결정적으로 골라 같은 종목은 항상 같은 색.
+const MONOGRAM_COLORS = [
+  'bg-blue-500/15 text-blue-300',
+  'bg-emerald-500/15 text-emerald-300',
+  'bg-violet-500/15 text-violet-300',
+  'bg-amber-500/15 text-amber-300',
+  'bg-rose-500/15 text-rose-300',
+  'bg-cyan-500/15 text-cyan-300',
+];
+
+function monogram(ticker: string): { text: string; cls: string } {
+  let h = 0;
+  for (let i = 0; i < ticker.length; i++) {
+    h = (h * 31 + ticker.charCodeAt(i)) >>> 0;
+  }
+  return {
+    text: ticker.replace(/[.\-]/g, '').slice(0, 4),
+    cls: MONOGRAM_COLORS[h % MONOGRAM_COLORS.length],
+  };
+}
+
 export default function StockHeaderCard({
   profile,
   quote,
@@ -15,6 +37,7 @@ export default function StockHeaderCard({
   const color = down ? 'text-rose-500' : 'text-emerald-500';
   const Arrow = down ? TrendingDown : TrendingUp;
   const exchangeShort = shortExchange(profile.exchange);
+  const mono = monogram(profile.ticker);
 
   return (
     <div className="rounded-2xl border border-border bg-card/40 p-5 lg:p-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -28,7 +51,13 @@ export default function StockHeaderCard({
             className="w-14 h-14 rounded-2xl object-contain bg-white/5 border border-border p-1 shrink-0"
           />
         ) : (
-          <div className="w-14 h-14 rounded-2xl bg-secondary border border-border shrink-0" />
+          <div
+            className={`w-14 h-14 rounded-2xl border border-border shrink-0 flex items-center justify-center font-bold tracking-tight ${
+              mono.text.length >= 4 ? 'text-xs' : 'text-sm'
+            } ${mono.cls}`}
+          >
+            {mono.text}
+          </div>
         )}
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">

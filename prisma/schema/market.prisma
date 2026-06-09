@@ -71,3 +71,18 @@ model CusipTicker {
   name      String?
   updatedAt DateTime @updatedAt
 }
+
+// 미국 전체 상장 심볼 디렉터리. gemini-server cron이 Finnhub /stock/symbol?exchange=US에서
+// 받아 주 1회 갱신(1콜에 미국 전체). 종목 검색 자동완성 전용 — 검색이 이 테이블만 조회해
+// Finnhub /search 콜을 안 먹는다(미스 시에만 fallback). equity류(Common Stock/ETP/ADR/REIT)만 적재, ~27k rows.
+model StockSymbol {
+  symbol        String   @id // "AAPL", "BRK.B"
+  displaySymbol String?
+  description   String // 영문 회사명 (Finnhub 원본, 대문자)
+  type          String // "Common Stock" | "ETP" | "ADR" | "REIT"
+  currency      String?
+  mic           String? // 거래소 MIC (예: "XNAS", "XNYS")
+  updatedAt     DateTime @default(now())
+
+  @@index([description])
+}

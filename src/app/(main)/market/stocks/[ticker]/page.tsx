@@ -3,6 +3,7 @@
 import { useStockDetail } from '@/lib/services/stock/use-stock-detail';
 import { useStockInsider } from '@/lib/services/stock/use-stock-insider';
 import { useStockNews } from '@/lib/services/stock/use-stock-news';
+import { Info } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import AnalystRecommendationCard from '../components/analyst-recommendation-card';
 import InsiderDetailCard from '../components/insider-detail-card';
@@ -44,6 +45,25 @@ export default function StockDetailPage() {
   }
 
   const { profile, quote, metrics, recommendation } = detail.data;
+
+  // ETF/펀드는 회사 지표·애널리스트·내부자 거래가 없음 → 시세·차트·뉴스만 표시.
+  if (profile.isFund) {
+    return (
+      <div className="flex flex-col gap-6">
+        <StockHeaderCard profile={profile} quote={quote} />
+        <StockPriceChart ticker={symbol} />
+        <StockQuoteCard quote={quote} profile={profile} />
+        <div className="rounded-2xl border border-border bg-card/40 p-4 flex items-start gap-2.5 text-sm text-muted-foreground">
+          <Info className="w-4 h-4 mt-0.5 shrink-0" />
+          <p className="break-keep">
+            ETF·펀드는 회사 주요 지표, 애널리스트 의견, 내부자 거래 정보가 제공되지
+            않습니다.
+          </p>
+        </div>
+        <StockNewsList news={news.data ?? []} loading={news.isLoading} />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
