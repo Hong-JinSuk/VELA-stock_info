@@ -43,7 +43,8 @@ export default function StocksShell({ children }: { children: ReactNode }) {
             </h1>
             {!condensed && (
               <p className="text-sm text-muted-foreground mt-1.5">
-                실시간 주식 정보와 재무 상태를 확인하세요. (Powered by Finnhub)
+                실시간 주식 정보와 재무 상태를 확인하세요. (현재는 미국주식
+                데이터만 제공하고 있습니다.)
               </p>
             )}
           </div>

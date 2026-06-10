@@ -45,14 +45,14 @@ export default function StockDetailPage() {
     );
   }
 
-  const { profile, quote, metrics, recommendation } = detail.data;
+  const { profile, quote, metrics, recommendation, priceTarget } = detail.data;
 
   // ETF/펀드는 회사 지표·애널리스트·내부자 거래가 없음 → 시세·차트·뉴스만 표시.
   if (profile.isFund) {
     return (
       <div className="flex flex-col gap-6">
         <StockHeaderCard profile={profile} quote={quote} />
-        <StockPriceChart ticker={symbol} />
+        <StockPriceChart ticker={symbol} priceTarget={priceTarget} />
         <StockQuoteCard quote={quote} profile={profile} />
         <EtfHoldingsCard ticker={symbol} />
         <div className="rounded-2xl border border-border bg-card/40 p-4 flex items-start gap-2.5 text-sm text-muted-foreground">
@@ -70,7 +70,7 @@ export default function StockDetailPage() {
   return (
     <div className="flex flex-col gap-6">
       <StockHeaderCard profile={profile} quote={quote} />
-      <StockPriceChart ticker={symbol} />
+      <StockPriceChart ticker={symbol} priceTarget={priceTarget} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">

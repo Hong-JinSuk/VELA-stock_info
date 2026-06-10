@@ -86,6 +86,7 @@ export default function InsiderTrendCard({
                   tickFormatter={abbrev}
                 />
                 <Tooltip
+                  cursor={{ fill: 'rgba(255,255,255,0.06)' }}
                   contentStyle={{
                     background: '#0a0a0a',
                     border: '1px solid #27272a',

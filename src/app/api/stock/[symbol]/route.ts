@@ -7,6 +7,7 @@ import {
   getQuote,
   getRecommendation,
 } from '@/lib/api/finnhub';
+import { getPriceTarget } from '@/lib/api/yahoo';
 import { prisma } from '@/lib/prisma';
 import type { StockDetail, StockProfile } from '@/types/stock';
 import { unstable_cache } from 'next/cache';
@@ -76,12 +77,14 @@ async function withUsListingMeta(
 // 시세가 섞여 있어 60초 캐시 (intraday 변동 반영하되 rate-limit 보호).
 const cachedDetail = unstable_cache(
   async (symbol: string): Promise<StockDetail | null> => {
-    const [profile, quote, metrics, recommendation] = await Promise.all([
-      getProfile(symbol),
-      getQuote(symbol),
-      getMetrics(symbol),
-      getRecommendation(symbol),
-    ]);
+    const [profile, quote, metrics, recommendation, priceTarget] =
+      await Promise.all([
+        getProfile(symbol),
+        getQuote(symbol),
+        getMetrics(symbol),
+        getRecommendation(symbol),
+        getPriceTarget(symbol), // best-effort: 실패/미제공 시 null
+      ]);
     // 회사 프로필이 있으면 미국 상장 메타로 교정해 반환. 없지만 유효한 시세가 있으면(ETF 등) fallback.
     if (profile) {
       return {
@@ -89,11 +92,13 @@ const cachedDetail = unstable_cache(
         quote,
         metrics,
         recommendation,
+        priceTarget,
       };
     }
     if (quote.current > 0) {
       const fund = await fundProfileFallback(symbol);
-      if (fund) return { profile: fund, quote, metrics, recommendation };
+      if (fund)
+        return { profile: fund, quote, metrics, recommendation, priceTarget };
     }
     return null;
   },

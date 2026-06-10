@@ -61,11 +61,21 @@ export type AnalystRecommendation = {
   total: number;
 };
 
+// 애널리스트 목표주가 컨센서스 (Yahoo financialData). 차트의 목표가 팬에 사용.
+export type PriceTarget = {
+  mean: number; // 평균 목표가
+  high: number; // 최고
+  low: number; // 최저
+  current: number; // 현재가 (Yahoo, USD)
+  count: number; // 목표가 제시 애널리스트 수
+};
+
 export type StockDetail = {
   profile: StockProfile;
   quote: StockQuote;
   metrics: StockMetrics;
   recommendation: AnalystRecommendation | null;
+  priceTarget: PriceTarget | null;
 };
 
 // 6개월 일봉 차트용.
