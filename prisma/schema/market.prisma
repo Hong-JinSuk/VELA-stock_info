@@ -84,5 +84,44 @@ model StockSymbol {
   mic           String? // 거래소 MIC (예: "XNAS", "XNYS")
   updatedAt     DateTime @default(now())
 
+  etf StockSymbolEtf? // type='ETP'면 ETF 보유종목 상세(1:1). 아니면 null.
+
   @@index([description])
+}
+
+// ETF 보유종목 상세. StockSymbol(type='ETP')과 symbol로 1:1 관계 → 이름/타입/거래소는
+// StockSymbol에서 join으로 가져오고(중복 저장 X), 여기엔 ETF 고유 정보만 둔다.
+// gemini-server 배치가 Yahoo topHoldings에서 ETF별 top-10을 받아 저장.
+// 점진 배치: cron tick마다 lastSyncedAt이 가장 오래된 N개만 순차 갱신 → Edge 타임아웃 회피.
+// vela ETF 상세가 이 테이블만 조회(Yahoo live 호출 X).
+model StockSymbolEtf {
+  symbol       String   @id // = StockSymbol.symbol
+  stockPct     Float? // 자산배분: 주식 비중 (0~1)
+  bondPct      Float? // 채권 비중
+  cashPct      Float? // 현금 비중
+  // 직전 스냅샷 대비 top-10 변동. entered=신규 편입 심볼, exited=편출 심볼.
+  entered      String[] @default([])
+  exited       String[] @default([])
+  lastSyncedAt DateTime @default(now()) // 점진 배치 선택 기준(오래된 것부터)
+  updatedAt    DateTime @updatedAt
+
+  stock    StockSymbol             @relation(fields: [symbol], references: [symbol], onDelete: Cascade)
+  holdings StockSymbolEtfHolding[]
+}
+
+// ETF top-10 개별 보유종목(현재 스냅샷). 갱신 시 해당 ETF 행을 전부 교체.
+model StockSymbolEtfHolding {
+  id        String  @id @default(uuid()) @db.Uuid
+  etfSymbol String
+  rank      Int // 1~10 (비중 내림차순)
+  prevRank  Int? // 직전 스냅샷에서의 순위. 순위변동(▲▼) 계산용. null = 신규 진입 또는 최초 적재
+  symbol    String? // 구성종목 티커. StockSymbol에 있으면 soft join 가능(현금/선물 등은 null)
+  name      String // 구성종목명 (Yahoo 원본 — 비미국/현금은 StockSymbol에 없을 수 있어 직접 저장)
+  weight    Float // 비중 (0~1)
+
+  etf StockSymbolEtf @relation(fields: [etfSymbol], references: [symbol], onDelete: Cascade)
+
+  @@unique([etfSymbol, rank])
+  @@index([etfSymbol])
+  @@index([symbol])
 }

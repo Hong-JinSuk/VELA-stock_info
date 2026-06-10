@@ -6,10 +6,11 @@ import { useStockNews } from '@/lib/services/stock/use-stock-news';
 import { Info } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import AnalystRecommendationCard from '../components/analyst-recommendation-card';
+import EtfHoldingsCard from '../components/etf-holdings-card';
 import InsiderDetailCard from '../components/insider-detail-card';
 import InsiderTrendCard from '../components/insider-trend-card';
-import StockHeaderCard from '../components/stock-header-card';
 import StockDetailSkeleton from '../components/stock-detail-skeleton';
+import StockHeaderCard from '../components/stock-header-card';
 import StockMetricsCard from '../components/stock-metrics-card';
 import StockNewsList from '../components/stock-news-list';
 import StockPriceChart from '../components/stock-price-chart';
@@ -53,11 +54,12 @@ export default function StockDetailPage() {
         <StockHeaderCard profile={profile} quote={quote} />
         <StockPriceChart ticker={symbol} />
         <StockQuoteCard quote={quote} profile={profile} />
+        <EtfHoldingsCard ticker={symbol} />
         <div className="rounded-2xl border border-border bg-card/40 p-4 flex items-start gap-2.5 text-sm text-muted-foreground">
           <Info className="w-4 h-4 mt-0.5 shrink-0" />
           <p className="break-keep">
-            ETF·펀드는 회사 주요 지표, 애널리스트 의견, 내부자 거래 정보가 제공되지
-            않습니다.
+            ETF·펀드는 회사 주요 지표, 애널리스트 의견, 내부자 거래 정보가
+            제공되지 않습니다.
           </p>
         </div>
         <StockNewsList news={news.data ?? []} loading={news.isLoading} />

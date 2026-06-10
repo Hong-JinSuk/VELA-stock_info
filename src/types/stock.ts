@@ -99,6 +99,26 @@ export type InsiderAnalysis = {
   totalDisposed: number;
 };
 
+// ---- ETF 보유종목 (StockSymbolEtf / Yahoo topHoldings 기반) ----
+
+export type EtfHoldingEntry = {
+  rank: number;
+  prevRank: number | null; // 직전 순위. null = 신규 진입 또는 최초 적재
+  symbol: string | null;
+  name: string; // 표시명 (한국어명 우선, 없으면 Yahoo 원본)
+  weight: number; // 비중 0~1
+};
+
+export type EtfHoldingsData = {
+  stockPct: number | null;
+  bondPct: number | null;
+  cashPct: number | null;
+  entered: string[]; // 직전 대비 top-10 편입 심볼
+  exited: string[]; // 편출 심볼
+  holdings: EtfHoldingEntry[];
+  updatedAt: string; // ISO
+};
+
 export type StockNewsItem = {
   source: string;
   headline: string;

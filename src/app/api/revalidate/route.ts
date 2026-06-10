@@ -14,6 +14,7 @@ const ALLOWED_TAGS = new Set([
   'stock-news',
   'stock-candle',
   'stock-search',
+  'etf-holdings',
 ]);
 
 export async function POST(req: NextRequest) {

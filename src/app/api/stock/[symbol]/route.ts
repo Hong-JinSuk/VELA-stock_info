@@ -19,6 +19,7 @@ const MIC_LABELS: Record<string, string> = {
   ARCX: 'NYSE Arca',
   BATS: 'Cboe BZX',
   XASE: 'NYSE American',
+  OOTC: 'OTC', // 장외(미국 OTC ADR 등)
 };
 
 // ETF/펀드 등 Finnhub 회사 프로필(profile2)이 비는 종목은 우리 StockSymbol로 fallback.
@@ -47,6 +48,30 @@ async function fundProfileFallback(
   };
 }
 
+// 외국기업 ADR(TSM·BABA 등)은 Finnhub profile2가 본토 거래소·통화(TAIWAN/TWD)로 주지만,
+// 실제 시세(quote)는 미국 ADR(USD) 가격이다 → "USD 가격에 TWD 라벨" 불일치가 생긴다.
+// 우리 StockSymbol DB에 있는 심볼이면 미국 상장 메타(거래소·통화)로 교정한다.
+// (DB에 없는 심볼 = 해외 직접조회 등은 Finnhub 원본 유지.)
+async function withUsListingMeta(
+  symbol: string,
+  profile: StockProfile,
+): Promise<StockProfile> {
+  const rows = await prisma.$queryRaw<
+    Array<{ currency: string | null; mic: string | null }>
+  >(Prisma.sql`
+    SELECT currency, mic FROM "StockSymbol" WHERE symbol = ${symbol} LIMIT 1
+  `);
+  const row = rows[0];
+  if (!row) return profile;
+  return {
+    ...profile,
+    // ticker도 본토 심볼(7203.T 등)로 오는 경우가 있어 검색한 미국 심볼로 교정.
+    ticker: symbol,
+    exchange: (row.mic && MIC_LABELS[row.mic]) || row.mic || profile.exchange,
+    currency: row.currency ?? profile.currency,
+  };
+}
+
 // 종목 기본정보: 프로필 + 시세 + 주요지표 + 애널리스트 의견.
 // 시세가 섞여 있어 60초 캐시 (intraday 변동 반영하되 rate-limit 보호).
 const cachedDetail = unstable_cache(
@@ -57,8 +82,15 @@ const cachedDetail = unstable_cache(
       getMetrics(symbol),
       getRecommendation(symbol),
     ]);
-    // 회사 프로필이 있으면 그대로. 없지만 유효한 시세가 있으면(ETF 등) StockSymbol로 fallback.
-    if (profile) return { profile, quote, metrics, recommendation };
+    // 회사 프로필이 있으면 미국 상장 메타로 교정해 반환. 없지만 유효한 시세가 있으면(ETF 등) fallback.
+    if (profile) {
+      return {
+        profile: await withUsListingMeta(symbol, profile),
+        quote,
+        metrics,
+        recommendation,
+      };
+    }
     if (quote.current > 0) {
       const fund = await fundProfileFallback(symbol);
       if (fund) return { profile: fund, quote, metrics, recommendation };

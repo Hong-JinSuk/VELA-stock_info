@@ -18,20 +18,13 @@ type Suggestion = StockSearchItem & { kr?: string };
 
 const HANGUL_RE = /[가-힣]/;
 
-// 미국 상장 보통주를 위로 올린다. Finnhub /search는 해외 거래소 심볼을
-// 섞어 주는데(.V/.NE/.L/.SZ 등 접미사), 미국 상장은 보통 접미사 점이 없다.
-// 점수 낮을수록 상위: 보통주 여부(우선) + 접미사 점 없음(차선).
-function rankScore(it: StockSearchItem): number {
-  const common = it.type === 'Common Stock' ? 0 : 2;
-  const usListed = it.symbol.includes('.') ? 1 : 0;
-  return common + usListed;
-}
-
-// 한글 입력이면 정적 한국어명 맵으로 매칭(Finnhub 미호출), 아니면 Finnhub 결과를 랭킹.
-// 어느 쪽이든 한국어명(kr)을 붙여 표시한다.
+// 한글 입력이면 정적 한국어명 맵으로 매칭(API 미호출), 아니면 서버(/stock/search) 결과를
+// 그대로 사용한다. 서버가 이미 매치품질(exact > prefix > contains)·인기·타입으로 랭킹하므로
+// 클라에서 재정렬하지 않는다 — 재정렬하면 exact 심볼 매치인 ADR(TSM 등)이 보통주에 밀려
+// 맨 아래로 내려가는 문제가 있었다. 어느 쪽이든 한국어명(kr)을 붙여 표시한다.
 function buildSuggestions(
   query: string,
-  finnhubItems: StockSearchItem[],
+  serverItems: StockSearchItem[],
 ): Suggestion[] {
   if (HANGUL_RE.test(query.trim())) {
     return searchKrTickers(query)
@@ -44,11 +37,9 @@ function buildSuggestions(
         kr: TICKER_KR[ticker],
       }));
   }
-  return [...finnhubItems]
-    .map((it, i) => ({ it, i }))
-    .sort((a, b) => rankScore(a.it) - rankScore(b.it) || a.i - b.i)
+  return serverItems
     .slice(0, SUGGEST_LIMIT)
-    .map(({ it }) => ({ ...it, kr: krNameOf(it.symbol) }));
+    .map((it) => ({ ...it, kr: krNameOf(it.symbol) }));
 }
 
 // stocks 레이아웃에 상주하는 검색바. 입력 티커로 /market/stocks/{TICKER} 이동.
