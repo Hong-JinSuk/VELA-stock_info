@@ -11,10 +11,14 @@ function StatCard({
   label,
   value,
   tone,
+  row = false,
 }: {
   label: string;
   value: number;
   tone: Tone;
+  // row=true: 모바일에서 라벨 왼쪽·숫자 오른쪽 가로 행 (좁은 칸에서 큰 숫자 넘침 방지),
+  // sm 이상에서는 가운데 정렬 카드. row=false: 항상 가운데 정렬.
+  row?: boolean;
 }) {
   const cls =
     tone === 'buy'
@@ -22,10 +26,19 @@ function StatCard({
       : tone === 'sell'
         ? 'border-rose-500/20 bg-rose-500/5 text-rose-400'
         : 'border-border bg-secondary/30 text-foreground/70';
+  const layout = row
+    ? 'flex items-center justify-between gap-3 text-left sm:block sm:text-center'
+    : 'text-center';
   return (
-    <div className={`rounded-xl border p-3 text-center ${cls}`}>
+    <div className={`rounded-xl border p-3 ${layout} ${cls}`}>
       <p className="text-[11px] text-muted-foreground break-keep">{label}</p>
-      <p className="text-base font-bold tabular-nums mt-1">{fmtShares(value)}</p>
+      <p
+        className={`text-base font-bold tabular-nums ${
+          row ? 'shrink-0 sm:mt-1' : 'mt-1'
+        }`}
+      >
+        {fmtShares(value)}
+      </p>
     </div>
   );
 }
@@ -79,13 +92,14 @@ function InsiderBody({ analysis }: { analysis: InsiderAnalysis }) {
       <p className="text-[11px] text-muted-foreground/60 mb-3">
         보상·옵션 수령, 세금 충당, 증여 등 — 일정·기계적 거래라 매매 신호로 보지 않음.
       </p>
-      <div className="grid grid-cols-3 gap-2">
-        <StatCard label="보상/옵션 수령" value={b.awardGrant} tone="neutral" />
-        <StatCard label="세금/옵션비용" value={b.taxOption} tone="neutral" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <StatCard label="보상/옵션 수령" value={b.awardGrant} tone="neutral" row />
+        <StatCard label="세금/옵션비용" value={b.taxOption} tone="neutral" row />
         <StatCard
           label="증여/기타"
           value={b.otherAcquisition + b.otherDisposition}
           tone="neutral"
+          row
         />
       </div>
     </>
@@ -118,10 +132,10 @@ export default function InsiderDetailCard({
             <Skeleton className="h-14" />
             <Skeleton className="h-14" />
           </div>
-          <div className="grid grid-cols-3 gap-2">
-            <Skeleton className="h-14" />
-            <Skeleton className="h-14" />
-            <Skeleton className="h-14" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <Skeleton className="h-12 sm:h-14" />
+            <Skeleton className="h-12 sm:h-14" />
+            <Skeleton className="h-12 sm:h-14" />
           </div>
         </div>
       ) : !analysis || !analysis.hasData ? (

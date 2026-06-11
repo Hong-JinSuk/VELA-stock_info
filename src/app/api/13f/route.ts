@@ -1,93 +1,97 @@
-import { PRIORITY_FILLINGS } from '@/constants/13f-priority';
+import { paginatedResponse } from '@/lib/api/pagination';
 import prisma from '@/lib/prisma';
 import type {
   ThirteenFListItem,
   ThirteenFListResponse,
+  ThirteenFTopHolding,
+  ThirteenFTopSector,
+  ThirteenFTopTrade,
 } from '@/types/thirteenf';
 import { Prisma } from '@/generated/prisma/client';
 import { type NextRequest, NextResponse } from 'next/server';
 
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
+// sparkline에 넘길 AUM 시계열 최대 길이 (오래된 분기는 잘라 payload 절약).
+const TREND_MAX_POINTS = 12;
 
-type FilerRow = {
-  cik: string;
-  name: string;
-  lastFiledDate: string;
-  latestAccession: string | null;
-};
-
-function toListItem(f: FilerRow): ThirteenFListItem {
-  return {
-    accession: f.latestAccession ?? '',
-    cik: f.cik,
-    filerName: f.name,
-    fileDate: f.lastFiledDate,
-  };
-}
-
+// 하이브리드 리스트:
+//  - tier1(리치): 최신 분기 ThirteenFSummary 보유 filer → AUM desc. AUM/Q/Q/holdings/top들/trend 채움.
+//  - tier2(나머지): summary 없는 filer(예: 국민연금·JPM 등 대형/미집계) → lastFiledDate desc, 리치 셀은 null.
+// tier1을 먼저, 그다음 tier2를 이어붙여 페이지네이션 → 풍성함 + 전체 커버리지 둘 다.
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
-  const entityName = (sp.get('q') ?? '').trim();
+  const entityName = (sp.get('searchKey') ?? '').trim();
   const page = Math.max(1, Number.parseInt(sp.get('page') ?? '1', 10));
-  const pageSize = Math.min(
+  const size = Math.min(
     MAX_PAGE_SIZE,
     Math.max(1, Number.parseInt(sp.get('size') ?? `${DEFAULT_PAGE_SIZE}`, 10)),
   );
 
   try {
-    if (entityName) {
-      // 검색 모드: 이름 부분일치, lastFiledDate desc.
-      const where: Prisma.ThirteenFFilerWhereInput = {
-        name: { contains: entityName, mode: 'insensitive' },
-        latestAccession: { not: null },
-      };
-      const [total, rows] = await Promise.all([
-        prisma.thirteenFFiler.count({ where }),
-        prisma.thirteenFFiler.findMany({
-          where,
-          orderBy: [{ lastFiledDate: 'desc' }, { name: 'asc' }],
-          skip: (page - 1) * pageSize,
-          take: pageSize,
-          select: {
-            cik: true,
-            name: true,
-            lastFiledDate: true,
-            latestAccession: true,
-          },
-        }),
-      ]);
+    const latest = await prisma.thirteenFSummary.findFirst({
+      orderBy: { periodEnding: 'desc' },
+      select: { periodEnding: true },
+    });
+    const period = latest?.periodEnding ?? '';
 
-      const response: ThirteenFListResponse = {
-        items: rows.map(toListItem),
-        total,
-        page,
-        pageSize,
-      };
-      console.log(
-        `[13F_LIST] q="${entityName}" page=${page} returned=${rows.length} total=${total}`,
-      );
-      return NextResponse.json(response);
-    }
-
-    // 기본 모드: priority filer 먼저, 그다음 lastFiledDate desc로 페이지네이션.
-    const priorityCiks = PRIORITY_FILLINGS.map((p) => p.cik);
-    const priorityOrder = new Map(
-      PRIORITY_FILLINGS.map((p, idx) => [p.cik, { order: p.order, idx }]),
-    );
-
-    const baseWhere: Prisma.ThirteenFFilerWhereInput = {
+    // tier1: 최신 분기 summary 보유
+    const richWhere: Prisma.ThirteenFSummaryWhereInput = {
+      periodEnding: period,
+      ...(entityName
+        ? { filer: { name: { contains: entityName, mode: 'insensitive' } } }
+        : {}),
+    };
+    // tier2: 최신 분기 summary 없는 filer
+    const restWhere: Prisma.ThirteenFFilerWhereInput = {
       latestAccession: { not: null },
-    };
-    const nonPriorityWhere: Prisma.ThirteenFFilerWhereInput = {
-      ...baseWhere,
-      cik: { notIn: priorityCiks },
+      summaries: { none: { periodEnding: period } },
+      ...(entityName
+        ? { name: { contains: entityName, mode: 'insensitive' } }
+        : {}),
     };
 
-    const priorityRows =
-      page === 1
-        ? await prisma.thirteenFFiler.findMany({
-            where: { ...baseWhere, cik: { in: priorityCiks } },
+    const [richTotal, restTotal] = await Promise.all([
+      period ? prisma.thirteenFSummary.count({ where: richWhere }) : 0,
+      prisma.thirteenFFiler.count({ where: restWhere }),
+    ]);
+    const total = richTotal + restTotal;
+
+    // 이 페이지가 두 tier에서 각각 몇 개씩 가져올지 계산 (tier1 먼저).
+    const offset = (page - 1) * size;
+    const richTake = Math.max(0, Math.min(size, richTotal - offset));
+    const richSkip = Math.min(offset, richTotal);
+    const restTake = size - richTake;
+    const restSkip = Math.max(0, offset - richTotal);
+
+    const [richRows, restRows] = await Promise.all([
+      richTake > 0
+        ? prisma.thirteenFSummary.findMany({
+            where: richWhere,
+            orderBy: { aumUsd: 'desc' },
+            skip: richSkip,
+            take: richTake,
+            select: {
+              cik: true,
+              accession: true,
+              fileDate: true,
+              aumUsd: true,
+              qoqPercent: true,
+              holdingCount: true,
+              topSectors: true,
+              topHoldings: true,
+              topBuys: true,
+              topSells: true,
+              filer: { select: { name: true } },
+            },
+          })
+        : [],
+      restTake > 0
+        ? prisma.thirteenFFiler.findMany({
+            where: restWhere,
+            orderBy: [{ lastFiledDate: 'desc' }, { name: 'asc' }],
+            skip: restSkip,
+            take: restTake,
             select: {
               cik: true,
               name: true,
@@ -95,51 +99,59 @@ export async function GET(req: NextRequest) {
               latestAccession: true,
             },
           })
-        : [];
-
-    // priority 정렬: PRIORITY_FILLINGS의 order, 같으면 배열 순.
-    const orderedPriority = priorityRows.slice().sort((a, b) => {
-      const oa = priorityOrder.get(a.cik) ?? { order: 999, idx: 999 };
-      const ob = priorityOrder.get(b.cik) ?? { order: 999, idx: 999 };
-      if (oa.order !== ob.order) return oa.order - ob.order;
-      return oa.idx - ob.idx;
-    });
-
-    // page=1에서는 priority 만큼 일반 결과를 덜 가져옴.
-    const priorityCount = orderedPriority.length;
-    const remainingSlots = Math.max(0, pageSize - priorityCount);
-    const skip =
-      page === 1 ? 0 : (page - 1) * pageSize - priorityCount;
-
-    const [nonPriorityTotal, nonPriorityRows] = await Promise.all([
-      prisma.thirteenFFiler.count({ where: nonPriorityWhere }),
-      prisma.thirteenFFiler.findMany({
-        where: nonPriorityWhere,
-        orderBy: [{ lastFiledDate: 'desc' }, { name: 'asc' }],
-        skip,
-        take: page === 1 ? remainingSlots : pageSize,
-        select: {
-          cik: true,
-          name: true,
-          lastFiledDate: true,
-          latestAccession: true,
-        },
-      }),
+        : [],
     ]);
 
-    const items: ThirteenFListItem[] = [
-      ...orderedPriority.map(toListItem),
-      ...nonPriorityRows.map(toListItem),
-    ];
+    // tier1 행들의 AUM 시계열(TREND).
+    const richCiks = richRows.map((r) => r.cik);
+    const aumPoints =
+      richCiks.length > 0
+        ? await prisma.thirteenFAumPoint.findMany({
+            where: { cik: { in: richCiks } },
+            orderBy: { periodEnding: 'asc' },
+            select: { cik: true, aumUsd: true },
+          })
+        : [];
+    const trendByCik = new Map<string, number[]>();
+    for (const p of aumPoints) {
+      const arr = trendByCik.get(p.cik) ?? [];
+      arr.push(Number(p.aumUsd));
+      trendByCik.set(p.cik, arr);
+    }
 
-    const response: ThirteenFListResponse = {
-      items,
-      total: nonPriorityTotal + priorityCount,
-      page,
-      pageSize,
-    };
+    const richItems: ThirteenFListItem[] = richRows.map((r) => ({
+      accession: r.accession,
+      cik: r.cik,
+      filerName: r.filer?.name ?? '',
+      fileDate: r.fileDate,
+      periodEnding: period,
+      summary: {
+        aumUsd: Number(r.aumUsd),
+        qoqPercent: r.qoqPercent,
+        holdingCount: r.holdingCount,
+        topSectors: (r.topSectors as unknown as ThirteenFTopSector[]) ?? [],
+        topHoldings: (r.topHoldings as unknown as ThirteenFTopHolding[]) ?? [],
+        topBuys: (r.topBuys as unknown as ThirteenFTopTrade[]) ?? [],
+        topSells: (r.topSells as unknown as ThirteenFTopTrade[]) ?? [],
+        trend: (trendByCik.get(r.cik) ?? []).slice(-TREND_MAX_POINTS),
+      },
+    }));
+
+    const restItems: ThirteenFListItem[] = restRows.map((f) => ({
+      accession: f.latestAccession ?? '',
+      cik: f.cik,
+      filerName: f.name,
+      fileDate: f.lastFiledDate,
+      summary: null,
+    }));
+
+    const response: ThirteenFListResponse = paginatedResponse(
+      [...richItems, ...restItems],
+      total,
+      { page, size },
+    );
     console.log(
-      `[13F_LIST] page=${page} returned=${items.length} total=${response.total}`,
+      `[13F_LIST] q="${entityName}" period=${period} page=${page} rich=${richItems.length} rest=${restItems.length} total=${total}`,
     );
     return NextResponse.json(response);
   } catch (e) {

@@ -2,6 +2,34 @@
  * 13F filing 관련 타입 (WhaleWisdom 스타일 벤치마킹).
  */
 
+import type { PaginatedResponse } from '@/lib/api/pagination';
+
+// 리스트 행의 리치 요약 컬럼 (ThirteenFSummary Json 컬럼들의 항목 타입).
+export type ThirteenFTopSector = { sector: string; weightPercent: number };
+export type ThirteenFTopHolding = {
+  ticker: string | null;
+  name: string;
+  weightPercent: number;
+};
+export type ThirteenFTopTrade = {
+  ticker: string | null;
+  name: string;
+  tradeUsd: number; // 매수 +, 매도 -
+};
+
+// ThirteenFSummary(분기 박제) + AUM 시계열을 합친 리스트 행 요약.
+// summary 배치가 채운 filer만 존재 → 없으면 ThirteenFListItem.summary = null.
+export type ThirteenFListSummary = {
+  aumUsd: number; // 표지 총가치 (BigInt → number, 안전 범위)
+  qoqPercent: number | null; // 직전 분기 AUM 대비 %. 없으면 null
+  holdingCount: number;
+  topSectors: ThirteenFTopSector[];
+  topHoldings: ThirteenFTopHolding[];
+  topBuys: ThirteenFTopTrade[];
+  topSells: ThirteenFTopTrade[];
+  trend: number[]; // 분기별 aumUsd (오름차순). sparkline용
+};
+
 // 리스트 페이지의 한 줄 = 한 13F filer (최신 filing의 accession만 노출).
 // form.idx 기반 batch라 formType/periodEnding/bizLocation은 알 수 없어 옵셔널.
 export type ThirteenFListItem = {
@@ -12,15 +40,13 @@ export type ThirteenFListItem = {
   formType?: string;
   periodEnding?: string;
   bizLocation?: string | null;
+  // ThirteenFSummary LEFT JOIN 결과. summary 없는 filer는 null.
+  summary?: ThirteenFListSummary | null;
 };
 
-// 페이지네이션된 검색 결과.
-export type ThirteenFListResponse = {
-  items: ThirteenFListItem[];
-  total: number; // 검색 결과 총 건수 (SEC가 10000으로 capped)
-  page: number; // 1-based
-  pageSize: number;
-};
+// 페이지네이션된 검색 결과 (표준 PaginatedResponse 형태).
+// total은 검색 결과 총 건수. page/size가 -1이면 페이지네이션 안 한 응답.
+export type ThirteenFListResponse = PaginatedResponse<ThirteenFListItem>;
 
 // 한 보유 종목 (infoTable의 한 row).
 export type ThirteenFHolding = {

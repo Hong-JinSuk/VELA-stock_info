@@ -1,25 +1,35 @@
 'use client';
 
+import DataTable from '@/components/common/data-table/data-table';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   type ThirteenFFiler,
   useThirteenFFilers,
 } from '@/lib/services/market/use-thirteenf-filers';
 import { useThirteenFList } from '@/lib/services/market/use-thirteenf-list';
+import {
+  type PaginationState,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import { Search, X } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { thirteenFColumns } from './columns';
 
 const PAGE_SIZE = 20;
 const SUGGEST_DEBOUNCE_MS = 200;
 
 export default function Page() {
+  const router = useRouter();
   const [input, setInput] = useState('');
   const [debouncedInput, setDebouncedInput] = useState('');
   const [q, setQ] = useState('');
-  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: PAGE_SIZE,
+  });
   const [showSuggest, setShowSuggest] = useState(false);
   const [highlight, setHighlight] = useState(-1);
 
@@ -49,7 +59,7 @@ export default function Page() {
 
   function runSearch(value: string) {
     setQ(value.trim());
-    setPage(1);
+    setPagination((p) => ({ ...p, pageIndex: 0 }));
     setShowSuggest(false);
     setHighlight(-1);
     inputRef.current?.blur();
@@ -77,16 +87,27 @@ export default function Page() {
     }
   }
 
-  const { data, isLoading, isError, error, isFetching } = useThirteenFList({
-    q,
-    page,
-    size: PAGE_SIZE,
+  const { data, isLoading, isError, error } = useThirteenFList({
+    searchKey: q,
+    page: pagination.pageIndex + 1,
+    size: pagination.pageSize,
   });
 
   const total = data?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const hasPrev = page > 1;
-  const hasNext = page < totalPages;
+  const totalPages = Math.max(1, Math.ceil(total / pagination.pageSize));
+
+  const table = useReactTable({
+    data: data?.items ?? [],
+    columns: thirteenFColumns,
+    getCoreRowModel: getCoreRowModel(),
+    manualPagination: true,
+    pageCount: data ? totalPages : -1,
+    state: { pagination },
+    onPaginationChange: setPagination,
+    meta: {
+      onRowClick: (row) => router.push(`/market/13f/${row.original.accession}`),
+    },
+  });
 
   return (
     <main className="flex flex-col flex-1 min-h-0 overflow-hidden p-6">
@@ -133,7 +154,7 @@ export default function Page() {
             onClick={() => {
               setInput('');
               setQ('');
-              setPage(1);
+              setPagination((p) => ({ ...p, pageIndex: 0 }));
               setShowSuggest(false);
             }}
             aria-label="검색어 지우기"
@@ -188,91 +209,26 @@ export default function Page() {
         )}
       </form>
 
-      {isLoading ? (
-        <ul className="space-y-2">
-          {Array.from({ length: 7 }).map((_, i) => (
-            <li
-              key={`l-${i}`}
-              className="border border-border rounded-lg bg-card/40 backdrop-blur-md px-4 py-3"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1 space-y-2">
-                  <Skeleton className="h-4 w-1/3" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-                <Skeleton className="h-3 w-32 shrink-0" />
-              </div>
-            </li>
-          ))}
-        </ul>
-      ) : isError ? (
+      {isError ? (
         <div className="p-6 text-sm text-red-500">
           13F 로드 실패:{' '}
           {error instanceof Error ? error.message : '알 수 없는 오류'}
         </div>
-      ) : !data || data.items.length === 0 ? (
-        <div className="p-6 text-sm text-muted-foreground">
-          {q
-            ? `"${q}"에 해당하는 filing이 없습니다.`
-            : '조회된 13F filing이 없습니다.'}
-        </div>
       ) : (
-        <ScrollArea className="flex-1 min-h-0">
-          <ul
-            className={`space-y-2 ${isFetching ? 'opacity-60 transition-opacity overflow-hidden' : ''}`}
-          >
-            {data.items.map((it) => (
-              <li
-                key={it.accession}
-                className="border border-border rounded-lg bg-card/40 backdrop-blur-md hover:border-foreground/20 transition-colors"
-              >
-                <Link
-                  href={`/market/13f/${it.accession}`}
-                  className="block px-4 py-3"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">
-                        {it.filerName}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        마지막 접수 {it.fileDate}
-                        {it.bizLocation && ` · ${it.bizLocation}`}
-                      </p>
-                    </div>
-                    <code className="text-[10px] text-muted-foreground/70 shrink-0">
-                      {it.accession}
-                    </code>
-                  </div>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </ScrollArea>
-      )}
-
-      {data && data.items.length > 0 && (
-        <div className="flex items-center justify-between mt-4 text-sm">
-          <button
-            type="button"
-            disabled={!hasPrev}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="px-3 py-1.5 rounded-md border border-border bg-card/40 hover:border-foreground/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            이전
-          </button>
-          <span className="text-xs text-muted-foreground">
-            {page} / {totalPages}
-          </span>
-          <button
-            type="button"
-            disabled={!hasNext}
-            onClick={() => setPage((p) => p + 1)}
-            className="px-3 py-1.5 rounded-md border border-border bg-card/40 hover:border-foreground/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            다음
-          </button>
-        </div>
+        <DataTable
+          table={table}
+          rowKey="cik"
+          isLoading={isLoading}
+          rowHeight={88}
+          scrollX
+          showPagination={!!data}
+          pageSizeOptions={[20, 50, 100]}
+          emptyMessage={
+            q
+              ? `"${q}"에 해당하는 filing이 없습니다.`
+              : '조회된 13F filing이 없습니다.'
+          }
+        />
       )}
     </main>
   );

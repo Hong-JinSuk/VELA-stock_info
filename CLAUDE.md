@@ -58,6 +58,28 @@ npx prisma generate           # Prisma 클라이언트 재생성 (스키마 변�
   - 긴 응답이 예상되는 호출(Gemini 등)은 `{ timeout: 60000 }` 등으로 timeout을 명시할 것 (기본 10s).
   - 응답 에러는 `error-interceptors`가 `throw new Error(message)` 형태로 정규화하므로, 호출 측은 `error instanceof Error ? error.message : ...` 패턴으로 받을 수 있음.
 
+## API Response 표준 — ⚠️ CRITICAL
+
+표준 정의는 `src/lib/api/pagination.ts`. **페이지네이션하는 목록 GET 응답은 `PaginatedResponse<T>` 형태**를 따른다.
+
+- 형태: `{ items: T[], total: number, page: number, size: number }`.
+  - `total`: 조건에 맞는 전체 건수 (현재 페이지가 아니라 총합).
+  - **같은 엔드포인트가 전체를 한 번에 반환할 때(전체 모드)는 `page: -1, size: -1`** (`NO_PAGINATION`). 즉 page/size가 -1이면 "자르지 않고 다 준 것".
+- **예외**: 자동완성·차트 시계열·고정 세트처럼 작게 capped 되어 **통째로 주는 bounded 목록**은 굳이 envelope를 씌우지 않고 bare array(예: `T[]`)로 둔다. envelope는 "자를 게 있는(페이징 의미가 있는)" 목록에만 쓴다.
+- 서버(route.ts):
+  - `readPagination(sp)`로 page/size를 읽는다. **page/size가 둘 다 없으면 `null`(= 페이지네이션 안 함 = 전체)**.
+  - 응답은 `paginatedResponse(items, total, pagination)` 빌더로 만든다. pagination이 `null`이면 page/size가 자동으로 -1이 된다.
+- 클라 훅의 응답 타입도 `PaginatedResponse<T>`로 받는다.
+- **쿼리 파라미터 이름은 의미가 드러나게.** 검색어를 무지성 `q`로 두지 말 것 → `searchKey`, `title`, `cik` 등 도메인에 맞는 이름 사용.
+- **신규 GET 훅을 만들 땐 페이징 필요 여부를 사용자에게 먼저 물어볼 것.** 묻지 않고 임의로 page/size를 붙이지 말 것.
+
+POST / PATCH / PUT / DELETE:
+
+- 목록이 아니므로 **페이지네이션 메타(total/page/size)를 붙이지 않는다.**
+- 영향받은 리소스 자체(또는 `{ id }`)를 반환. 필요하면 `src/lib/api/response.ts`의 `createResponse(message, status, result)` envelope 사용.
+- 요청 body는 **zod 스키마(`src/schemas/`)로 검증**하고, 클라는 `useMutation`으로 호출.
+- 단일 리소스 GET(예: stock detail)은 목록이 아니므로 envelope 없이 리소스를 그대로 반환한다 (`PaginatedResponse` 강제 X).
+
 ## AI / Gemini API Workflow — ⚠️ CRITICAL
 
 **Gemini 및 AI 관련 신규 엔드포인트는 반드시 `gemini-server` 프로젝트를 참조해서 작성할 것.** (추가 working directory에 등록되어 있음.)
@@ -145,6 +167,7 @@ src/
 - `fetch`로 API를 호출하는 것 → 반드시 `src/lib/api/axios.ts`의 `api` 인스턴스를 사용. "API Calls" 섹션 참고.
 - AI 관련 로직을 vela web 안에서 직접 작성하는 것 → Gemini 호출/프롬프트는 `gemini-server`에만 두고 vela web은 호출만. "AI / Gemini API Workflow" 섹션 참고.
 - 외부 API/서비스로 풀 수 있는 매핑·데이터를 손으로 hardcoded static map으로 만드는 것 → 휴먼 에러와 커버리지 한계 발생. "Static Fallback Policy" 섹션 참고.
+- GET 목록 응답을 `PaginatedResponse<T>`(items/total/page/size, 비페이징은 page/size: -1) 형태로 안 맞추는 것, 검색어를 무지성 `q`로 두는 것 → "API Response 표준" 섹션 참고.
 
 ## Compaction Instructions
 
