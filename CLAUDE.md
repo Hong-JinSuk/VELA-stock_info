@@ -186,7 +186,7 @@ POST / PATCH / PUT / DELETE:
 
 ## Claude 작업 권한
 
-- **read-only 조회는 사전 허락 없이 실행해도 된다**: DB SELECT(진단/검증 목적), curl 등 읽기성 HTTP 요청 포함.
+- **읽기 전용(변경 없는) 작업은 종류 불문 사전 허락 없이 실행해도 된다**: 파일 읽기/grep/탐색, DB SELECT(진단/검증 목적), curl 등 읽기성 HTTP 요청 전부 포함. 물어보지 말 것.
 - 상태를 바꾸는 작업(DB 쓰기·삭제, 스키마 변경 등)은 사용자가 요청한 작업 범위 내에서만.
 
 ## Compaction Instructions

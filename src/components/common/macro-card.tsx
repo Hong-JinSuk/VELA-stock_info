@@ -1,5 +1,9 @@
 import { useIsMobile } from '@/hooks/use-mobile';
-import type { IndicatorState, MacroIndicator } from '@/types/macro-indicator';
+import type {
+  IndicatorBands,
+  IndicatorState,
+  MacroIndicator,
+} from '@/types/macro-indicator';
 import {
   Activity,
   AlertTriangle,
@@ -40,7 +44,15 @@ import { Card } from '../ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
-type Status = 'Good' | 'Neutral' | 'Bad';
+type Status = 'VeryGood' | 'Good' | 'Neutral' | 'Bad' | 'VeryBad';
+
+const STATUS_LABELS: Record<Status, string> = {
+  VeryGood: '매우 좋음',
+  Good: '좋음',
+  Neutral: '보통',
+  Bad: '안좋음',
+  VeryBad: '매우 안좋음',
+};
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Activity,
@@ -104,9 +116,11 @@ export function MacroCard({ indicator }: MacroCardProps) {
   const nextRelease = formatNextRelease(indicator.nextReleaseDate);
 
   const statusColors: Record<Status, string> = {
-    Good: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    VeryGood: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+    Good: 'text-lime-500 bg-lime-500/10 border-lime-500/20',
     Neutral: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
-    Bad: 'text-red-500 bg-red-500/10 border-red-500/20',
+    Bad: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
+    VeryBad: 'text-red-500 bg-red-500/10 border-red-500/20',
   };
 
   const [descTitle, descBody] = displayMeta.description.split(' - ');
@@ -177,6 +191,11 @@ export function MacroCard({ indicator }: MacroCardProps) {
                     상태별 해석
                   </p>
                   <StateRow
+                    state={displayMeta.states?.veryGood}
+                    tone="veryGood"
+                    active={status === 'VeryGood'}
+                  />
+                  <StateRow
                     state={displayMeta.states?.good}
                     tone="good"
                     active={status === 'Good'}
@@ -190,6 +209,11 @@ export function MacroCard({ indicator }: MacroCardProps) {
                     state={displayMeta.states?.bad}
                     tone="bad"
                     active={status === 'Bad'}
+                  />
+                  <StateRow
+                    state={displayMeta.states?.veryBad}
+                    tone="veryBad"
+                    active={status === 'VeryBad'}
                   />
                 </div>
               </div>
@@ -239,6 +263,11 @@ export function MacroCard({ indicator }: MacroCardProps) {
                     상태별 해석
                   </p>
                   <StateRow
+                    state={displayMeta.states?.veryGood}
+                    tone="veryGood"
+                    active={status === 'VeryGood'}
+                  />
+                  <StateRow
                     state={displayMeta.states?.good}
                     tone="good"
                     active={status === 'Good'}
@@ -252,6 +281,11 @@ export function MacroCard({ indicator }: MacroCardProps) {
                     state={displayMeta.states?.bad}
                     tone="bad"
                     active={status === 'Bad'}
+                  />
+                  <StateRow
+                    state={displayMeta.states?.veryBad}
+                    tone="veryBad"
+                    active={status === 'VeryBad'}
                   />
                 </div>
               </div>
@@ -273,7 +307,7 @@ export function MacroCard({ indicator }: MacroCardProps) {
           <span
             className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase border shrink-0 ${statusColors[status]}`}
           >
-            {status}
+            {STATUS_LABELS[status]}
           </span>
         </div>
 
@@ -287,7 +321,11 @@ export function MacroCard({ indicator }: MacroCardProps) {
             <span className="shrink-0">{currentState.resultIcon}</span>
             <span
               className={`font-semibold break-keep ${
-                status === 'Bad' ? 'text-red-400' : 'text-foreground/90'
+                status === 'VeryBad'
+                  ? 'text-red-400'
+                  : status === 'Bad'
+                    ? 'text-orange-400'
+                    : 'text-foreground/90'
               }`}
             >
               {currentState.resultLabel}
@@ -299,9 +337,11 @@ export function MacroCard({ indicator }: MacroCardProps) {
   );
 }
 
+type StateTone = 'veryGood' | 'good' | 'neutral' | 'bad' | 'veryBad';
+
 type StateRowProps = {
   state: IndicatorState | undefined;
-  tone: 'good' | 'neutral' | 'bad';
+  tone: StateTone;
   active: boolean;
 };
 
@@ -314,10 +354,12 @@ function StateRow({ state, tone, active }: StateRowProps) {
       </div>
     );
   }
-  const toneColor: Record<typeof tone, string> = {
-    good: 'bg-emerald-500',
+  const toneColor: Record<StateTone, string> = {
+    veryGood: 'bg-emerald-500',
+    good: 'bg-lime-500',
     neutral: 'bg-amber-500',
-    bad: 'bg-red-500',
+    bad: 'bg-orange-500',
+    veryBad: 'bg-red-500',
   };
   return (
     <div
@@ -341,22 +383,40 @@ function resolveIcon(name: string): LucideIcon {
   return ICON_MAP[name] ?? Gauge;
 }
 
+// 5단계 경계 판정. invert=false: 낮을수록 좋음, invert=true: 높을수록 좋음.
+function bandStatus(v: number, bands: IndicatorBands, invert: boolean): Status {
+  if (invert) {
+    if (v >= bands.veryGood) return 'VeryGood';
+    if (v >= bands.good) return 'Good';
+    if (v <= bands.veryBad) return 'VeryBad';
+    if (v <= bands.bad) return 'Bad';
+    return 'Neutral';
+  }
+  if (v <= bands.veryGood) return 'VeryGood';
+  if (v <= bands.good) return 'Good';
+  if (v >= bands.veryBad) return 'VeryBad';
+  if (v >= bands.bad) return 'Bad';
+  return 'Neutral';
+}
+
 // status 결정 우선순위:
-//  1. trendGood/trendBad가 있으면 changePercent 기준 (이전 대비 추세)
-//  2. thresholdGood/thresholdBad가 있으면 value 절대값 기준
-//  3. 둘 다 없으면 Neutral
+//  1. trends가 있으면 changePercent 기준 (이전 대비 추세)
+//  2. thresholds가 있으면 value 절대값 기준
+//  3. 구버전(3단계) 필드 폴백 — 다음 indicator-snapshot 배치 전까지 DB에 남은 meta 대응
+//  4. 아무것도 없으면 Neutral
 function computeStatus(indicator: MacroIndicator): Status {
   const { value, changePercent, displayMeta } = indicator;
-  const {
-    thresholdGood,
-    thresholdBad,
-    invertThreshold,
-    trendGood,
-    trendBad,
-    invertTrend,
-  } = displayMeta;
+  const { thresholds, trends, invertThreshold, invertTrend } = displayMeta;
 
-  // 1. trend 기반 (changePercent)
+  if (trends && changePercent !== null) {
+    return bandStatus(changePercent, trends, Boolean(invertTrend));
+  }
+  if (thresholds) {
+    return bandStatus(value, thresholds, Boolean(invertThreshold));
+  }
+
+  // ---- 구버전(3단계) 폴백 ----
+  const { trendGood, trendBad, thresholdGood, thresholdBad } = displayMeta;
   if (
     trendGood !== undefined &&
     trendBad !== undefined &&
@@ -371,8 +431,6 @@ function computeStatus(indicator: MacroIndicator): Status {
     if (changePercent >= trendBad) return 'Bad';
     return 'Neutral';
   }
-
-  // 2. value threshold
   if (thresholdGood !== undefined && thresholdBad !== undefined) {
     if (invertThreshold) {
       if (value >= thresholdGood) return 'Good';
@@ -462,7 +520,17 @@ function pickState(
   status: Status,
 ): IndicatorState {
   if (!states) return FALLBACK_STATE;
-  if (status === 'Good' && states.good) return states.good;
-  if (status === 'Bad' && states.bad) return states.bad;
-  return states.neutral ?? FALLBACK_STATE;
+  // 극단 chip이 없으면(구버전 meta) 같은 방향의 chip으로 폴백.
+  switch (status) {
+    case 'VeryGood':
+      return states.veryGood ?? states.good ?? states.neutral ?? FALLBACK_STATE;
+    case 'Good':
+      return states.good ?? states.neutral ?? FALLBACK_STATE;
+    case 'Bad':
+      return states.bad ?? states.neutral ?? FALLBACK_STATE;
+    case 'VeryBad':
+      return states.veryBad ?? states.bad ?? states.neutral ?? FALLBACK_STATE;
+    default:
+      return states.neutral ?? FALLBACK_STATE;
+  }
 }

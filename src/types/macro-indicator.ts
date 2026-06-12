@@ -20,6 +20,16 @@ export type SignalThresholds = {
   clear: number;
 };
 
+// 5단계 상태 경계 (gemini-server catalog의 IndicatorBands와 동일 구조).
+// invert=false: 낮을수록 좋음 (v ≤ veryGood → 매우 좋음, v ≥ veryBad → 매우 안좋음)
+// invert=true: 높을수록 좋음 (비교 방향 반전)
+export type IndicatorBands = {
+  veryGood: number;
+  good: number;
+  bad: number;
+  veryBad: number;
+};
+
 export type IndicatorDisplayMeta = {
   cardName: string; // 카드 헤더에 표시되는 한국어 이름 (gemini-server에서 indicator.name 자동 주입)
   iconName: string;
@@ -27,17 +37,24 @@ export type IndicatorDisplayMeta = {
   marketImpact: string;
   valueDecimals: number;
   unitSuffix: string;
+  // 5단계 경계. thresholds = value 기준, trends = changePercent 기준 (trends 우선).
+  thresholds?: IndicatorBands;
+  invertThreshold?: boolean;
+  trends?: IndicatorBands;
+  invertTrend?: boolean;
+  // ---- 구버전(3단계) 호환 필드 ----
+  // 다음 indicator-snapshot 배치가 5단계 meta로 갱신하기 전까지 DB에 남아있을 수 있음.
   thresholdGood?: number;
   thresholdBad?: number;
-  invertThreshold?: boolean;
   trendGood?: number;
   trendBad?: number;
-  invertTrend?: boolean;
   signalThresholds?: SignalThresholds;
   states: {
+    veryGood?: IndicatorState;
     good?: IndicatorState;
     neutral: IndicatorState;
     bad?: IndicatorState;
+    veryBad?: IndicatorState;
   };
 };
 

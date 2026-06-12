@@ -1,3 +1,5 @@
+import Sparkline from '@/components/common/sparkline';
+import { sectorColor } from '@/constants/sector-colors';
 import { cn } from '@/lib/utils';
 import type {
   ThirteenFListItem,
@@ -6,7 +8,6 @@ import type {
 } from '@/types/thirteenf';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Building2 } from 'lucide-react';
-import { useId } from 'react';
 
 // summary 없는 행에서 리치 셀에 표시할 placeholder.
 function Dash() {
@@ -19,73 +20,6 @@ function formatAum(n: number): string {
   if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
   if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
   return `$${n.toLocaleString()}`;
-}
-
-// 분기별 AUM 시계열 sparkline (inline SVG). 상승=emerald, 하락=red.
-function Sparkline({ data }: { data: number[] }) {
-  const gradientId = useId();
-  if (data.length < 2) return <Dash />;
-  const w = 72;
-  const h = 28;
-  const pad = 2;
-  const min = Math.min(...data);
-  const max = Math.max(...data);
-  const span = max - min || 1;
-  const coords = data.map((v, i) => {
-    const x = pad + (i / (data.length - 1)) * (w - pad * 2);
-    const y = h - pad - ((v - min) / span) * (h - pad * 2);
-    return [x, y] as const;
-  });
-  const line = coords
-    .map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`)
-    .join(' ');
-  // 라인 아래 채움 영역: 라인 점들 → 오른쪽 끝 바닥 → 왼쪽 끝 바닥 (polygon 자동 닫힘).
-  const area = `${line} ${coords[coords.length - 1][0].toFixed(1)},${h} ${coords[0][0].toFixed(1)},${h}`;
-  const up = data[data.length - 1] >= data[0];
-  return (
-    <svg
-      width={w}
-      height={h}
-      className={up ? 'text-emerald-500' : 'text-red-500'}
-      aria-hidden
-    >
-      <defs>
-        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="currentColor" stopOpacity={0.3} />
-          <stop offset="100%" stopColor="currentColor" stopOpacity={0} />
-        </linearGradient>
-      </defs>
-      <polygon points={area} fill={`url(#${gradientId})`} stroke="none" />
-      <polyline
-        points={line}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={1.5}
-        strokeLinejoin="round"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-// 섹터별 고정 색 (gemini-server sector-bucket.ts의 10개 버킷과 1:1).
-// 순서(비중 desc)와 무관하게 같은 섹터는 어느 행에서든 같은 색으로 보인다.
-const SECTOR_COLOR_BY_NAME: Record<string, string> = {
-  Technology: 'bg-blue-500',
-  Financials: 'bg-emerald-500',
-  'Health Care': 'bg-rose-500',
-  Consumer: 'bg-amber-500',
-  'Communication Services': 'bg-violet-500',
-  Industrials: 'bg-slate-500',
-  Energy: 'bg-orange-500',
-  Materials: 'bg-teal-500',
-  Utilities: 'bg-yellow-400',
-  'Real Estate': 'bg-cyan-500',
-};
-const SECTOR_COLOR_FALLBACK = 'bg-zinc-400';
-
-function sectorColor(sector: string): string {
-  return SECTOR_COLOR_BY_NAME[sector] ?? SECTOR_COLOR_FALLBACK;
 }
 
 // TOP SECTORS: top 섹터를 상대 비율로 채운 바 + 상위 2개 레전드. 비중 desc 순서 유지.

@@ -14,7 +14,8 @@ export const navMain: NavItemProps[] = [
     icon: CandlestickChart,
     isActive: false,
     items: [
-      { title: '섹터·경제 지표', url: '/indicators', disabled: false },
+      { title: '경제 지표', url: '/indicators', disabled: false },
+      { title: '섹터 지표', url: '/sectors', disabled: false },
       { title: '13F', url: '/13f', disabled: false },
       { title: '종목찾기', url: '/stocks', disabled: false },
     ],
