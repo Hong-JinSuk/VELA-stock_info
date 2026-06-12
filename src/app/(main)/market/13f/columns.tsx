@@ -36,7 +36,9 @@ function Sparkline({ data }: { data: number[] }) {
     const y = h - pad - ((v - min) / span) * (h - pad * 2);
     return [x, y] as const;
   });
-  const line = coords.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  const line = coords
+    .map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`)
+    .join(' ');
   // 라인 아래 채움 영역: 라인 점들 → 오른쪽 끝 바닥 → 왼쪽 끝 바닥 (polygon 자동 닫힘).
   const area = `${line} ${coords[coords.length - 1][0].toFixed(1)},${h} ${coords[0][0].toFixed(1)},${h}`;
   const up = data[data.length - 1] >= data[0];
@@ -66,14 +68,27 @@ function Sparkline({ data }: { data: number[] }) {
   );
 }
 
-const SECTOR_COLORS = [
-  'bg-blue-500',
-  'bg-emerald-500',
-  'bg-amber-500',
-  'bg-rose-500',
-];
+// 섹터별 고정 색 (gemini-server sector-bucket.ts의 10개 버킷과 1:1).
+// 순서(비중 desc)와 무관하게 같은 섹터는 어느 행에서든 같은 색으로 보인다.
+const SECTOR_COLOR_BY_NAME: Record<string, string> = {
+  Technology: 'bg-blue-500',
+  Financials: 'bg-emerald-500',
+  'Health Care': 'bg-rose-500',
+  Consumer: 'bg-amber-500',
+  'Communication Services': 'bg-violet-500',
+  Industrials: 'bg-slate-500',
+  Energy: 'bg-orange-500',
+  Materials: 'bg-teal-500',
+  Utilities: 'bg-yellow-400',
+  'Real Estate': 'bg-cyan-500',
+};
+const SECTOR_COLOR_FALLBACK = 'bg-zinc-400';
 
-// TOP SECTORS: top 섹터를 상대 비율로 채운 바 + 상위 2개 레전드.
+function sectorColor(sector: string): string {
+  return SECTOR_COLOR_BY_NAME[sector] ?? SECTOR_COLOR_FALLBACK;
+}
+
+// TOP SECTORS: top 섹터를 상대 비율로 채운 바 + 상위 2개 레전드. 비중 desc 순서 유지.
 function SectorBar({ sectors }: { sectors: ThirteenFTopSector[] }) {
   const top = sectors.slice(0, 4);
   if (top.length === 0) return <Dash />;
@@ -81,22 +96,19 @@ function SectorBar({ sectors }: { sectors: ThirteenFTopSector[] }) {
   return (
     <div className="w-full">
       <div className="flex h-1.5 w-full overflow-hidden rounded-full bg-muted">
-        {top.map((s, i) => (
+        {top.map((s) => (
           <div
             key={s.sector}
-            className={cn('h-full', SECTOR_COLORS[i % SECTOR_COLORS.length])}
+            className={cn('h-full', sectorColor(s.sector))}
             style={{ width: `${(s.weightPercent / sum) * 100}%` }}
           />
         ))}
       </div>
       <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
-        {top.slice(0, 2).map((s, i) => (
+        {top.slice(0, 2).map((s) => (
           <span key={s.sector} className="flex items-center gap-1">
             <span
-              className={cn(
-                'size-1.5 rounded-full',
-                SECTOR_COLORS[i % SECTOR_COLORS.length],
-              )}
+              className={cn('size-1.5 rounded-full', sectorColor(s.sector))}
             />
             <span className="truncate">{s.sector}</span>
           </span>
@@ -106,18 +118,22 @@ function SectorBar({ sectors }: { sectors: ThirteenFTopSector[] }) {
   );
 }
 
-// 세로로 쌓이는 ticker 칩.
-function TickerChips({ tickers }: { tickers: (string | null)[] }) {
-  const shown = tickers.filter((t): t is string => !!t).slice(0, 3);
+// 세로로 쌓이는 종목 칩. ticker 있으면 ticker, 없으면 이름으로 폴백(잘라서).
+function TickerChips({
+  items,
+}: {
+  items: { ticker: string | null; name: string }[];
+}) {
+  const shown = items.slice(0, 3);
   if (shown.length === 0) return <Dash />;
   return (
     <div className="flex flex-col items-start gap-1">
-      {shown.map((t) => (
+      {shown.map((x, i) => (
         <span
-          key={t}
-          className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-medium"
+          key={x.ticker ?? `${x.name}-${i}`}
+          className="max-w-[100px] truncate rounded bg-muted px-1.5 py-0.5 text-[11px] font-medium"
         >
-          {t}
+          {x.ticker ?? x.name}
         </span>
       ))}
     </div>
@@ -132,22 +148,22 @@ function TradeChips({
   trades: ThirteenFTopTrade[];
   kind: 'buy' | 'sell';
 }) {
-  const shown = trades.filter((t) => !!t.ticker).slice(0, 2);
+  const shown = trades.slice(0, 3);
   if (shown.length === 0) return <Dash />;
   return (
     <div className="flex flex-col items-start gap-1">
-      {shown.map((t) => (
+      {shown.map((t, i) => (
         <span
-          key={t.ticker}
+          key={t.ticker ?? `${t.name}-${i}`}
           className={cn(
-            'rounded px-1.5 py-0.5 text-[11px] font-medium',
+            'max-w-[100px] truncate rounded px-1.5 py-0.5 text-[11px] font-medium',
             kind === 'buy'
               ? 'bg-emerald-500/15 text-emerald-500'
               : 'bg-red-500/15 text-red-500',
           )}
         >
           {kind === 'buy' ? '+' : '-'}
-          {t.ticker}
+          {t.ticker ?? t.name}
         </span>
       ))}
     </div>
@@ -157,7 +173,7 @@ function TradeChips({
 export const thirteenFColumns: ColumnDef<ThirteenFListItem>[] = [
   {
     accessorKey: 'filerName',
-    header: 'FUND / MANAGER',
+    header: '펀드 / 매니저',
     size: 260,
     cell: ({ row }) => (
       <div className="flex min-w-0 items-center gap-3">
@@ -168,16 +184,18 @@ export const thirteenFColumns: ColumnDef<ThirteenFListItem>[] = [
           <p className="truncate text-sm font-semibold text-foreground">
             {row.original.filerName}
           </p>
-          <p className="truncate font-mono text-[10px] text-muted-foreground/70">
-            {row.original.accession}
-          </p>
+          {row.original.krName && (
+            <p className="truncate text-[11px] text-muted-foreground">
+              {row.original.krName}
+            </p>
+          )}
         </div>
       </div>
     ),
   },
   {
     id: 'aum',
-    header: 'AUM',
+    header: '운용자산',
     size: 110,
     meta: { align: 'right' },
     cell: ({ row }) => {
@@ -191,9 +209,9 @@ export const thirteenFColumns: ColumnDef<ThirteenFListItem>[] = [
   },
   {
     id: 'qoq',
-    header: 'Q/Q',
+    header: '전분기 대비',
     size: 90,
-    meta: { align: 'right' },
+    meta: { align: 'center' },
     cell: ({ row }) => {
       const v = row.original.summary?.qoqPercent;
       if (v == null) return <Dash />;
@@ -215,13 +233,14 @@ export const thirteenFColumns: ColumnDef<ThirteenFListItem>[] = [
   },
   {
     id: 'trend',
-    header: 'TREND',
+    header: '추이',
     size: 100,
+    meta: { align: 'center' },
     cell: ({ row }) => <Sparkline data={row.original.summary?.trend ?? []} />,
   },
   {
     id: 'holdings',
-    header: 'HOLDINGS',
+    header: '보유 종목 수',
     size: 90,
     meta: { align: 'right' },
     cell: ({ row }) => {
@@ -235,23 +254,23 @@ export const thirteenFColumns: ColumnDef<ThirteenFListItem>[] = [
   },
   {
     id: 'sectors',
-    header: 'TOP SECTORS',
+    header: '주요 섹터',
     size: 160,
-    cell: ({ row }) => <SectorBar sectors={row.original.summary?.topSectors ?? []} />,
+    cell: ({ row }) => (
+      <SectorBar sectors={row.original.summary?.topSectors ?? []} />
+    ),
   },
   {
     id: 'topHoldings',
-    header: 'TOP HOLDINGS',
+    header: '주요 보유',
     size: 110,
     cell: ({ row }) => (
-      <TickerChips
-        tickers={(row.original.summary?.topHoldings ?? []).map((h) => h.ticker)}
-      />
+      <TickerChips items={row.original.summary?.topHoldings ?? []} />
     ),
   },
   {
     id: 'topBuys',
-    header: 'TOP BUYS',
+    header: '주요 매수',
     size: 110,
     cell: ({ row }) => (
       <TradeChips trades={row.original.summary?.topBuys ?? []} kind="buy" />
@@ -259,7 +278,7 @@ export const thirteenFColumns: ColumnDef<ThirteenFListItem>[] = [
   },
   {
     id: 'topSells',
-    header: 'TOP SELLS',
+    header: '주요 매도',
     size: 110,
     cell: ({ row }) => (
       <TradeChips trades={row.original.summary?.topSells ?? []} kind="sell" />
@@ -267,10 +286,10 @@ export const thirteenFColumns: ColumnDef<ThirteenFListItem>[] = [
   },
   {
     accessorKey: 'fileDate',
-    header: 'REPORTED',
+    header: '보고일',
     size: 110,
     meta: {
-      align: 'right',
+      align: 'center',
       headerClassName: 'text-muted-foreground',
       cellClassName: 'text-sm text-muted-foreground',
     },

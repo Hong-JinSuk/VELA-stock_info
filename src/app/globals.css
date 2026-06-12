@@ -202,3 +202,10 @@
     clip-path: inset(0 0 0 0);
   }
 }
+
+/* DataTable 등 내부 스크롤 영역용 — 얇고 은은한 스크롤바 (필요할 때만 표시). */
+@utility scrollbar-subtle {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-muted-foreground) 35%, transparent)
+    transparent;
+}

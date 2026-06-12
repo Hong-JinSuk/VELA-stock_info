@@ -1,4 +1,7 @@
 'use client';
+// useReactTable 인스턴스(가변 객체)를 다루는 컴포넌트 — React Compiler memoization과
+// 충돌해 페이지네이션 상태가 부분 갱신되는 버그가 있어 컴파일러 제외.
+'use no memo';
 
 import DataTable from '@/components/common/data-table/data-table';
 import { Input } from '@/components/ui/input';
@@ -87,7 +90,7 @@ export default function Page() {
     }
   }
 
-  const { data, isLoading, isError, error } = useThirteenFList({
+  const { data, isLoading, isFetching, isError, error } = useThirteenFList({
     searchKey: q,
     page: pagination.pageIndex + 1,
     size: pagination.pageSize,
@@ -218,7 +221,8 @@ export default function Page() {
         <DataTable
           table={table}
           rowKey="cik"
-          isLoading={isLoading}
+          // keepPreviousData라 페이지 전환 중에는 isLoading=false → isFetching까지 봐야 스켈레톤이 뜸.
+          isLoading={isLoading || isFetching}
           rowHeight={88}
           scrollX
           showPagination={!!data}

@@ -1,4 +1,7 @@
 'use client';
+// TanStack table 인스턴스는 같은 참조를 유지한 채 내부 상태만 바뀌므로
+// React Compiler memoization과 충돌(부분 갱신 누락) → 이 파일은 컴파일러 제외.
+'use no memo';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -24,15 +27,16 @@ function alignClass(align?: 'left' | 'center' | 'right') {
   return 'text-left';
 }
 
-// scrollX=false: 비율(%) 폭 → 컨테이너에 맞춰 가로 스크롤 없음 (table-fixed).
-// scrollX=true: 픽셀 고정폭 + min-width → 넘치면 컨테이너가 가로 스크롤.
+// 항상 table-fixed. scrollX=false: 비율(%) 폭 → 컨테이너에 맞춰 가로 스크롤 없음.
+// scrollX=true: 픽셀 폭 + 테이블 min-width=totalSize → 컨테이너가 충분히 넓으면
+// 여분 공간이 비율대로 분배돼 스크롤바 없음, 좁을 때만 가로 스크롤 발생.
 function colWidthStyle<TData>(
   col: Column<TData, unknown>,
   scrollX: boolean,
   totalSize: number,
 ): CSSProperties {
   const size = col.getSize();
-  if (scrollX) return { width: size, minWidth: size };
+  if (scrollX) return { width: size };
   return { width: `${(size / totalSize) * 100}%` };
 }
 
@@ -64,14 +68,15 @@ export default function DataTable<TData>({
       {/* 세로 스크롤 영역: 헤더는 sticky로 이 영역 상단에 고정, body만 스크롤. */}
       <div
         className={cn(
-          'min-h-0 flex-1 overflow-y-auto',
+          'scrollbar-subtle min-h-0 flex-1 overflow-y-auto',
           scrollX ? 'overflow-x-auto' : 'overflow-x-hidden',
         )}
       >
         {/* shadcn Table 내부 컨테이너 overflow 무력화 → 스크롤은 위 div 한 곳에서만. */}
         <Table
           containerClassName="overflow-x-visible"
-          className={cn(scrollX ? 'w-max min-w-full' : 'table-fixed')}
+          className="table-fixed"
+          style={scrollX ? { minWidth: totalSize } : undefined}
         >
           <colgroup>
             {leafColumns.map((col) => (

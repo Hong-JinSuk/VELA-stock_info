@@ -36,6 +36,7 @@ export type ThirteenFListItem = {
   accession: string; // 최신 13F-HR의 accession ("0001067983-25-001234")
   cik: string; // padded "0001067983"
   filerName: string; // "BERKSHIRE HATHAWAY INC"
+  krName?: string | null; // 한국어 매니저명 (ThirteenFFiler.krName, 수동 매핑이라 없을 수 있음)
   fileDate: string; // "YYYY-MM-DD" (마지막 13F-HR 접수일)
   formType?: string;
   periodEnding?: string;
