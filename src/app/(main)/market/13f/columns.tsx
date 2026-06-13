@@ -14,6 +14,13 @@ function Dash() {
   return <span className="text-muted-foreground/40">—</span>;
 }
 
+// "2025-09-30" → "2025 Q3". 구분기 summary 라벨용.
+function quarterLabel(periodEnding: string): string {
+  const [y, m] = periodEnding.split('-');
+  const quarter = Math.ceil(Number(m) / 3);
+  return `${y} Q${quarter}`;
+}
+
 // $431.76B / $18.21B / $431.8M 형태.
 function formatAum(n: number): string {
   if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
@@ -133,11 +140,18 @@ export const thirteenFColumns: ColumnDef<ThirteenFListItem>[] = [
     size: 110,
     meta: { align: 'right' },
     cell: ({ row }) => {
-      const s = row.original.summary;
-      return s ? (
-        <span className="text-sm font-semibold">{formatAum(s.aumUsd)}</span>
-      ) : (
-        <Dash />
+      const { summary: s, summaryAsOf } = row.original;
+      if (!s) return <Dash />;
+      return (
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-sm font-semibold">{formatAum(s.aumUsd)}</span>
+          {/* 최신 분기가 아닌 마지막 보고 기준 데이터임을 표시 (보고 중단/지연 filer). */}
+          {summaryAsOf && (
+            <span className="whitespace-nowrap text-[10px] text-amber-500/80">
+              {quarterLabel(summaryAsOf)} 기준
+            </span>
+          )}
+        </div>
       );
     },
   },

@@ -20,7 +20,7 @@ import {
   YAxis,
 } from 'recharts';
 
-const RANGES: Array<{ value: CandleRange; label: string }> = [
+export const RANGES: Array<{ value: CandleRange; label: string }> = [
   { value: '1mo', label: '1개월' },
   { value: '6mo', label: '6개월' },
   { value: '1y', label: '1년' },
@@ -115,11 +115,21 @@ const TOOLTIP_LABELS: Record<string, string> = {
 export default function StockPriceChart({
   ticker,
   priceTarget,
+  range: rangeProp,
+  onRangeChange,
 }: {
   ticker: string;
   priceTarget?: PriceTarget | null;
+  /** 부모가 기간을 제어할 때(헤더 카드 등락%와 동기화). 없으면 내부 상태로 동작. */
+  range?: CandleRange;
+  onRangeChange?: (range: CandleRange) => void;
 }) {
-  const [range, setRange] = useState<CandleRange>('6mo');
+  const [innerRange, setInnerRange] = useState<CandleRange>('6mo');
+  const range = rangeProp ?? innerRange;
+  const setRange = (r: CandleRange) => {
+    setInnerRange(r);
+    onRangeChange?.(r);
+  };
   const [showTarget, setShowTarget] = useState(false);
   const { data, isLoading } = useStockCandle(ticker, range);
   const points = data ?? [];
@@ -135,6 +145,12 @@ export default function StockPriceChart({
     ? ((priceTarget.mean - priceTarget.current) / priceTarget.current) * 100
     : 0;
   const upsideStr = `${upside >= 0 ? '+' : ''}${upside.toFixed(1)}%`;
+  // 목표가 라벨에 붙일 현재가 대비 등락 %.
+  const pctVsCurrent = (v: number): string => {
+    if (!priceTarget) return '';
+    const p = ((v - priceTarget.current) / priceTarget.current) * 100;
+    return `${p >= 0 ? '+' : ''}${p.toFixed(1)}%`;
+  };
   // 팬 각 선을 자기 값(고/평균/저) vs 현재가 기준으로 색칠.
   const highColor = priceTarget
     ? sentimentColor(priceTarget.high, priceTarget.current)
@@ -203,7 +219,7 @@ export default function StockPriceChart({
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={chartData}
-              margin={{ top: 10, right: show ? 76 : 8, bottom: 0, left: 8 }}
+              margin={{ top: 10, right: show ? 132 : 8, bottom: 0, left: 8 }}
             >
               <defs>
                 <linearGradient id="priceFill" x1="0" y1="0" x2="0" y2="1">
@@ -317,7 +333,7 @@ export default function StockPriceChart({
                       value: `현재 $${priceTarget.current.toFixed(0)}`,
                       position: 'left',
                       fill: priceColor,
-                      fontSize: 10,
+                      fontSize: 11,
                     }}
                   />
                   <ReferenceDot
@@ -328,10 +344,10 @@ export default function StockPriceChart({
                     fillOpacity={0.7}
                     stroke="none"
                     label={{
-                      value: `고 $${priceTarget.high.toFixed(0)}`,
+                      value: `고 $${priceTarget.high.toFixed(0)} (${pctVsCurrent(priceTarget.high)})`,
                       position: 'right',
                       fill: highColor,
-                      fontSize: 10,
+                      fontSize: 12,
                     }}
                   />
                   <ReferenceDot
@@ -342,24 +358,24 @@ export default function StockPriceChart({
                     fillOpacity={0.7}
                     stroke="none"
                     label={{
-                      value: `저 $${priceTarget.low.toFixed(0)}`,
+                      value: `저 $${priceTarget.low.toFixed(0)} (${pctVsCurrent(priceTarget.low)})`,
                       position: 'right',
                       fill: lowColor,
-                      fontSize: 10,
+                      fontSize: 12,
                     }}
                   />
                   <ReferenceDot
                     x={horizonDate}
                     y={priceTarget.mean}
-                    r={3.5}
+                    r={4}
                     fill={meanColor}
                     stroke="none"
                     label={{
-                      value: `평균 $${priceTarget.mean.toFixed(0)}`,
+                      value: `평균 $${priceTarget.mean.toFixed(0)} (${pctVsCurrent(priceTarget.mean)})`,
                       position: 'right',
                       fill: meanColor,
-                      fontSize: 11,
-                      fontWeight: 600,
+                      fontSize: 13,
+                      fontWeight: 700,
                     }}
                   />
                 </>
@@ -370,9 +386,19 @@ export default function StockPriceChart({
       </div>
 
       {show && priceTarget && (
-        <p className="text-center text-xs text-muted-foreground/60 mt-2 break-keep">
+        <p className="text-center text-sm text-muted-foreground mt-3 break-keep">
           애널리스트 {priceTarget.count}명의 12개월 목표주가 컨센서스 (Yahoo) ·
-          현재가 대비 평균 {upsideStr}
+          평균{' '}
+          <span className="font-semibold text-foreground">
+            ${priceTarget.mean.toFixed(2)}
+          </span>{' '}
+          <span
+            className={`font-semibold ${
+              upside >= 0 ? 'text-emerald-500' : 'text-rose-500'
+            }`}
+          >
+            ({upsideStr})
+          </span>
         </p>
       )}
     </div>

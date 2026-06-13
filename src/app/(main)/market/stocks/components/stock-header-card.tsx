@@ -1,8 +1,13 @@
 'use client';
 
+import {
+  type CandleRange,
+  useStockCandle,
+} from '@/lib/services/stock/use-stock-candle';
 import { fmtNum, shortExchange } from '@/lib/stock/format';
 import type { StockProfile, StockQuote } from '@/types/stock';
 import { ExternalLink, TrendingDown, TrendingUp } from 'lucide-react';
+import { RANGES } from './stock-price-chart';
 
 // 로고가 없을 때(ETF·로고없는 주식) 대체할 티커 이니셜 모노그램.
 // 심볼 해시로 색을 결정적으로 골라 같은 종목은 항상 같은 색.
@@ -29,11 +34,28 @@ function monogram(ticker: string): { text: string; cls: string } {
 export default function StockHeaderCard({
   profile,
   quote,
+  range,
 }: {
   profile: StockProfile;
   quote: StockQuote;
+  /** 지정하면 등락 표시를 일간 대신 해당 기간(차트 토글과 동기화) 수익률로 보여준다. */
+  range?: CandleRange;
 }) {
-  const down = quote.change < 0;
+  // 훅 규칙상 항상 호출 — 차트와 queryKey가 같아 중복 fetch는 없음 (react-query dedup).
+  const { data: candle } = useStockCandle(profile.ticker, range ?? '6mo');
+  const rangeBase = range !== undefined ? candle?.[0]?.close : undefined;
+  const useRange = rangeBase != null && rangeBase > 0;
+
+  // range 지정 시: 기간 시작 종가 대비 현재가 등락. 미지정/로딩 중: 일간 등락 (기존 동작).
+  const change = useRange ? quote.current - rangeBase : quote.change;
+  const percent = useRange
+    ? ((quote.current - rangeBase) / rangeBase) * 100
+    : quote.percentChange;
+  const rangeLabel = useRange
+    ? RANGES.find((r) => r.value === range)?.label
+    : null;
+
+  const down = change < 0;
   const color = down ? 'text-rose-500' : 'text-emerald-500';
   const Arrow = down ? TrendingDown : TrendingUp;
   const exchangeShort = shortExchange(profile.exchange);
@@ -104,8 +126,12 @@ export default function StockHeaderCard({
           className={`flex items-center gap-1 sm:justify-end mt-1 font-semibold tabular-nums ${color}`}
         >
           <Arrow className="w-4 h-4" />
-          {fmtNum(Math.abs(quote.change))} ({fmtNum(Math.abs(quote.percentChange))}
-          %)
+          {fmtNum(Math.abs(change))} ({fmtNum(Math.abs(percent))}%)
+          {rangeLabel && (
+            <span className="ml-1 text-xs font-medium text-muted-foreground">
+              · {rangeLabel}
+            </span>
+          )}
         </div>
       </div>
     </div>

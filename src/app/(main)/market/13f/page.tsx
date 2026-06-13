@@ -121,6 +121,10 @@ export default function Page() {
             ? `총 ${total.toLocaleString()}건 · ${data.page} / ${totalPages} 페이지`
             : '13F 데이터를 불러오는 중...'}
         </p>
+        <p className="mt-0.5 text-xs text-muted-foreground/70 break-keep">
+          1년 이상 13F 보고가 없는 기관(등록 해지·운용 중단 등)은 목록과
+          검색에서 제외됩니다.
+        </p>
       </header>
 
       <form

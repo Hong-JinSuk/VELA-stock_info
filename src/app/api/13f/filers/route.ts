@@ -1,3 +1,4 @@
+import { thirteenFStaleCutoff } from '@/constants/13f-stale';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma/client';
 import { type NextRequest, NextResponse } from 'next/server';
@@ -23,6 +24,8 @@ export async function GET(req: NextRequest) {
 
   try {
     const where: Prisma.ThirteenFFilerWhereInput = {
+      // 1년 이상 13F 보고가 없는 filer(활동 중단)는 자동완성에서도 제외 (목록과 동일 기준).
+      lastFiledDate: { gte: thirteenFStaleCutoff() },
       OR: [
         { name: { contains: q, mode: 'insensitive' } },
         { krName: { contains: q, mode: 'insensitive' } },

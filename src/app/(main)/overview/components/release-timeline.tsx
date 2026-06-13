@@ -2,6 +2,11 @@
 
 import SkeletonCard from '@/components/common/skeleton-card';
 import { getIndicatorScenario } from '@/constants/indicator-scenarios';
+import {
+  getUpcomingMarketEvents,
+  type MarketEvent,
+  type MarketEventCategory,
+} from '@/constants/market-events';
 import { useMacroIndicators } from '@/lib/services/stock/use-macro-indicators';
 import type {
   IndicatorCategory,
@@ -113,6 +118,25 @@ const CATEGORY_STYLE: Record<string, { label: string; pill: string }> = {
   },
 };
 
+// 시장 이벤트(만기·리밸런싱·FOMC) 카드의 카테고리 칩 스타일.
+const EVENT_STYLE: Record<
+  MarketEventCategory,
+  { label: string; pill: string }
+> = {
+  fomc: {
+    label: 'FOMC',
+    pill: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+  },
+  expiry: {
+    label: 'EXPIRY',
+    pill: 'bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20',
+  },
+  rebalance: {
+    label: 'REBAL',
+    pill: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
+  },
+};
+
 function getCategoryStyle(category: IndicatorCategory | null) {
   if (!category) {
     return {
@@ -191,6 +215,15 @@ function formatValue(
   })}${unitSuffix}`;
 }
 
+// 지표 발표 카드와 시장 이벤트(만기·FOMC) 카드를 한 타임라인에 합치기 위한 union.
+type TimelineEntry =
+  | { kind: 'indicator'; item: TimelineItem }
+  | { kind: 'event'; event: MarketEvent; daysUntil: number };
+
+function entryDaysUntil(entry: TimelineEntry): number {
+  return entry.kind === 'indicator' ? entry.item.daysUntil : entry.daysUntil;
+}
+
 export default function ReleaseTimeline() {
   const { data, isLoading, isError } = useMacroIndicators();
 
@@ -206,15 +239,29 @@ export default function ReleaseTimeline() {
         daysSinceRelease: getDaysSinceRelease(i.releasedAt),
         releasedRecently: isReleasedRecently(i.releasedAt),
       }))
-      .filter((i) => i.daysUntil >= 0 || i.releasedRecently)
-      .sort((a, b) => {
-        // 오늘 발표된 카드는 최상단에 띄우기.
-        if (a.releasedRecently !== b.releasedRecently) {
-          return a.releasedRecently ? -1 : 1;
-        }
-        return a.daysUntil - b.daysUntil;
-      });
+      .filter((i) => i.daysUntil >= 0 || i.releasedRecently);
   }, [data]);
+
+  const entries: TimelineEntry[] = useMemo(() => {
+    const eventEntries: TimelineEntry[] = getUpcomingMarketEvents().map(
+      (event) => ({
+        kind: 'event',
+        event,
+        daysUntil: getDaysUntil(event.date),
+      }),
+    );
+    const indicatorEntries: TimelineEntry[] = items.map((item) => ({
+      kind: 'indicator',
+      item,
+    }));
+    return [...indicatorEntries, ...eventEntries].sort((a, b) => {
+      // 오늘 발표된 지표 카드는 최상단에 띄우기.
+      const aRecent = a.kind === 'indicator' && a.item.releasedRecently;
+      const bRecent = b.kind === 'indicator' && b.item.releasedRecently;
+      if (aRecent !== bRecent) return aRecent ? -1 : 1;
+      return entryDaysUntil(a) - entryDaysUntil(b);
+    });
+  }, [items]);
 
   return (
     <section className="flex flex-col w-full sm:min-h-0">
@@ -222,7 +269,7 @@ export default function ReleaseTimeline() {
         <SkeletonCard rows={6} cols={1} />
       ) : isError ? (
         <div className="p-6 text-sm text-red-500">발표 캘린더 로드 실패</div>
-      ) : items.length === 0 ? (
+      ) : entries.length === 0 ? (
         <div className="p-6 text-sm text-muted-foreground">
           예정된 발표가 없습니다.
         </div>
@@ -233,13 +280,67 @@ export default function ReleaseTimeline() {
               aria-hidden
               className="absolute left-[7px] top-1 bottom-1 w-px bg-border"
             />
-            {items.map((item) => (
-              <TimelineCard key={item.indicatorId} item={item} />
-            ))}
+            {entries.map((entry) =>
+              entry.kind === 'indicator' ? (
+                <TimelineCard key={entry.item.indicatorId} item={entry.item} />
+              ) : (
+                <EventCard
+                  key={entry.event.id}
+                  event={entry.event}
+                  daysUntil={entry.daysUntil}
+                />
+              ),
+            )}
           </ol>
         </section>
       )}
     </section>
+  );
+}
+
+// 시장 이벤트 카드 — 값/상승·하락 시나리오가 없는 일정 이벤트.
+// 만기·리밸런싱의 "통상적 영향"(변동성·수급)을 표시한다.
+function EventCard({
+  event,
+  daysUntil,
+}: {
+  event: MarketEvent;
+  daysUntil: number;
+}) {
+  const { label, pill } = EVENT_STYLE[event.category];
+  return (
+    <li className="relative mb-3 last:mb-0">
+      <span
+        aria-hidden
+        className="absolute -left-[18px] top-3 size-2 rounded-full ring-2 ring-background bg-foreground/40"
+      />
+      <article className="rounded-lg border border-border bg-card/40 backdrop-blur-md px-4 py-3 transition-colors hover:border-foreground/20">
+        <header className="flex items-center justify-between gap-3 mb-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className={`text-[10px] font-medium tracking-wide px-1.5 py-0.5 rounded border ${pill}`}
+            >
+              {label}
+            </span>
+            <h3 className="text-sm font-semibold text-foreground truncate">
+              {event.name}
+            </h3>
+            {event.badge && (
+              <span className="text-[10px] font-medium tracking-wide px-1.5 py-0.5 rounded border bg-violet-500/10 text-violet-400 border-violet-500/20 shrink-0">
+                {event.badge}
+              </span>
+            )}
+          </div>
+          <div className="shrink-0 text-[11px] text-muted-foreground tabular-nums">
+            {formatDDay(daysUntil, null)} · {formatMonthDay(event.date)}
+          </div>
+        </header>
+        <p className="text-[11px] leading-relaxed text-foreground/70 break-keep">
+          <span className="text-amber-400/80 font-medium">통상 영향</span>{' '}
+          <span className="text-muted-foreground/40">—</span> {event.impact}
+        </p>
+      </article>
+    </li>
   );
 }
 

@@ -43,6 +43,9 @@ export type ThirteenFListItem = {
   bizLocation?: string | null;
   // ThirteenFSummary LEFT JOIN 결과. summary 없는 filer는 null.
   summary?: ThirteenFListSummary | null;
+  // summary가 최신 분기 것이 아닐 때 그 summary의 periodEnding ("YYYY-MM-DD").
+  // 보고를 중단했거나 늦게 내는 filer의 "마지막 데이터"를 분기 라벨과 함께 보여주는 용도.
+  summaryAsOf?: string | null;
 };
 
 // 페이지네이션된 검색 결과 (표준 PaginatedResponse 형태).

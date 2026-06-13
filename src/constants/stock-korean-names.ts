@@ -134,6 +134,7 @@ export const TICKER_KR: Record<string, string> = {
   GFS: '글로벌파운드리스',
   ANET: '아리스타네트웍스',
   WDC: '웨스턴디지털',
+  SNDK: '샌디스크',
   STX: '시게이트',
   NTAP: '넷앱',
   HPE: '휴렛팩커드엔터프라이즈',

@@ -1,8 +1,7 @@
-// 빈 랜딩 상태 — 헤더/검색바는 layout이 제공. 검색 전 안내만 표시.
+import StockPreviewTeaser from './components/stock-preview-teaser';
+
+// 빈 랜딩 상태 — 헤더/검색바는 layout이 제공.
+// 검색 전에는 대표 티커의 실제 상세 카드를 반투명 티저로 보여준다.
 export default function StocksPage() {
-  return (
-    <div className="flex-1 flex items-center justify-center text-sm text-muted-foreground/60">
-      티커를 검색해 종목 정보를 확인하세요.
-    </div>
-  );
+  return <StockPreviewTeaser />;
 }

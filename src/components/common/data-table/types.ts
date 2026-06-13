@@ -54,5 +54,10 @@ export type DataTableProps<TData> = {
   showPagination?: boolean;
   /** 페이지 크기 선택 옵션. 주면 size 선택 UI 표시. */
   pageSizeOptions?: number[];
+  /**
+   * 정렬 등으로 행 순서가 바뀔 때 FLIP(layout) 애니메이션으로 부드럽게 이동.
+   * rowKey가 안정적이어야 자연스럽게 동작한다.
+   */
+  animateRows?: boolean;
   className?: string;
 };

@@ -1,10 +1,12 @@
 'use client';
 
+import type { CandleRange } from '@/lib/services/stock/use-stock-candle';
 import { useStockDetail } from '@/lib/services/stock/use-stock-detail';
 import { useStockInsider } from '@/lib/services/stock/use-stock-insider';
 import { useStockNews } from '@/lib/services/stock/use-stock-news';
 import { Info } from 'lucide-react';
 import { useParams } from 'next/navigation';
+import { useState } from 'react';
 import AnalystRecommendationCard from '../components/analyst-recommendation-card';
 import EtfHoldingsCard from '../components/etf-holdings-card';
 import InsiderDetailCard from '../components/insider-detail-card';
@@ -20,6 +22,8 @@ export default function StockDetailPage() {
   const { ticker } = useParams<{ ticker: string }>();
   const symbol = decodeURIComponent(ticker).toUpperCase();
 
+  // 차트 기간 토글과 헤더 카드 등락%를 동기화하기 위해 페이지에서 관리.
+  const [range, setRange] = useState<CandleRange>('6mo');
   const detail = useStockDetail(symbol);
   const insider = useStockInsider(symbol);
   const news = useStockNews(symbol, detail.data?.profile.name);
@@ -51,8 +55,13 @@ export default function StockDetailPage() {
   if (profile.isFund) {
     return (
       <div className="flex flex-col gap-6">
-        <StockHeaderCard profile={profile} quote={quote} />
-        <StockPriceChart ticker={symbol} priceTarget={priceTarget} />
+        <StockHeaderCard profile={profile} quote={quote} range={range} />
+        <StockPriceChart
+          ticker={symbol}
+          priceTarget={priceTarget}
+          range={range}
+          onRangeChange={setRange}
+        />
         <StockQuoteCard quote={quote} profile={profile} />
         <EtfHoldingsCard ticker={symbol} />
         <div className="rounded-2xl border border-border bg-card/40 p-4 flex items-start gap-2.5 text-sm text-muted-foreground">
@@ -69,8 +78,13 @@ export default function StockDetailPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <StockHeaderCard profile={profile} quote={quote} />
-      <StockPriceChart ticker={symbol} priceTarget={priceTarget} />
+      <StockHeaderCard profile={profile} quote={quote} range={range} />
+      <StockPriceChart
+        ticker={symbol}
+        priceTarget={priceTarget}
+        range={range}
+        onRangeChange={setRange}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">

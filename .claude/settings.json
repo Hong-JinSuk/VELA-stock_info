@@ -24,7 +24,10 @@
       "Bash(MIGRATE_MODE=true npx prisma migrate deploy)",
       "Bash(lsof -nP -iTCP:3001 -sTCP:LISTEN)",
       "Bash(curl -s -X POST http://localhost:3001/ai/indicator-batch -w \"\\\\nHTTP: %{http_code}\\\\n\")",
-      "Bash(curl -s -X POST http://localhost:3000/vela/api/debug-cleanup/reset-released-at -w \"\\\\nHTTP: %{http_code}\\\\n\")"
+      "Bash(curl -s -X POST http://localhost:3000/vela/api/debug-cleanup/reset-released-at -w \"\\\\nHTTP: %{http_code}\\\\n\")",
+      "Bash(curl -s --max-time 5 \"http://localhost:3000/vela/api/13f?page=447&size=20\")",
+      "Bash(python3 -c ' *)",
+      "Bash(curl -s --max-time 5 \"http://localhost:3000/vela/api/13f?searchKey=Scion&page=1&size=5\")"
     ],
     "additionalDirectories": [
       "/Users/hjs/projects/gemini-server/src",

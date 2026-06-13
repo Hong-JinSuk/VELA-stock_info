@@ -14,9 +14,13 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import { type Column, flexRender } from '@tanstack/react-table';
+import { motion } from 'motion/react';
 import type { CSSProperties } from 'react';
 import DataTablePagination from './data-table-pagination';
 import type { DataTableProps } from './types';
+
+// animateRows용 motion 버전 TableRow (스타일은 TableRow 그대로 유지).
+const MotionTableRow = motion.create(TableRow);
 
 const DEFAULT_ROW_HEIGHT = 56;
 const DEFAULT_SKELETON_ROWS = 10;
@@ -50,6 +54,7 @@ export default function DataTable<TData>({
   emptyMessage = '데이터가 없습니다.',
   showPagination,
   pageSizeOptions,
+  animateRows = false,
   className,
 }: DataTableProps<TData>) {
   const { onRowClick, onRowHover } = table.options.meta ?? {};
@@ -134,38 +139,56 @@ export default function DataTable<TData>({
                 </TableCell>
               </TableRow>
             ) : (
-              rows.map((row) => (
-                <TableRow
-                  key={rowKey ? String(row.original[rowKey]) : row.id}
-                  data-state={row.getIsSelected() ? 'selected' : undefined}
-                  style={{ height: rowHeight }}
-                  className={cn(onRowClick && 'cursor-pointer')}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
-                  onMouseEnter={onRowHover ? () => onRowHover(row) : undefined}
-                  onMouseLeave={onRowHover ? () => onRowHover(null) : undefined}
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const { align, cellClassName } =
-                      cell.column.columnDef.meta ?? {};
-                    return (
-                      <TableCell
-                        key={cell.id}
-                        style={{ height: rowHeight }}
-                        className={cn(
-                          'overflow-hidden',
-                          alignClass(align),
-                          cellClassName,
-                        )}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))
+              rows.map((row) => {
+                const key = rowKey ? String(row.original[rowKey]) : row.id;
+                const rowProps = {
+                  'data-state': row.getIsSelected() ? 'selected' : undefined,
+                  style: { height: rowHeight },
+                  className: cn(onRowClick && 'cursor-pointer'),
+                  onClick: onRowClick ? () => onRowClick(row) : undefined,
+                  onMouseEnter: onRowHover
+                    ? () => onRowHover(row)
+                    : undefined,
+                  onMouseLeave: onRowHover
+                    ? () => onRowHover(null)
+                    : undefined,
+                };
+                const cells = row.getVisibleCells().map((cell) => {
+                  const { align, cellClassName } =
+                    cell.column.columnDef.meta ?? {};
+                  return (
+                    <TableCell
+                      key={cell.id}
+                      style={{ height: rowHeight }}
+                      className={cn(
+                        'overflow-hidden',
+                        alignClass(align),
+                        cellClassName,
+                      )}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </TableCell>
+                  );
+                });
+                // animateRows: key(FLIP 식별자)가 같은 행이 위치만 바뀌면 부드럽게 이동.
+                return animateRows ? (
+                  <MotionTableRow
+                    key={key}
+                    layout
+                    transition={{ type: 'spring', stiffness: 350, damping: 32 }}
+                    {...rowProps}
+                  >
+                    {cells}
+                  </MotionTableRow>
+                ) : (
+                  <TableRow key={key} {...rowProps}>
+                    {cells}
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
