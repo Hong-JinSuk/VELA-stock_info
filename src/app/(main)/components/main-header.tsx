@@ -16,6 +16,7 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { agentStatusAtom } from '@/store/ai-atom';
+import { AgentStatus } from '@/types/ai';
 import { UserRole } from '@/types/user';
 import { useAtom } from 'jotai';
 import { useSession } from 'next-auth/react';
@@ -37,7 +38,7 @@ export function MainHeader() {
     agentStatusRef.current = agentStatus;
   });
 
-  const sessionUser = (session?.user as any) ?? null;
+  const sessionUser = session?.user ?? null;
   const usage = sessionUser?.usage ?? null;
   const role = sessionUser?.role as UserRole | undefined;
   const isUnlimited = usage?.maxLimit === -1;
@@ -51,7 +52,7 @@ export function MainHeader() {
   );
 
   useEffect(() => {
-    if (ACTIVE_STATUSES.includes(agentStatusRef.current as any)) return;
+    if ((ACTIVE_STATUSES as readonly AgentStatus[]).includes(agentStatusRef.current)) return;
 
     if (!session) {
       setAgentStatus('로그인 필요');

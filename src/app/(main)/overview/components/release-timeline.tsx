@@ -263,6 +263,13 @@ export default function ReleaseTimeline() {
     });
   }, [items]);
 
+  // FOMC 카드에 현 정책금리(연방기금금리) 맥락을 붙이기 위해 fed_funds 지표를 찾아둔다.
+  // fed_funds는 발표일정이 없어 타임라인 카드로는 안 뜨지만, 매크로 지표 데이터엔 있다.
+  const policyRate = useMemo(
+    () => data?.find((i) => i.indicatorId === 'fed_funds') ?? null,
+    [data],
+  );
+
   return (
     <section className="flex flex-col w-full sm:min-h-0">
       {isLoading ? (
@@ -288,6 +295,9 @@ export default function ReleaseTimeline() {
                   key={entry.event.id}
                   event={entry.event}
                   daysUntil={entry.daysUntil}
+                  policyRate={
+                    entry.event.category === 'fomc' ? policyRate : null
+                  }
                 />
               ),
             )}
@@ -300,14 +310,18 @@ export default function ReleaseTimeline() {
 
 // 시장 이벤트 카드 — 값/상승·하락 시나리오가 없는 일정 이벤트.
 // 만기·리밸런싱의 "통상적 영향"(변동성·수급)을 표시한다.
+// FOMC는 정책금리(fed_funds)를 받으면 지표 카드처럼 "이전 → 현재"로 현 기준금리를 함께 보여준다.
 function EventCard({
   event,
   daysUntil,
+  policyRate,
 }: {
   event: MarketEvent;
   daysUntil: number;
+  policyRate?: MacroIndicator | null;
 }) {
   const { label, pill } = EVENT_STYLE[event.category];
+  const rateMeta = policyRate?.displayMeta;
   return (
     <li className="relative mb-3 last:mb-0">
       <span
@@ -335,6 +349,31 @@ function EventCard({
             {formatDDay(daysUntil, null)} · {formatMonthDay(event.date)}
           </div>
         </header>
+        {policyRate && rateMeta && (
+          <div className="text-xs text-muted-foreground mb-2 break-keep">
+            <span className="text-muted-foreground/70">
+              {rateMeta.cardName} 이전
+            </span>{' '}
+            <span className="text-foreground/80 tabular-nums">
+              {policyRate.previousValue !== null
+                ? formatValue(
+                    policyRate.previousValue,
+                    rateMeta.valueDecimals,
+                    rateMeta.unitSuffix,
+                  )
+                : '—'}
+            </span>
+            <span className="mx-1.5 text-muted-foreground/40">→</span>
+            <span className="text-muted-foreground/70">현재</span>{' '}
+            <span className="text-foreground tabular-nums font-medium">
+              {formatValue(
+                policyRate.value,
+                rateMeta.valueDecimals,
+                rateMeta.unitSuffix,
+              )}
+            </span>
+          </div>
+        )}
         <p className="text-[11px] leading-relaxed text-foreground/70 break-keep">
           <span className="text-amber-400/80 font-medium">통상 영향</span>{' '}
           <span className="text-muted-foreground/40">—</span> {event.impact}

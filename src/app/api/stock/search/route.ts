@@ -68,10 +68,10 @@ const cachedSearch = unstable_cache(
 );
 
 export async function GET(req: NextRequest) {
-  const q = (req.nextUrl.searchParams.get('q') ?? '').trim();
-  if (!q) return NextResponse.json([]);
+  const searchKey = (req.nextUrl.searchParams.get('searchKey') ?? '').trim();
+  if (!searchKey) return NextResponse.json([]);
   try {
-    const items = await cachedSearch(q);
+    const items = await cachedSearch(searchKey);
     return NextResponse.json(items);
   } catch (e) {
     if (e instanceof FinnhubRateLimitError) {

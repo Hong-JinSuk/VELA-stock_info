@@ -80,7 +80,7 @@ export default function SignupModal({ isOpen, closeModal }: Props) {
       {
         loading: '인증 코드를 발송 중입니다...',
         success: '인증 코드가 발송되었습니다! 📧',
-        error: (e: any) => e.message,
+        error: (e: Error) => e.message,
       },
     );
   };
@@ -151,7 +151,7 @@ export default function SignupModal({ isOpen, closeModal }: Props) {
         onClose();
         return '회원 가입에 성공했습니다! 👍';
       },
-      error: (e: any) => e.message,
+      error: (e: Error) => e.message,
     });
   };
 

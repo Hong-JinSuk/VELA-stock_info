@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
+    // Prisma client 생성물 (커밋되지만 컴파일된 코드라 lint 대상 아님).
+    'src/generated/**',
   ]),
 ]);
 

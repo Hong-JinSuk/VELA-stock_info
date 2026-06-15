@@ -4,8 +4,8 @@ import { useMutation } from '@tanstack/react-query';
 
 type LogParams = {
   stockName: string;
-  queryData?: any;
-  refineData?: any;
+  queryData?: unknown;
+  refineData?: unknown;
   resultData: AiPredictionResultType;
 };
 

@@ -3,7 +3,7 @@ import { getNextCycleEnd, ROLE_LIMITS, UserRole } from '@/types/user';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
-import type { AuthOptions } from 'next-auth';
+import type { AuthOptions, User } from 'next-auth';
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
@@ -67,7 +67,7 @@ export const authOptions: AuthOptions = {
           gender: res.gender ?? null,
           birthday: res.birthday ?? null,
           ageRange: res.age ?? null,
-        } as any; // PrismaAdapter는 추가 필드도 user 테이블에 그대로 저장함
+        } as unknown as User; // PrismaAdapter는 추가 필드도 user 테이블에 그대로 저장함
       },
     }),
     // GithubProvider({
@@ -111,7 +111,7 @@ export const authOptions: AuthOptions = {
 
         // 성공 시 (보안상 비밀번호 제거 후 return)
         const { password, ...safeUser } = user;
-        return safeUser as any;
+        return safeUser as unknown as User;
       },
     }),
   ],
@@ -144,7 +144,7 @@ export const authOptions: AuthOptions = {
 
         if (!existingUsage) {
           const now = new Date();
-          const role = ((user as any).role as UserRole) ?? 'FREE';
+          const role = (user as { role?: UserRole }).role ?? 'FREE';
           await prisma.userUsage.create({
             data: {
               userId: user.id,
@@ -162,13 +162,14 @@ export const authOptions: AuthOptions = {
 
     async session({ session, token }) {
       if (session.user) {
+        // JWT 전용 클레임(iat/exp/jti/picture)은 session.user에 섞지 않도록 분리해서 버린다.
         const { iat, exp, jti, sub, picture, ...userData } = token;
-        (session.user as any) = {
+        session.user = {
           ...session.user,
           ...userData,
           // token.id가 없는 기존 세션은 NextAuth가 보장하는 sub로 보완
-          id: userData.id ?? sub,
-        };
+          id: userData.id ?? sub ?? '',
+        } as typeof session.user;
 
         // token.id: 로그인 시 safeUser에서 주입 / token.sub: NextAuth가 항상 보장하는 유저 ID
         const userId = (token.id ?? token.sub) as string | undefined;
@@ -195,7 +196,7 @@ export const authOptions: AuthOptions = {
             });
           }
 
-          (session.user as any).usage = usage;
+          session.user.usage = usage;
         }
       }
       return session;

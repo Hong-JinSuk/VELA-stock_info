@@ -1,6 +1,6 @@
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import prisma from '@/lib/prisma';
-import { getNextCycleEnd, UserRole } from '@/types/user';
+import { getNextCycleEnd } from '@/types/user';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 
@@ -14,7 +14,7 @@ export async function POST() {
       );
     }
 
-    const userId = (session.user as any).id as string;
+    const userId = session.user.id;
     if (!userId) {
       return NextResponse.json(
         { message: '유저 ID를 찾을 수 없습니다.' },
@@ -33,7 +33,7 @@ export async function POST() {
     // 주기 만료 시 리셋 후 새 주기로 increment
     const now = new Date();
     if (existing.cycleEnd < now) {
-      const role = ((session.user as any).role as UserRole) ?? 'FREE';
+      const role = session.user.role ?? 'FREE';
       const usage = await prisma.userUsage.update({
         where: { userId },
         data: {

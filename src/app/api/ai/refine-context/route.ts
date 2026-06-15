@@ -30,17 +30,22 @@ export async function POST(request: Request) {
     console.log('[REFINE] end');
 
     return NextResponse.json({ refinedData });
-  } catch (error: any) {
+  } catch (error) {
     console.error('[REFINE] failed:', error);
 
-    const status = error.response?.status || error.status || 500;
+    const err = error as {
+      response?: { status?: number };
+      status?: number;
+      message?: string;
+    };
+    const status = err.response?.status || err.status || 500;
     const message = errorMessage[status] || '알 수 없는 오류가 발생했습니다.';
 
     return NextResponse.json(
       {
         message,
         debug:
-          process.env.NODE_ENV === 'development' ? error.message : undefined,
+          process.env.NODE_ENV === 'development' ? err.message : undefined,
       },
       { status },
     );

@@ -57,6 +57,18 @@ src/
 - 스키마 수정만 하고 migrate는 미루는 경우라도 **클라이언트 재생성과 dev 서버 재시작은 항상 안내할 것.**
 - 빌드 시 migrate는 `MIGRATE_MODE=true` 환경변수로 `DIRECT_URL` 사용 (pgbouncer는 DDL 지원 안 함).
 
+## 시간대 (Timezone) — ⚠️ CRITICAL
+
+**DB에 저장하는 모든 timestamp는 KST(UTC+9) 벽시계 기준으로 저장한다.** 사용자가 DB를 직접 조회했을 때(Supabase 콘솔 등) 별도 변환 없이 KST로 보이는 것이 기준이다.
+
+- timestamp 컬럼은 tz 없는 `timestamp`(Prisma `DateTime` → `TIMESTAMP(3)`)를 쓰되, **넣는 값 자체를 KST 벽시계로 박아 넣는다.** (instant를 UTC로 저장하지 말 것 — 그러면 DB에서 9시간 어긋나 보인다.)
+- **SQL에서 생성**: `NOW()` 대신 `(NOW() AT TIME ZONE 'Asia/Seoul')` 사용 (KST 벽시계를 tz 없는 timestamp로 반환). Prisma `@default(now())`는 UTC라 KST가 필요한 컬럼은 raw/마이그레이션으로 default를 바꾸거나 앱에서 명시적으로 KST 값을 넣을 것.
+- **앱 코드(JS/TS)에서 생성**: `new Date()`(UTC instant)를 그대로 넣지 말고 KST 문자열로 변환해서 넣는다.
+  - 날짜 키: `getKstDateKey()` (`new Date(Date.now() + 9h).toISOString().slice(0,10)`).
+  - timestamp: `new Date(d.getTime() + 9*60*60*1000).toISOString().replace('T',' ').replace('Z','')` → `"YYYY-MM-DD HH:mm:ss.SSS"`. 레퍼런스 구현은 gemini-server `batch-log.ts`의 `toKstTimestamp`.
+- `durationMs`처럼 **기간(diff) 계산은 tz와 무관**하므로 실제 instant(`Date.getTime()`)로 계산할 것. 변환은 컬럼에 넣는 값에만 적용.
+- ⚠️ 알려진 잔여 이슈: 일부 테이블의 `createdAt @default(now())`/`CURRENT_TIMESTAMP`는 아직 DB default가 UTC다. 새 timestamp를 추가하거나 기존 것을 고칠 때 위 규칙으로 맞출 것.
+
 ## API Calls — ⚠️ CRITICAL
 
 - **HTTP 클라이언트**: 모든 API 호출은 `src/lib/api/axios.ts`의 `api` 인스턴스를 사용한다. `fetch`는 사용하지 말 것 (서버/클라이언트 모두).

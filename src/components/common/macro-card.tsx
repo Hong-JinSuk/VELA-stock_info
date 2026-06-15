@@ -40,6 +40,7 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
+import { createElement } from 'react';
 import { Card } from '../ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
@@ -102,7 +103,6 @@ type MacroCardProps = {
 export function MacroCard({ indicator }: MacroCardProps) {
   const isMobile = useIsMobile();
   const { displayMeta, value } = indicator;
-  const Icon = resolveIcon(displayMeta.iconName);
   const status = computeStatus(indicator);
   const currentState = pickState(displayMeta.states, status);
   const { main, suffix: decimalSuffix } = formatValue(
@@ -133,7 +133,10 @@ export function MacroCard({ indicator }: MacroCardProps) {
         <div className="flex flex-col items-start gap-2.5 min-w-0">
           <div className="flex items-center w-full gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center border border-border shadow-sm shrink-0">
-              <Icon className="w-4 h-4 text-foreground/70" />
+              <MacroIcon
+                iconName={displayMeta.iconName}
+                className="w-4 h-4 text-foreground/70"
+              />
             </div>
             <p className="text-sm font-semibold text-foreground tracking-wide break-keep line-clamp-2 min-w-0">
               {name}
@@ -162,7 +165,10 @@ export function MacroCard({ indicator }: MacroCardProps) {
               <div className="space-y-3.5">
                 <h4 className="font-semibold text-sm flex items-center gap-2.5 text-foreground">
                   <div className="w-7 h-7 rounded-md bg-secondary flex items-center justify-center border border-border">
-                    <Icon className="w-3.5 h-3.5" />
+                    <MacroIcon
+                      iconName={displayMeta.iconName}
+                      className="w-3.5 h-3.5"
+                    />
                   </div>
                   {name}
                 </h4>
@@ -234,7 +240,10 @@ export function MacroCard({ indicator }: MacroCardProps) {
               <div className="space-y-3.5">
                 <h4 className="font-semibold text-sm flex items-center gap-2.5 text-foreground">
                   <div className="w-7 h-7 rounded-md bg-secondary flex items-center justify-center border border-border">
-                    <Icon className="w-3.5 h-3.5" />
+                    <MacroIcon
+                      iconName={displayMeta.iconName}
+                      className="w-3.5 h-3.5"
+                    />
                   </div>
                   {name}
                 </h4>
@@ -381,6 +390,19 @@ function StateRow({ state, tone, active }: StateRowProps) {
 
 function resolveIcon(name: string): LucideIcon {
   return ICON_MAP[name] ?? Gauge;
+}
+
+// 동적 아이콘 렌더 래퍼. 호출부에서 `const Icon = resolveIcon(...)` 후 <Icon/>으로 쓰면
+// React Compiler가 capitalized-local을 "render 중 컴포넌트 생성"으로 오인하므로,
+// 모듈 레벨 컴포넌트 안에서 createElement로 우회한다.
+function MacroIcon({
+  iconName,
+  className,
+}: {
+  iconName: string;
+  className?: string;
+}) {
+  return createElement(resolveIcon(iconName), { className });
 }
 
 // 5단계 경계 판정. invert=false: 낮을수록 좋음, invert=true: 높을수록 좋음.

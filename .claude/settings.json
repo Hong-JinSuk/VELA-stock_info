@@ -27,7 +27,15 @@
       "Bash(curl -s -X POST http://localhost:3000/vela/api/debug-cleanup/reset-released-at -w \"\\\\nHTTP: %{http_code}\\\\n\")",
       "Bash(curl -s --max-time 5 \"http://localhost:3000/vela/api/13f?page=447&size=20\")",
       "Bash(python3 -c ' *)",
-      "Bash(curl -s --max-time 5 \"http://localhost:3000/vela/api/13f?searchKey=Scion&page=1&size=5\")"
+      "Bash(curl -s --max-time 5 \"http://localhost:3000/vela/api/13f?searchKey=Scion&page=1&size=5\")",
+      "Bash(awk ' *)",
+      "Bash(grep -vE \"^\\\\s*$\")",
+      "Bash(awk '/^\\\\/Users/{f=$0} /error/ && !/warning/ && /[0-9]+:[0-9]+/ {print f\": \"$0}')",
+      "Bash(grep -rn \"searchParams.get\\('q'\\)\\\\|get\\(\\\\\"q\\\\\"\\)\\\\|[?&]q=\\\\|q:\\\\| q \\\\b\\\\|params.q\\\\|{ q }\\\\|\\(q\\)\\\\|\\(q,\" src/ --include=\"*.ts\" --include=\"*.tsx\")",
+      "Bash(grep -rn \"get\\('q'\\)\\\\|params: { q }\\\\|params: { q,\" src/ --include=\"*.ts\" --include=\"*.tsx\")",
+      "Bash(awk '/^\\\\/Users/{f=$0} /error/ && !/warning/ && /[0-9]+:[0-9]+/ {print f}')",
+      "Bash(curl -s \"http://localhost:3000/vela/api/overview/macro-indicators\")",
+      "Bash(node -e \"let s='';process.stdin.on\\('data',d=>s+=d\\).on\\('end',\\(\\)=>{try{const j=JSON.parse\\(s\\);const a=Array.isArray\\(j\\)?j:\\(j.items||[]\\);const f=a.find\\(x=>x.indicatorId==='fed_funds'\\);console.log\\(f?\\('fed_funds: value='+f.value+' prev='+f.previousValue+' decimals='+f.displayMeta?.valueDecimals+' unit='+JSON.stringify\\(f.displayMeta?.unitSuffix\\)+' cardName='+f.displayMeta?.cardName\\):'fed_funds 없음 / 총 '+a.length+'개'\\);}catch\\(e\\){console.log\\('파싱 실패\\(서버 안떠있거나 경로 다름\\):',s.slice\\(0,120\\)\\);}}\\)\")"
     ],
     "additionalDirectories": [
       "/Users/hjs/projects/gemini-server/src",

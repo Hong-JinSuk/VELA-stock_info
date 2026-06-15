@@ -97,7 +97,7 @@ export default function OverviewAiInsight() {
           <div className="@container space-y-6">
             <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4">
               <p className="text-foreground font-medium leading-relaxed">
-                "{insight.overview}"
+                &ldquo;{insight.overview}&rdquo;
               </p>
             </div>
 
