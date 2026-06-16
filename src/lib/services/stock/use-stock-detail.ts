@@ -1,6 +1,6 @@
 import { api } from '@/lib/api/axios';
+import { usePersistentQuery } from '@/lib/services/use-persistent-query';
 import type { StockDetail } from '@/types/stock';
-import { useQuery } from '@tanstack/react-query';
 
 async function fetchStockDetail(ticker: string): Promise<StockDetail> {
   const { data } = await api.get<StockDetail>(
@@ -10,7 +10,8 @@ async function fetchStockDetail(ticker: string): Promise<StockDetail> {
 }
 
 export function useStockDetail(ticker: string) {
-  return useQuery({
+  // 재진입 시 localStorage 스냅샷으로 즉시 표시 + 백그라운드 갱신.
+  return usePersistentQuery({
     queryKey: ['stock-detail', ticker],
     queryFn: () => fetchStockDetail(ticker),
     enabled: Boolean(ticker),

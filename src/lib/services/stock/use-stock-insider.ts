@@ -1,6 +1,6 @@
 import { api } from '@/lib/api/axios';
+import { usePersistentQuery } from '@/lib/services/use-persistent-query';
 import type { InsiderAnalysis } from '@/types/stock';
-import { useQuery } from '@tanstack/react-query';
 
 async function fetchStockInsider(ticker: string): Promise<InsiderAnalysis> {
   const { data } = await api.get<InsiderAnalysis>(
@@ -10,7 +10,7 @@ async function fetchStockInsider(ticker: string): Promise<InsiderAnalysis> {
 }
 
 export function useStockInsider(ticker: string) {
-  return useQuery({
+  return usePersistentQuery({
     queryKey: ['stock-insider', ticker],
     queryFn: () => fetchStockInsider(ticker),
     enabled: Boolean(ticker),

@@ -1,6 +1,6 @@
 import { api } from '@/lib/api/axios';
+import { usePersistentQuery } from '@/lib/services/use-persistent-query';
 import type { EtfHoldingsData } from '@/types/stock';
-import { useQuery } from '@tanstack/react-query';
 
 // ETF 보유종목. 배치 미적재 ETF는 200 + null(섹션 미표시).
 async function fetchHoldings(ticker: string): Promise<EtfHoldingsData | null> {
@@ -11,7 +11,7 @@ async function fetchHoldings(ticker: string): Promise<EtfHoldingsData | null> {
 }
 
 export function useStockHoldings(ticker: string, enabled: boolean) {
-  return useQuery({
+  return usePersistentQuery({
     queryKey: ['etf-holdings', ticker],
     queryFn: () => fetchHoldings(ticker),
     enabled: enabled && Boolean(ticker),

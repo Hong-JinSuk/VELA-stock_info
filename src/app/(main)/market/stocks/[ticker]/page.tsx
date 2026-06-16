@@ -54,7 +54,7 @@ export default function StockDetailPage() {
   // ETF/펀드는 회사 지표·애널리스트·내부자 거래가 없음 → 시세·차트·뉴스만 표시.
   if (profile.isFund) {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 animate-in fade-in duration-300">
         <StockHeaderCard profile={profile} quote={quote} range={range} />
         <StockPriceChart
           ticker={symbol}
@@ -77,7 +77,7 @@ export default function StockDetailPage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 animate-in fade-in duration-300">
       <StockHeaderCard profile={profile} quote={quote} range={range} />
       <StockPriceChart
         ticker={symbol}

@@ -1,6 +1,6 @@
 import { api } from '@/lib/api/axios';
+import { usePersistentQuery } from '@/lib/services/use-persistent-query';
 import type { StockCandlePoint } from '@/types/stock';
-import { useQuery } from '@tanstack/react-query';
 
 export type CandleRange = '1mo' | '6mo' | '1y' | 'ytd';
 
@@ -16,7 +16,7 @@ async function fetchStockCandle(
 }
 
 export function useStockCandle(ticker: string, range: CandleRange = '6mo') {
-  return useQuery({
+  return usePersistentQuery({
     queryKey: ['stock-candle', ticker, range],
     queryFn: () => fetchStockCandle(ticker, range),
     enabled: Boolean(ticker),
