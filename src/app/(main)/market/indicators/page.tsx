@@ -184,6 +184,7 @@ export default function Page() {
                   <MacroCard
                     key={indicator.indicatorId}
                     indicator={indicator}
+                    showFavorite
                   />
                 ))}
               </div>

@@ -19,6 +19,17 @@ export type StockQuote = {
   previousClose: number; // 전일 종가 (pc)
 };
 
+// 즐겨찾기 목록 등 여러 종목을 한 번에 가볍게 보여줄 때 쓰는 요약 시세.
+// 상세(StockDetail)는 종목당 호출이 무거우므로, 이름 + 시세만 배치로 제공.
+export type StockQuoteItem = {
+  symbol: string;
+  name: string;
+  currency: string;
+  current: number; // 현재가 (없으면 0)
+  change: number; // 전일 대비
+  percentChange: number; // 전일 대비 %
+};
+
 export type StockProfile = {
   name: string;
   ticker: string;
@@ -81,6 +92,9 @@ export type StockDetail = {
 // 6개월 일봉 차트용.
 export type StockCandlePoint = { date: string; close: number };
 
+// 1일 인트라데이(5분봉) 미니 차트용.
+export type StockIntradayPoint = { time: string; close: number };
+
 // ---- 내부자 거래 분석 ----
 
 // 취득(물량 증가) 3 + 처분(물량 감소) 3 버킷. 단위: 주식 수.
@@ -107,6 +121,14 @@ export type InsiderAnalysis = {
   monthly: InsiderMonthlyPoint[]; // 길이 12 (오래된→최신)
   totalAcquired: number;
   totalDisposed: number;
+};
+
+// 즐겨찾기 행 펼치기용 묶음 — 1일 차트 + 애널리스트 의견 + 내부자 거래.
+// 펼칠 때 한 번에 받아 추가 호출/네트워크 왕복을 줄인다.
+export type StockSummary = {
+  intraday: StockIntradayPoint[];
+  recommendation: AnalystRecommendation | null;
+  insider: InsiderAnalysis;
 };
 
 // ---- ETF 보유종목 (StockSymbolEtf / Yahoo topHoldings 기반) ----

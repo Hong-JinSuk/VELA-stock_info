@@ -44,6 +44,7 @@ import { createElement } from 'react';
 import { Card } from '../ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import FavoriteButton from './favorite-button';
 
 type Status = 'VeryGood' | 'Good' | 'Neutral' | 'Bad' | 'VeryBad';
 
@@ -98,9 +99,11 @@ const FALLBACK_STATE: IndicatorState = {
 
 type MacroCardProps = {
   indicator: MacroIndicator;
+  // true면 헤더에 즐겨찾기 별표 표시 (실제 지표/마이페이지에서만 true, 데모·랜딩은 false).
+  showFavorite?: boolean;
 };
 
-export function MacroCard({ indicator }: MacroCardProps) {
+export function MacroCard({ indicator, showFavorite = false }: MacroCardProps) {
   const isMobile = useIsMobile();
   const { displayMeta, value } = indicator;
   const status = computeStatus(indicator);
@@ -151,7 +154,16 @@ export function MacroCard({ indicator }: MacroCardProps) {
             </div>
           )}
         </div>
-        {isMobile ? (
+        <div className="flex items-center gap-0.5 shrink-0">
+          {showFavorite && (
+            <FavoriteButton
+              type="INDICATOR"
+              itemKey={indicator.indicatorId}
+              label={name}
+              size={16}
+            />
+          )}
+          {isMobile ? (
           <Popover>
             <PopoverTrigger asChild>
               <button className="text-muted-foreground hover:text-foreground transition-colors outline-none -mr-1 -mt-1 p-1 rounded-md hover:bg-secondary shrink-0">
@@ -300,7 +312,8 @@ export function MacroCard({ indicator }: MacroCardProps) {
               </div>
             </TooltipContent>
           </Tooltip>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col justify-end min-w-0">

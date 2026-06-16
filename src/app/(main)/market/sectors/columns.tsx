@@ -1,3 +1,4 @@
+import FavoriteButton from '@/components/common/favorite-button';
 import Sparkline from '@/components/common/sparkline';
 import { sectorColor } from '@/constants/sector-colors';
 import { cn } from '@/lib/utils';
@@ -60,6 +61,20 @@ export function buildSectorColumns(
   activePeriod: SectorPeriodKey,
 ): ColumnDef<SectorPerformance>[] {
   return [
+    {
+      id: 'favorite',
+      header: '',
+      size: 40,
+      meta: { align: 'center' },
+      cell: ({ row }) => (
+        <FavoriteButton
+          type="SECTOR"
+          itemKey={row.original.ticker}
+          label={row.original.nameKo}
+          size={15}
+        />
+      ),
+    },
     {
       accessorKey: 'nameKo',
       header: '섹터',

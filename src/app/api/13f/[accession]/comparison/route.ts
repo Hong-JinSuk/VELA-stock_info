@@ -84,25 +84,34 @@ async function findPreviousAccession(
   return { accession: accessionNumber[prevPos] };
 }
 
-// CUSIP 기준으로 join (같은 종목의 multi-row는 사전 합산).
-function aggregateByCusip(
+type AggEntry = {
+  cusip: string;
+  name: string;
+  ticker: string | null;
+  valueUsd: number;
+  putCall: 'Put' | 'Call' | null;
+};
+
+// CUSIP + 옵션종류(보통주/Put/Call) 기준으로 join.
+// 같은 종목이라도 보통주·풋·콜은 성격이 달라(풋=하락 베팅) 별도 행으로 분리해야 정확하다.
+function aggregateByInstrument(
   holdings: ThirteenFHolding[],
-): Map<string, { name: string; ticker: string | null; valueUsd: number }> {
-  const map = new Map<
-    string,
-    { name: string; ticker: string | null; valueUsd: number }
-  >();
+): Map<string, AggEntry> {
+  const map = new Map<string, AggEntry>();
   for (const h of holdings) {
-    const existing = map.get(h.cusip);
+    const key = `${h.cusip}|${h.putCall ?? ''}`;
+    const existing = map.get(key);
     if (existing) {
       existing.valueUsd += h.valueUsd;
       // ticker는 한 종목이라 동일. 누락된 경우만 채움.
       if (!existing.ticker && h.ticker) existing.ticker = h.ticker;
     } else {
-      map.set(h.cusip, {
+      map.set(key, {
+        cusip: h.cusip,
         name: h.nameOfIssuer,
         ticker: h.ticker,
         valueUsd: h.valueUsd,
+        putCall: h.putCall,
       });
     }
   }
@@ -117,25 +126,30 @@ function buildComparisonRows(
   sells: ThirteenFChangeRow[];
   holds: ThirteenFChangeRow[];
 } {
-  const currMap = aggregateByCusip(current.holdings);
-  const prevMap = previous ? aggregateByCusip(previous.holdings) : new Map();
+  const currMap = aggregateByInstrument(current.holdings);
+  const prevMap: Map<string, AggEntry> = previous
+    ? aggregateByInstrument(previous.holdings)
+    : new Map();
   const currTotal = Array.from(currMap.values()).reduce(
     (s, v) => s + v.valueUsd,
     0,
   );
 
-  const allCusips = new Set([...currMap.keys(), ...prevMap.keys()]);
-  const rows: ThirteenFChangeRow[] = Array.from(allCusips).map((cusip) => {
-    const curr = currMap.get(cusip);
-    const prev = prevMap.get(cusip);
+  // cusip|putCall 복합 키 단위로 비교.
+  const allKeys = new Set([...currMap.keys(), ...prevMap.keys()]);
+  const rows: ThirteenFChangeRow[] = Array.from(allKeys).map((key) => {
+    const curr = currMap.get(key);
+    const prev = prevMap.get(key);
+    const base = curr ?? prev; // 둘 중 하나는 반드시 존재
     const currVal = curr?.valueUsd ?? 0;
     const prevVal = prev?.valueUsd ?? 0;
     const delta = currVal - prevVal;
     const deltaPercent = prevVal > 0 ? (delta / prevVal) * 100 : null;
     return {
-      cusip,
+      cusip: base?.cusip ?? '',
       ticker: curr?.ticker ?? prev?.ticker ?? null,
       nameOfIssuer: curr?.name ?? prev?.name ?? '',
+      putCall: base?.putCall ?? null,
       previousValueUsd: prevVal,
       currentValueUsd: currVal,
       deltaValueUsd: delta,
@@ -191,11 +205,15 @@ async function loadComparison(
     buys: buys.slice(0, COMPARISON_ROW_CAP),
     sells: sells.slice(0, COMPARISON_ROW_CAP),
     holds: holds.slice(0, COMPARISON_ROW_CAP),
+    // 현재 분기가 비밀유지로 명세 비공개면 안내용 표지 총계를 함께 전달.
+    holdingsWithheld: current.holdingsWithheld,
+    reportedValueUsd: current.reportedValueUsd,
+    reportedEntryCount: current.reportedEntryCount,
   };
 }
 
 const cachedLoadComparison = unstable_cache(
   loadComparison,
-  ['13f-comparison-v10'],
+  ['13f-comparison-v12'],
   { revalidate: COMPARISON_CACHE, tags: ['13f-comparison'] },
 );

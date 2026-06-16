@@ -4,6 +4,7 @@ import {
   type CandleRange,
   useStockCandle,
 } from '@/lib/services/stock/use-stock-candle';
+import FavoriteButton from '@/components/common/favorite-button';
 import { fmtNum, shortExchange } from '@/lib/stock/format';
 import type { StockProfile, StockQuote } from '@/types/stock';
 import { ExternalLink, TrendingDown, TrendingUp } from 'lucide-react';
@@ -91,6 +92,12 @@ export default function StockHeaderCard({
                 {exchangeShort}
               </span>
             )}
+            <FavoriteButton
+              type="STOCK"
+              itemKey={profile.ticker}
+              label={profile.name}
+              size={20}
+            />
           </div>
           {profile.weburl ? (
             <a

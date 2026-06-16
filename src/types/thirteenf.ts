@@ -78,6 +78,11 @@ export type ThirteenFDetail = {
   topHoldingName: string | null;
   topHoldingWeight: number | null; // 1위 종목 비중
   holdings: ThirteenFHolding[];
+  // 비밀유지(confidential treatment) 신청으로 종목 명세가 비공개인 filing.
+  // 보유명세 테이블은 placeholder(value 0)지만 표지 신고총액은 존재 → 아래 reported* 로 표시.
+  holdingsWithheld: boolean;
+  reportedValueUsd: number | null; // 표지 tableValueTotal (명세 비공개 시 안내용)
+  reportedEntryCount: number | null; // 표지 tableEntryTotal (신고 종목 수)
 };
 
 // 이전 분기 대비 변동 row.
@@ -85,6 +90,7 @@ export type ThirteenFChangeRow = {
   cusip: string;
   ticker: string | null;
   nameOfIssuer: string;
+  putCall: 'Put' | 'Call' | null; // 옵션 포지션 구분 (보통주는 null). 같은 종목도 옵션종류별 별도 행
   previousValueUsd: number; // 이전 분기 가치 (없으면 0 = 신규 매수)
   currentValueUsd: number; // 현재 분기 가치 (없으면 0 = 완전 매도)
   deltaValueUsd: number; // current - previous
@@ -113,4 +119,8 @@ export type ThirteenFComparison = {
   buysCount: number; // delta > 0 종목 전체 수
   sellsCount: number; // delta < 0 종목 전체 수
   holdsCount: number; // 현재 보유 종목 전체 수
+  // 현재 분기가 비밀유지로 명세 비공개인 경우 (buys/sells/holds는 비어 있음).
+  holdingsWithheld: boolean;
+  reportedValueUsd: number | null; // 표지 신고총액
+  reportedEntryCount: number | null; // 표지 신고 종목 수
 };

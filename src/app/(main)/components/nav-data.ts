@@ -37,6 +37,8 @@ export const navMain: NavItemProps[] = [
     icon: UserCircle,
     isActive: false,
     items: [
+      { title: '즐겨찾기', url: '/favorites' },
+      { title: '보고서', url: '/report' },
       { title: 'AI 분석 기록', url: '/ai-logs', disabled: true },
       {
         title: '환경 설정',
@@ -54,6 +56,8 @@ export const navPresonal: NavItemProps[] = [
     icon: UserCircle,
     isActive: true,
     items: [
+      { title: '즐겨찾기', url: '/favorites' },
+      { title: '보고서', url: '/report' },
       { title: 'AI 분석 기록', url: '/ai-logs', disabled: true },
       {
         title: '환경 설정',

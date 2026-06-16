@@ -16,6 +16,27 @@ export const ROLE_LIMITS: Record<UserRole, number> = {
   TESTER: -1,
 };
 
+// 개인화(즐겨찾기) 정책 — 유료(BASIC 이상) 전용, 티어별 개수 차등.
+// -1 = 무제한. FREE는 0 → 기능 자체 비활성.
+export const FAVORITE_LIMITS: Record<UserRole, number> = {
+  FREE: 0,
+  BASIC: 30,
+  PRO: 100,
+  MAX: -1,
+  ADMIN: -1,
+  TESTER: -1,
+};
+
+// 개인화 기능 사용 가능 여부 (FREE만 차단).
+export function canUsePersonalization(role: UserRole): boolean {
+  return FAVORITE_LIMITS[role] !== 0;
+}
+
+// 해당 역할의 즐겨찾기 최대 개수 (-1 = 무제한).
+export function getFavoriteLimit(role: UserRole): number {
+  return FAVORITE_LIMITS[role];
+}
+
 // FREE: 1주 / MAX: 1시간 / 그 외: 1달
 export function getNextCycleEnd(role: UserRole, from: Date): Date {
   const end = new Date(from);

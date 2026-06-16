@@ -33,7 +33,8 @@ model User {
   // 유저가 ai로 검색한 로그
   aiLog     AiLog[]
 
-  // watchlists Watchlist[] (나중에 추가할 관심종목)
+  // 개인화 즐겨찾기(종목·13F 등). 유료 전용 게이팅은 앱 레벨.
+  favorites Favorite[]
 }
 
 // 💡 소셜 로그인(OAuth) 정보를 저장하는 전용 테이블

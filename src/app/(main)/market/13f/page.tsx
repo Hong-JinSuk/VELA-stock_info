@@ -19,7 +19,7 @@ import {
 import { Search, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { thirteenFColumns } from './columns';
+import { thirteenFColumns, thirteenFFavoriteColumn } from './columns';
 
 const PAGE_SIZE = 20;
 const SUGGEST_DEBOUNCE_MS = 200;
@@ -101,7 +101,7 @@ export default function Page() {
 
   const table = useReactTable({
     data: data?.items ?? [],
-    columns: thirteenFColumns,
+    columns: [thirteenFFavoriteColumn, ...thirteenFColumns],
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
     pageCount: data ? totalPages : -1,

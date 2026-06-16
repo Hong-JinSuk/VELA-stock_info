@@ -74,6 +74,28 @@ async function fetchInfoTableXml(
   return secFetchText(xmlUrl);
 }
 
+// 표지(primary_doc.xml)의 신고 총계. 보유명세가 비어 있을 때 "비밀유지로 비공개인지"
+// (= 신고총액은 있는데 명세만 placeholder) 판별 + 안내 표시에 쓴다.
+// tableValueTotal/tableEntryTotal은 schema상 단일 정수 필드라 regex로 안전하게 추출.
+async function fetchCoverTotals(
+  cik: string,
+  accession: string,
+): Promise<{ valueUsd: number; entryCount: number } | null> {
+  try {
+    const accNoDashes = stripAccessionDashes(accession);
+    const cikNumeric = String(Number(cik));
+    const xml = await secFetchText(
+      `${ARCHIVES_BASE}/${cikNumeric}/${accNoDashes}/primary_doc.xml`,
+    );
+    const v = xml.match(/<tableValueTotal>\s*(\d+)\s*<\/tableValueTotal>/i);
+    if (!v) return null;
+    const e = xml.match(/<tableEntryTotal>\s*(\d+)\s*<\/tableEntryTotal>/i);
+    return { valueUsd: Number(v[1]), entryCount: e ? Number(e[1]) : 0 };
+  } catch {
+    return null;
+  }
+}
+
 // fast-xml-parser는 단일 자식 vs 배열 구분이 까다로워서 strict한 옵션 사용.
 // removeNSPrefix: 일부 매니저(NPS 등)가 ns1:infoTable처럼 namespace prefix를 쓰므로 제거해서 통일 처리.
 const xmlParser = new XMLParser({
@@ -133,7 +155,23 @@ async function loadDetail(accession: string): Promise<ThirteenFDetail | null> {
   const filerName = stripCikFromDisplayName(meta.display_names[0] ?? '');
 
   const xml = await fetchInfoTableXml(cik, accession);
-  const parsedHoldings = xml ? parseInfoTable(xml) : [];
+  // placeholder(value 0) 행 제거. 비밀유지 filing은 "NA / cusip 000000000 / value 0" 한 줄짜리 stub.
+  const parsedHoldings = (xml ? parseInfoTable(xml) : []).filter(
+    (h) => h.valueUsd > 0,
+  );
+
+  // 명세가 비어 있으면 표지 신고총액을 확인 → 총액이 있으면 비밀유지로 명세 비공개인 것.
+  let holdingsWithheld = false;
+  let reportedValueUsd: number | null = null;
+  let reportedEntryCount: number | null = null;
+  if (parsedHoldings.length === 0) {
+    const cover = await fetchCoverTotals(cik, accession);
+    if (cover && cover.valueUsd > 0) {
+      holdingsWithheld = true;
+      reportedValueUsd = cover.valueUsd;
+      reportedEntryCount = cover.entryCount;
+    }
+  }
 
   // CUSIP 기준으로 ticker + canonical name enrich.
   // 13F filer가 약어로 적은 nameOfIssuer(예: NPS의 "APPLIED MATLS INC")를
@@ -163,10 +201,13 @@ async function loadDetail(accession: string): Promise<ThirteenFDetail | null> {
     topHoldingName: top?.nameOfIssuer ?? null,
     topHoldingWeight: top?.weightPercent ?? null,
     holdings,
+    holdingsWithheld,
+    reportedValueUsd,
+    reportedEntryCount,
   };
 }
 
-export const cachedLoadDetail = unstable_cache(loadDetail, ['13f-detail-v10'], {
+export const cachedLoadDetail = unstable_cache(loadDetail, ['13f-detail-v11'], {
   revalidate: CACHE_REVALIDATE,
   tags: ['13f-detail'],
 });

@@ -1,5 +1,6 @@
 'use client';
 
+import FavoriteButton from '@/components/common/favorite-button';
 import { useThirteenFComparison } from '@/lib/services/market/use-thirteenf-comparison';
 import type { ThirteenFChangeRow } from '@/types/thirteenf';
 import { useParams } from 'next/navigation';
@@ -28,39 +29,78 @@ export default function Page() {
 
   return (
     <main className="flex flex-col flex-1 min-h-0 overflow-y-auto no-scrollbar p-6 gap-6">
-      <header>
-        <h1 className="font-serif text-xl tracking-tight">{data.filerName}</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          현재 분기 {data.current.periodEnding} (접수 {data.current.fileDate}) ·
-          {data.previous
-            ? ` 비교 분기 ${data.previous.periodEnding} (접수 ${data.previous.fileDate})`
-            : ' 이전 분기 13F 없음 — 모두 신규 매수로 표시됩니다.'}
-        </p>
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="font-serif text-xl tracking-tight">{data.filerName}</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            현재 분기 {data.current.periodEnding} (접수 {data.current.fileDate}) ·
+            {data.previous
+              ? ` 비교 분기 ${data.previous.periodEnding} (접수 ${data.previous.fileDate})`
+              : ' 이전 분기 13F 없음 — 모두 신규 매수로 표시됩니다.'}
+          </p>
+        </div>
+        <FavoriteButton
+          type="THIRTEENF_FILER"
+          itemKey={data.cik}
+          label={data.filerName}
+          size={22}
+        />
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Section
-          title="🟢 Top Buy"
-          rows={data.buys}
-          count={data.buysCount}
-          mode="buy"
-          emptyText="이번 분기에 새로 매수하거나 비중을 늘린 종목이 없습니다."
-        />
-        <Section
-          title="🔴 Top Sell"
-          rows={data.sells}
-          count={data.sellsCount}
-          mode="sell"
-          emptyText="이번 분기에 매도/축소한 종목이 없습니다."
-        />
-        <Section
-          title="🔵 Top Hold"
-          rows={data.holds}
-          count={data.holdsCount}
-          mode="hold"
-          emptyText="보유 종목이 없습니다."
-        />
-      </div>
+      {data.holdingsWithheld ? (
+        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-5">
+          <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+            보유 명세 비공개 (비밀유지 신청)
+          </p>
+          <p className="mt-1.5 text-sm text-muted-foreground break-keep">
+            이 분기는 SEC 비밀유지 신청(confidential treatment)으로 종목별 보유
+            명세가 비공개입니다. 매도한 것이 아니라 명세만 가려진 상태로, 보통 약
+            1년 뒤 수정신고(13F-HR/A)로 공개됩니다.
+          </p>
+          {data.reportedValueUsd != null && (
+            <p className="mt-3 text-sm tabular-nums">
+              <span className="text-muted-foreground">표지 신고총액 </span>
+              <span className="font-semibold text-foreground">
+                {formatUsd(data.reportedValueUsd)}
+              </span>
+              {data.reportedEntryCount ? (
+                <span className="text-muted-foreground">
+                  {' '}
+                  · {data.reportedEntryCount.toLocaleString()}개 종목
+                </span>
+              ) : null}
+            </p>
+          )}
+          <p className="mt-2 text-[11px] text-muted-foreground/60 break-keep">
+            ※ 13F는 현금·비(非)13F 자산은 보고하지 않습니다. 신고총액은 13F 대상
+            증권(미국 상장주식·ETF·옵션 등)의 시장가치 합계입니다.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <Section
+            title="🟢 Top Buy"
+            rows={data.buys}
+            count={data.buysCount}
+            mode="buy"
+            emptyText="이번 분기에 새로 매수하거나 비중을 늘린 종목이 없습니다."
+          />
+          <Section
+            title="🔴 Top Sell"
+            rows={data.sells}
+            count={data.sellsCount}
+            mode="sell"
+            emptyText="이번 분기에 매도/축소한 종목이 없습니다."
+          />
+          <Section
+            title="🔵 Top Hold"
+            rows={data.holds}
+            count={data.holdsCount}
+            mode="hold"
+            emptyText="보유 종목이 없습니다."
+          />
+        </div>
+      )}
     </main>
   );
 }
@@ -107,6 +147,18 @@ function ChangeRow({
               </span>
             )}
           </p>
+          {row.putCall && (
+            <span
+              className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider border ${
+                row.putCall === 'Call'
+                  ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20'
+                  : 'text-rose-500 bg-rose-500/10 border-rose-500/20'
+              }`}
+              title={row.putCall === 'Call' ? '콜 옵션 (상승 베팅)' : '풋 옵션 (하락 베팅)'}
+            >
+              {row.putCall === 'Call' ? 'CALL' : 'PUT'}
+            </span>
+          )}
           {badge && (
             <span
               className={`shrink-0 px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider border ${badgeColor}`}
@@ -178,7 +230,11 @@ function Section({
         <>
           <ul className="space-y-0">
             {preview.map((r) => (
-              <ChangeRow key={r.cusip} row={r} mode={mode} />
+              <ChangeRow
+                key={`${r.cusip}-${r.putCall ?? 'SH'}`}
+                row={r}
+                mode={mode}
+              />
             ))}
           </ul>
           {remaining > 0 && (

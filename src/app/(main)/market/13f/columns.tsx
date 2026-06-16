@@ -1,3 +1,4 @@
+import FavoriteButton from '@/components/common/favorite-button';
 import Sparkline from '@/components/common/sparkline';
 import { sectorColor } from '@/constants/sector-colors';
 import { cn } from '@/lib/utils';
@@ -8,6 +9,23 @@ import type {
 } from '@/types/thirteenf';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Building2 } from 'lucide-react';
+
+// 즐겨찾기 별표 컬럼 (목록 맨 앞에 붙여 쓴다). 기본 thirteenFColumns에는 포함하지 않아
+// welcome 데모 등 즐겨찾기가 불필요한 곳은 영향 없음.
+export const thirteenFFavoriteColumn: ColumnDef<ThirteenFListItem> = {
+  id: 'favorite',
+  header: '',
+  size: 40,
+  meta: { align: 'center' },
+  cell: ({ row }) => (
+    <FavoriteButton
+      type="THIRTEENF_FILER"
+      itemKey={row.original.cik}
+      label={row.original.filerName}
+      size={15}
+    />
+  ),
+};
 
 // summary 없는 행에서 리치 셀에 표시할 placeholder.
 function Dash() {

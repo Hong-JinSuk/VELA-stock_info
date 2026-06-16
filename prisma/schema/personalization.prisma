@@ -1,0 +1,28 @@
+// 개인화 — 즐겨찾기(관심) 기능. 유료(BASIC 이상) 사용자 전용, 티어별 개수 차등은 앱에서 적용.
+// 폴리모픽 단일 테이블: 새 즐겨찾기 대상은 FavoriteType enum 값만 추가하면 됨(마이그레이션 불필요).
+
+enum FavoriteType {
+  STOCK // itemKey = StockSymbol.symbol  (예: "AAPL")
+  THIRTEENF_FILER // itemKey = ThirteenFFiler.cik  (예: "0001067983")
+  INDICATOR // itemKey = Indicator.id  (예: "vix", "ust_10y")
+  SECTOR // itemKey = 섹터 ETF ticker  (예: "XLK"), SECTOR_ETFS 고정셋
+}
+
+model Favorite {
+  id     String       @id @default(uuid())
+  userId String
+  type   FavoriteType
+  itemKey String // 도메인 자연키(symbol/cik). 폴리모픽이라 DB FK는 걸지 않고 앱에서 존재 검증.
+
+  label     String? // 표시명 캐시 — 통합 목록을 조인 없이 즉시 렌더 (예: "버크셔 해서웨이")
+  memo      String? // 사용자 메모 (개인화)
+  sortOrder Int      @default(0) // 사용자 정렬용
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, itemKey]) // 중복 즐겨찾기 방지 + 토글(upsert/delete) 키
+  @@index([userId, type, sortOrder]) // "내 13F 즐겨찾기" 정렬 조회
+  @@index([type, itemKey]) // 역방향(이 항목을 담은 사용자 수 등)
+}
