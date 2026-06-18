@@ -13,9 +13,9 @@ export default function Page() {
   return (
     <main className="flex flex-1 min-h-0 flex-col gap-8 overflow-y-auto no-scrollbar p-6">
       <header>
-        <h1 className="font-serif text-xl tracking-tight">보고서</h1>
+        <h1 className="font-serif text-xl tracking-tight">13F 보고서</h1>
         <p className="mt-1 text-sm text-muted-foreground break-keep">
-          즐겨찾기한 기관·종목을 바탕으로 한 분석 리포트.
+          즐겨찾기한 13F 기관들의 매매 컨센서스를 바탕으로 한 분석 리포트.
         </p>
       </header>
 

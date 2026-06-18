@@ -117,6 +117,14 @@ POST / PATCH / PUT / DELETE:
 - 외부 API가 일시적으로 실패할 수 있다는 우려가 있어도, 그 자체로는 static 대안의 정당화 사유가 아님. 캐시·재시도·에러 핸들링이 우선.
 - 정말 static이 필요한 경우(예: API에 없는 도메인 특화 매핑, 사용자 override)는 먼저 사유 설명하고 사용자 확인 후 진행.
 
+## 종목 검색 — ⚠️ 한국어 입력 지원 필수
+
+**종목 검색 자동완성은 영문/티커뿐 아니라 한국어로도 반드시 검색돼야 한다.** (예: "로켓랩"으로 RKLB가 떠야 함.)
+
+- 서버 `/api/stock/search`는 `StockSymbol`(영문 description/symbol)만 ILIKE 매칭하므로 **한글 입력은 매칭되지 않는다.** 한글은 정적 한국어명 맵(`src/constants/stock-korean-names.ts`의 `searchKrTickers`/`TICKER_KR`)으로 매칭한다.
+- **새 검색 UI는 `useStockSearch`를 직접 쓰지 말고 공용 훅 `src/lib/services/stock/use-stock-suggestions.ts`(`useStockSuggestions`)를 사용할 것.** 이 훅이 한글이면 정적 맵, 영문이면 서버 검색으로 자동 분기하고 `kr`(한국어명)·`inDirectory`(추가 가능 여부)를 붙여 준다.
+- 과거 실수: 섹터 분석 관리 종목검색이 `useStockSearch`를 직접 써서 한국어 검색이 안 됐음 → `useStockSuggestions`로 교체해 해결.
+
 ## Error Handling
 
 - API 호출은 hook 안에서 → 오류는 `throw new Error(message)`로 던질 것

@@ -1,0 +1,28 @@
+// 사이드바 메뉴 — ADMIN이 /admin/menus 화면에서 직접 CRUD.
+// 트리(2단): parentId=null이면 대분류, 아니면 하위 메뉴.
+// - key: 안정 식별자. 서버 가드 assertRouteAccess(key)가 minRole을 조회한다. 기존 routeKey 승계.
+// - path: 풀 경로(예: /market/13f). 대분류는 '#' 또는 대표 경로. 메뉴는 사이드바 항목만 정의하며 실제 페이지를 생성하지 않는다.
+// - icon: menu-icons 레지스트리 키(컴포넌트는 클라에서 매핑). 보통 대분류만 지정.
+// - minRole: 데이터 접근 최소 등급(GUEST..ADMIN). 등급이 부족해도 메뉴는 보이며 클릭 시 데이터만 차단.
+// - hidden: 사이드바에서 완전히 숨김(권한 무관). ADMIN에게는 항상 보인다.
+// - type: 'FOLDER'(아코디언, 하위 보유) | 'LINK'(단일 링크, 아코디언 없음) | 'POPUP'(새 창으로 열기, 오른쪽 끝 팝업 표시). FOLDER만 자식을 가질 수 있다.
+// - locked: 실수 방지 잠금. true면 수정/삭제/이동이 차단된다(잠금 해제만 허용).
+model Menu {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  parentId  String?
+  parent    Menu?    @relation("MenuChildren", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Menu[]   @relation("MenuChildren")
+  title     String
+  path      String
+  icon      String?
+  badge     String?
+  type      String   @default("LINK")
+  disabled  Boolean  @default(false)
+  minRole   String   @default("FREE")
+  hidden    Boolean  @default(false)
+  locked    Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

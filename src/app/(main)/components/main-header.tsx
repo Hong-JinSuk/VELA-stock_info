@@ -19,10 +19,11 @@ import { agentStatusAtom } from '@/store/ai-atom';
 import { AgentStatus } from '@/types/ai';
 import { UserRole } from '@/types/user';
 import { useAtom } from 'jotai';
+import { useMenus } from '@/lib/services/menu/use-menus';
+import type { MenuNode } from '@/types/menu';
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
-import { navMain } from './nav-data';
 
 const ACTIVE_STATUSES = ['분석 중'] as const;
 
@@ -31,7 +32,8 @@ export function MainHeader() {
   const { data: session } = useSession();
   const isMobile = useIsMobile();
   const pathname = usePathname();
-  const breadcrumbs = getBreadcrumbs(pathname);
+  const { data: menus } = useMenus();
+  const breadcrumbs = getBreadcrumbs(pathname, menus ?? []);
   const agentStatusRef = useRef(agentStatus);
 
   useEffect(() => {
@@ -209,28 +211,16 @@ function getPolicyDescription(
   }
 }
 
-function getFullUrl(parentUrl: string, childUrl: string) {
-  if (!parentUrl || parentUrl === '#') return childUrl;
-  if (childUrl.startsWith(parentUrl)) return childUrl;
-  const cleanParent = parentUrl.endsWith('/')
-    ? parentUrl.slice(0, -1)
-    : parentUrl;
-  const cleanChild = childUrl.startsWith('/') ? childUrl : `/${childUrl}`;
-  return `${cleanParent}${cleanChild}`;
-}
-
-function getBreadcrumbs(pathname: string): string[] {
-  for (const item of navMain) {
-    if (item.items && item.items.length > 0) {
-      for (const sub of item.items) {
-        const fullUrl = getFullUrl(item.url, sub.url);
-        if (pathname === fullUrl || pathname.startsWith(`${fullUrl}/`)) {
-          return [item.title, sub.title];
-        }
+// DB 메뉴 트리에서 현재 경로의 브레드크럼(대분류 → 하위)을 찾는다. path는 풀 경로.
+function getBreadcrumbs(pathname: string, tree: MenuNode[]): string[] {
+  for (const group of tree) {
+    for (const sub of group.children) {
+      if (pathname === sub.path || pathname.startsWith(`${sub.path}/`)) {
+        return [group.title, sub.title];
       }
     }
-    if (pathname === item.url || pathname.startsWith(`${item.url}/`)) {
-      return [item.title];
+    if (pathname === group.path || pathname.startsWith(`${group.path}/`)) {
+      return [group.title];
     }
   }
   return [];

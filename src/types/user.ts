@@ -37,6 +37,31 @@ export function getFavoriteLimit(role: UserRole): number {
   return FAVORITE_LIMITS[role];
 }
 
+// 메뉴/라우트 접근권한용 레벨. GUEST(비로그인) + UserRole. 높을수록 상위 권한.
+// 라우트는 "최소 레벨(minRole)"을 갖고, 유저 레벨이 그 이상이면 접근 허용.
+// - GUEST: 로그인 안 한 사용자(공개 메뉴는 minRole=GUEST)
+// - FREE: 로그인한 무료 사용자(= "로그인 전용"은 minRole=FREE)
+// - TESTER는 무제한(내부용)이라 ADMIN 바로 아래.
+export type AccessLevel = 'GUEST' | UserRole;
+
+export const ACCESS_RANK: Record<AccessLevel, number> = {
+  GUEST: -1,
+  FREE: 0,
+  BASIC: 1,
+  PRO: 2,
+  MAX: 3,
+  TESTER: 90,
+  ADMIN: 99,
+};
+
+// 유저 레벨이 라우트의 최소 레벨 이상인지. ADMIN은 항상 통과.
+export function canAccessLevel(
+  userLevel: AccessLevel,
+  minLevel: AccessLevel,
+): boolean {
+  return ACCESS_RANK[userLevel] >= ACCESS_RANK[minLevel];
+}
+
 // FREE: 1주 / MAX: 1시간 / 그 외: 1달
 export function getNextCycleEnd(role: UserRole, from: Date): Date {
   const end = new Date(from);

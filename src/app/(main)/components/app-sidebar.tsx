@@ -12,21 +12,15 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import {
-  IconCamera,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconReport,
-} from '@tabler/icons-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useNavMenus } from '@/lib/services/menu/use-nav-menus';
 import Link from 'next/link';
 import { NavAdmin } from './nav-admin';
-import { navMain } from './nav-data';
 import { NavMain } from './nav-main';
 import { NavUser } from './nav-user';
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { items: visibleNav, isLoading } = useNavMenus();
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -47,7 +41,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {navMain.length > 0 && <NavMain items={navMain} />}
+        {isLoading ? (
+          <div className="flex flex-col gap-1.5 p-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-10 rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          visibleNav.length > 0 && <NavMain items={visibleNav} />
+        )}
         {/* {navPresonal.length > 0 && <NavPersonal items={navPresonal} />} */}
         <NavAdmin />
         {/* {data.documents.length > 0 && <NavDocuments items={data.documents} />}
@@ -61,88 +63,3 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     </Sidebar>
   );
 }
-
-const data = {
-  navClouds: [
-    {
-      title: 'Capture',
-      icon: IconCamera,
-      isActive: true,
-      url: '#',
-      items: [
-        {
-          title: 'Active Proposals',
-          url: '#',
-        },
-        {
-          title: 'Archived',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Proposal',
-      icon: IconFileDescription,
-      url: '#',
-      items: [
-        {
-          title: 'Active Proposals',
-          url: '#',
-        },
-        {
-          title: 'Archived',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Prompts',
-      icon: IconFileAi,
-      url: '#',
-      items: [
-        {
-          title: 'Active Proposals',
-          url: '#',
-        },
-        {
-          title: 'Archived',
-          url: '#',
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    // {
-    //   title: 'Settings',
-    //   url: '#',
-    //   icon: IconSettings,
-    // },
-    // {
-    //   title: 'Get Help',
-    //   url: '#',
-    //   icon: IconHelp,
-    // },
-    // {
-    //   title: 'Search',
-    //   url: '#',
-    //   icon: IconSearch,
-    // },
-  ],
-  documents: [
-    {
-      name: 'Data Library',
-      url: '#',
-      icon: IconDatabase,
-    },
-    {
-      name: 'Reports',
-      url: '#',
-      icon: IconReport,
-    },
-    {
-      name: 'Word Assistant',
-      url: '#',
-      icon: IconFileWord,
-    },
-  ],
-};
