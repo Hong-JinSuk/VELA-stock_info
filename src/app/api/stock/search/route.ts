@@ -53,15 +53,25 @@ async function searchDb(q: string): Promise<StockSearchItem[]> {
     displaySymbol: r.displaySymbol ?? r.symbol,
     description: r.description,
     type: r.type,
+    inDirectory: true, // DB 결과는 항상 디렉터리에 존재
   }));
 }
 
 // 검색어별 1시간 캐시. DB가 비면(신규 상장 등) 그때만 Finnhub /search 1콜.
+// 폴백 결과는 각 심볼의 실제 DB 존재 여부로 inDirectory를 채운다(추가 가능 여부 표시용).
 const cachedSearch = unstable_cache(
   async (q: string): Promise<StockSearchItem[]> => {
     const dbResults = await searchDb(q);
     if (dbResults.length > 0) return dbResults;
-    return searchSymbol(q);
+
+    const fallback = await searchSymbol(q);
+    if (fallback.length === 0) return fallback;
+    const existing = await prisma.stockSymbol.findMany({
+      where: { symbol: { in: fallback.map((f) => f.symbol) } },
+      select: { symbol: true },
+    });
+    const inDir = new Set(existing.map((e) => e.symbol));
+    return fallback.map((f) => ({ ...f, inDirectory: inDir.has(f.symbol) }));
   },
   ['stock-search'],
   { revalidate: 3600, tags: ['stock-search'] },

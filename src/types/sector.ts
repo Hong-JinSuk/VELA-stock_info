@@ -16,3 +16,16 @@ export type SectorPerformance = {
   returns: Record<SectorPeriodKey, number | null>;
   trend: number[]; // 최근 종가 시계열 (sparkline용)
 };
+
+// 임의 ETF 기간 성과 (섹터 분석 ETF 테이블용). Yahoo 일봉에서 계산.
+// 기간 키는 EtfPeriodKey(d1·w1·m1·m3·m6·ytd·y1) — 섹터 지표보다 6달/1년이 더 있다.
+export type { EtfPeriodKey } from '@/lib/market/period-returns';
+export type EtfPerformance = {
+  symbol: string;
+  price: number | null;
+  returns: Record<
+    import('@/lib/market/period-returns').EtfPeriodKey,
+    number | null
+  >;
+  trend: number[];
+};

@@ -1,6 +1,7 @@
 'use client';
 
 import { IconChevronRight } from '@tabler/icons-react';
+import { AppWindow } from 'lucide-react';
 
 import {
   Collapsible,
@@ -32,6 +33,14 @@ const disabledColor =
 const isMenuActive = (pathname: string, url: string) => {
   if (!url || url === '#') return false;
   return pathname === url || pathname.startsWith(`${url}/`);
+};
+
+// POPUP 타입 메뉴: 새 창(팝업)으로 연다. 내부 경로는 base path를 붙인다.
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
+const openPopup = (url: string) => {
+  if (!url || url === '#') return;
+  const href = /^https?:\/\//.test(url) ? url : `${BASE_PATH}${url}`;
+  window.open(href, '_blank', 'noopener,noreferrer,width=1100,height=800');
 };
 
 // 상위 경로(Level 1)와 하위 경로(Level 2)를 자동으로 합쳐주는 함수
@@ -121,6 +130,15 @@ export function NavMain({ items }: { items: NavItemProps[] }) {
                                       준비 중
                                     </span>
                                   </div>
+                                ) : subItem.popup ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => openPopup(fullUrl)}
+                                    className="flex w-full items-center justify-between"
+                                  >
+                                    <span>{subItem.title}</span>
+                                    <AppWindow className="size-3.5 opacity-60" />
+                                  </button>
                                 ) : (
                                   <Link href={fullUrl}>
                                     <span>{subItem.title}</span>
@@ -160,6 +178,16 @@ export function NavMain({ items }: { items: NavItemProps[] }) {
                         준비 중
                       </span>
                     </div>
+                  ) : item.popup ? (
+                    <button
+                      type="button"
+                      onClick={() => openPopup(item.url)}
+                      className="flex w-full items-center"
+                    >
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                      <AppWindow className="ml-auto size-4 opacity-60" />
+                    </button>
                   ) : (
                     <Link href={item.url}>
                       {item.icon && <item.icon />}

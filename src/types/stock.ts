@@ -7,6 +7,9 @@ export type StockSearchItem = {
   displaySymbol: string;
   description: string;
   type: string;
+  // 우리 StockSymbol 디렉터리에 존재하는지. false면 Finnhub 폴백 결과(상장폐지/미수록 등)로
+  // 섹터·즐겨찾기처럼 DB 존재가 필요한 곳에선 추가 불가. (DB 결과는 항상 true)
+  inDirectory?: boolean;
 };
 
 export type StockQuote = {

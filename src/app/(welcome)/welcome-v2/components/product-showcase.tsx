@@ -1,6 +1,5 @@
 import { FadeInView } from '@/motion/fade-in-view';
 import { PRODUCT_DEMOS } from '../demos';
-import BrowserFrame from './browser-frame';
 
 // 실사용 화면 쇼케이스 — 데모 레지스트리를 순회하며 캡션 + 브라우저 프레임으로 표시.
 // 데스크톱에서는 텍스트/화면을 좌우 교차 배치, 모바일에서는 세로 스택.
@@ -26,7 +25,7 @@ export default function ProductShowcase() {
         </FadeInView>
 
         <div className="flex flex-col gap-20 sm:gap-28">
-          {PRODUCT_DEMOS.map(({ id, eyebrow, title, description, path, Component, width }, idx) => {
+          {PRODUCT_DEMOS.map(({ id, eyebrow, title, description, Component, width }, idx) => {
             const reversed = idx % 2 === 1;
             return (
               <FadeInView key={id}>
@@ -54,11 +53,9 @@ export default function ProductShowcase() {
                       reversed ? 'lg:order-1 lg:col-start-1' : 'lg:order-2'
                     }`}
                   >
-                    <BrowserFrame path={path}>
-                      <div className={width === 'wide' ? 'overflow-x-auto' : ''}>
-                        <Component />
-                      </div>
-                    </BrowserFrame>
+                    <div className={width === 'wide' ? 'overflow-x-auto' : ''}>
+                      <Component />
+                    </div>
                   </div>
                 </div>
               </FadeInView>

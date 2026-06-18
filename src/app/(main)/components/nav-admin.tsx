@@ -8,27 +8,15 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { useIndicatorBatchMutation } from '@/lib/services/admin/use-indicator-batch-mutation';
-import { useOverviewSnapshotMutation } from '@/lib/services/admin/use-overview-snapshot-mutation';
-import { useThirteenFFilersBatchMutation } from '@/lib/services/admin/use-thirteenf-filers-batch-mutation';
-import { useThirteenFSummaryBatchMutation } from '@/lib/services/admin/use-thirteenf-summary-batch-mutation';
-import { IconLoader2, IconRefresh } from '@tabler/icons-react';
+import { Settings2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 
-// ADMIN 권한 유저에게만 노출되는 사이드바 섹션. 오버뷰 인사이트 / 지표 / 13F 매니저 명단 수동 배치 트리거 제공.
+// ADMIN 권한 유저에게만 노출되는 사이드바 섹션.
+// 세부 관리 도구(메뉴 권한/섹터/수동 배치)는 /admin 페이지로 모음 — 사이드바는 단일 진입점만.
 export function NavAdmin() {
   const { data: session } = useSession();
-  const overviewMutation = useOverviewSnapshotMutation();
-  const indicatorMutation = useIndicatorBatchMutation();
-  const thirteenFFilersMutation = useThirteenFFilersBatchMutation();
-  const thirteenFSummaryMutation = useThirteenFSummaryBatchMutation();
-
   if (session?.user?.role !== 'ADMIN') return null;
-
-  const isOverviewPending = overviewMutation.isPending;
-  const isIndicatorPending = indicatorMutation.isPending;
-  const isThirteenFFilersPending = thirteenFFilersMutation.isPending;
-  const isThirteenFSummaryPending = thirteenFSummaryMutation.isPending;
 
   return (
     <SidebarGroup className="mt-auto">
@@ -37,74 +25,14 @@ export function NavAdmin() {
         <SidebarMenu className="gap-y-1.5">
           <SidebarMenuItem>
             <SidebarMenuButton
-              tooltip="오버뷰 인사이트 수동 배치"
-              disabled={isOverviewPending}
-              onClick={() => overviewMutation.mutate()}
-              className="w-full flex items-center py-4 px-3 rounded-xl transition-all text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent dark:text-white dark:hover:text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+              asChild
+              tooltip="관리"
+              className="w-full flex items-center py-4 px-3 rounded-xl transition-all text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent dark:text-white dark:hover:text-white cursor-pointer"
             >
-              {isOverviewPending ? (
-                <IconLoader2 className="animate-spin" />
-              ) : (
-                <IconRefresh />
-              )}
-              <span>
-                {isOverviewPending ? '오버뷰 배치 실행 중...' : '오버뷰 수동 배치'}
-              </span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip="FRED + Yahoo 지표 수동 배치"
-              disabled={isIndicatorPending}
-              onClick={() => indicatorMutation.mutate()}
-              className="w-full flex items-center py-4 px-3 rounded-xl transition-all text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent dark:text-white dark:hover:text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isIndicatorPending ? (
-                <IconLoader2 className="animate-spin" />
-              ) : (
-                <IconRefresh />
-              )}
-              <span>
-                {isIndicatorPending ? '지표 배치 실행 중...' : '지표 수동 배치'}
-              </span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip="SEC 13F 매니저 명단 수동 배치"
-              disabled={isThirteenFFilersPending}
-              onClick={() => thirteenFFilersMutation.mutate()}
-              className="w-full flex items-center py-4 px-3 rounded-xl transition-all text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent dark:text-white dark:hover:text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isThirteenFFilersPending ? (
-                <IconLoader2 className="animate-spin" />
-              ) : (
-                <IconRefresh />
-              )}
-              <span>
-                {isThirteenFFilersPending
-                  ? '13F 명단 배치 실행 중...'
-                  : '13F 명단 수동 배치'}
-              </span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip="13F 펀드 요약(AUM/섹터/매매) 수동 배치 — 클릭당 5개 filer"
-              disabled={isThirteenFSummaryPending}
-              onClick={() => thirteenFSummaryMutation.mutate()}
-              className="w-full flex items-center py-4 px-3 rounded-xl transition-all text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent dark:text-white dark:hover:text-white cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isThirteenFSummaryPending ? (
-                <IconLoader2 className="animate-spin" />
-              ) : (
-                <IconRefresh />
-              )}
-              <span>
-                {isThirteenFSummaryPending
-                  ? '13F 요약 배치 실행 중...'
-                  : '13F 요약 수동 배치'}
-              </span>
+              <Link href="/admin">
+                <Settings2 />
+                <span>관리</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

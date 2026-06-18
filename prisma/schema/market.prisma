@@ -85,6 +85,7 @@ model StockSymbol {
   updatedAt     DateTime @default(now())
 
   etf StockSymbolEtf? // type='ETP'면 ETF 보유종목 상세(1:1). 아니면 null.
+  valuation StockValuation? // 즐겨찾기 종목 적정주가 스냅샷(1:1). 종목 보고서용.
 
   @@index([description])
 }
@@ -124,4 +125,29 @@ model StockSymbolEtfHolding {
   @@unique([etfSymbol, rank])
   @@index([etfSymbol])
   @@index([symbol])
+}
+
+// 종목 적정주가 스냅샷 (종목 보고서). 심볼당 1행 — 전체 유저 즐겨찾기의 dedup 집합을
+// gemini-server 배치가 신선도 회전(가장 오래된 것부터 N개)으로 갱신 → vela는 DB만 읽음.
+// Finnhub metric=all(forward P/E·ROA·EPS성장률) + /quote(현재가)로 PEG 기반 적정주가 계산.
+// 폴리모픽 Favorite(type='STOCK')의 itemKey = symbol. 입력값도 함께 저장(표시/재현용).
+model StockValuation {
+  symbol       String   @id // = StockSymbol.symbol
+  price        Float // 스냅샷 시점 현재가 (Finnhub /quote .c)
+  forwardPe    Float? // forward P/E
+  growthPct    Float? // 적정PER 계산에 쓴 EPS 성장률(%)
+  growthSource String // 'EPS_5Y' | 'EPS_3Y' | 'EPS_TTM'
+  roaTtm       Float? // ROA(TTM) — 수익성 품질 배지용
+  high52w      Float? // 52주 최고가 (참고)
+  targetPeg    Float // 목표 PEG (현재 1.0). 모델 변경 추적용
+  fairPe       Float? // 적정 PER
+  fairValue    Float? // 적정주가
+  upsidePct    Float? // 상승여력(%)
+  status       String // 'OK' | 'NO_EARNINGS'
+  snapshotAt   DateTime // KST 벽시계 (배치 시점). 신선도 회전 정렬 기준
+  updatedAt    DateTime @updatedAt
+
+  stock StockSymbol @relation(fields: [symbol], references: [symbol], onDelete: Cascade)
+
+  @@index([snapshotAt]) // 가장 오래된 것부터 갱신
 }

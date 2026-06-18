@@ -226,7 +226,7 @@ export default function Page() {
         ) : (
           <>
             {/* 상단 고정 탭 — 클릭 시 해당 섹션으로 이동 + scrollspy 하이라이트 */}
-            <nav className="sticky top-0 z-20 -mx-6 -my-2 flex gap-2 overflow-x-auto no-scrollbar border-b border-border bg-background/90 px-6 py-3 backdrop-blur">
+            <nav className="sticky top-0 z-20 -mx-6 -my-2 flex items-center gap-2 overflow-x-auto no-scrollbar border-b border-border bg-background/90 px-6 py-3 backdrop-blur">
               {sections.map(({ key, count }) => {
                 const theme = SECTION_THEME[key];
                 const Icon = theme.icon;
@@ -236,13 +236,13 @@ export default function Page() {
                     key={key}
                     type="button"
                     onClick={() => scrollTo(key)}
-                    className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                    className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                       isActive
                         ? `ring-1 ${theme.activeChip}`
                         : 'text-muted-foreground hover:bg-muted'
                     }`}
                   >
-                    <Icon className="size-3.5" />
+                    <Icon className="size-3.5 shrink-0" />
                     {SECTION_TITLE[key]}
                     <span className="tabular-nums opacity-70">{count}</span>
                   </button>
