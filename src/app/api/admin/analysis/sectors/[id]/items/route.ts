@@ -1,7 +1,10 @@
 import { api } from '@/lib/api/axios';
 import { requireAdmin } from '@/lib/auth/guards';
 import prisma from '@/lib/prisma';
-import { addSectorItemSchema } from '@/schemas/analysis-sector-schema';
+import {
+  addSectorItemSchema,
+  updateSectorItemSchema,
+} from '@/schemas/analysis-sector-schema';
 import { NextRequest, NextResponse } from 'next/server';
 
 // POST /api/admin/analysis/sectors/[id]/items — 종목/ETF 추가. ADMIN 전용.
@@ -24,7 +27,7 @@ export async function POST(
     );
   }
   const symbol = parsed.data.symbol.toUpperCase();
-  const note = parsed.data.note;
+  const note = parsed.data.note?.trim() || null;
 
   const sector = await prisma.analysisSector.findUnique({
     where: { id: sectorId },
@@ -61,7 +64,7 @@ export async function POST(
 
   const count = await prisma.analysisSectorItem.count({ where: { sectorId } });
   const item = await prisma.analysisSectorItem.create({
-    data: { sectorId, symbol, note: note ?? null, sortOrder: count },
+    data: { sectorId, symbol, note, sortOrder: count },
   });
 
   // 신규 종목 우선: cron을 기다리지 않고 곧바로 적정주가 스냅샷(개별 종목만; ETF는 추정 불가).
@@ -85,6 +88,40 @@ export async function POST(
     { id: item.id, symbol: item.symbol, note: item.note, sortOrder: item.sortOrder },
     { status: 201 },
   );
+}
+
+// PATCH /api/admin/analysis/sectors/[id]/items — 항목 설명(note) 수정. ADMIN 전용.
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const g = await requireAdmin();
+  if (!g.ok) return g.res;
+
+  const { id: sectorId } = await params;
+  const parsed = updateSectorItemSchema.safeParse(
+    await req.json().catch(() => null),
+  );
+  if (!parsed.success) {
+    return NextResponse.json(
+      { message: '요청 형식이 올바르지 않습니다.' },
+      { status: 400 },
+    );
+  }
+  const symbol = parsed.data.symbol.toUpperCase();
+  const note = parsed.data.note?.trim() || null;
+
+  const res = await prisma.analysisSectorItem.updateMany({
+    where: { sectorId, symbol },
+    data: { note },
+  });
+  if (res.count === 0) {
+    return NextResponse.json(
+      { message: '항목을 찾을 수 없습니다.' },
+      { status: 404 },
+    );
+  }
+  return NextResponse.json({ symbol, note });
 }
 
 // DELETE /api/admin/analysis/sectors/[id]/items?symbol=AAPL — 종목 제거. ADMIN 전용.

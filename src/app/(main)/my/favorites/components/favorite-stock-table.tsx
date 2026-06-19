@@ -89,7 +89,7 @@ export default function FavoriteStockTable({
                 size={16}
               />
               <Link
-                href={`/market/stocks/${it.itemKey}`}
+                href={`/market-data/stocks/${it.itemKey}`}
                 className="flex min-w-0 flex-1 items-center gap-3"
               >
                 <div className="flex min-w-0 flex-1 flex-col">

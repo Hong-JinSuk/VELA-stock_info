@@ -20,7 +20,7 @@ model AnalysisSectorItem {
   id        String  @id @default(uuid())
   sectorId  String
   symbol    String // StockSymbol.symbol
-  note      String? // ADMIN 메모 (예: "대장주", "발사체")
+  note      String? // 항목 설명 — 사용자에게 노출(이 ETF/종목이 무엇인지). 예: "발사체 대장주"
   sortOrder Int     @default(0)
 
   sector AnalysisSector @relation(fields: [sectorId], references: [id], onDelete: Cascade)

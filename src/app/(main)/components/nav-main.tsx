@@ -18,7 +18,6 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
-import { useFng } from '@/lib/services/stock/use-fng';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { NavItemProps } from '../types';
@@ -58,7 +57,6 @@ const getFullUrl = (parentUrl: string, childUrl: string) => {
 
 export function NavMain({ items }: { items: NavItemProps[] }) {
   const pathname = usePathname();
-  const { data } = useFng();
 
   return (
     <SidebarGroup>

@@ -5,6 +5,7 @@ import {
   krNameOf,
   searchKrTickers,
 } from '@/constants/stock-korean-names';
+import { useTypeaheadNav } from '@/hooks/use-typeahead-nav';
 import { useStockSearch } from '@/lib/services/stock/use-stock-search';
 import type { StockSearchItem } from '@/types/stock';
 import { Search } from 'lucide-react';
@@ -52,10 +53,10 @@ export default function StockSearchBar() {
   );
   const [debounced, setDebounced] = useState('');
   const [showSuggest, setShowSuggest] = useState(false);
-  const [highlight, setHighlight] = useState(-1);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
 
   // 입력 → debounce → 서버 사이드 검색.
   useEffect(() => {
@@ -83,9 +84,9 @@ export default function StockSearchBar() {
     const ticker = symbol.trim().toUpperCase();
     if (!ticker) return;
     setShowSuggest(false);
-    setHighlight(-1);
+    reset();
     inputRef.current?.blur();
-    router.push(`/market/stocks/${encodeURIComponent(ticker)}`);
+    router.push(`/market-data/stocks/${encodeURIComponent(ticker)}`);
   }
 
   function onSelect(item: StockSearchItem) {
@@ -93,27 +94,19 @@ export default function StockSearchBar() {
     goTo(item.symbol);
   }
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (showSuggest && highlight >= 0 && suggestions[highlight]) {
-      onSelect(suggestions[highlight]);
-      return;
-    }
-    goTo(value);
-  }
+  // 종목찾기/13F/섹터 관리 공용 키보드 네비게이션(↑/↓/Enter/Esc).
+  const { highlight, setHighlight, onKeyDown, reset } = useTypeaheadNav({
+    items: suggestions,
+    isOpen: showSuggest,
+    onClose: () => setShowSuggest(false),
+    listRef,
+    onSelect,
+  });
 
-  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (!showSuggest || suggestions.length === 0) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setHighlight((h) => (h + 1) % suggestions.length);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setHighlight((h) => (h - 1 + suggestions.length) % suggestions.length);
-    } else if (e.key === 'Escape') {
-      setShowSuggest(false);
-      setHighlight(-1);
-    }
+  function handleSubmit(e: React.FormEvent) {
+    // 강조 항목 Enter는 onKeyDown이 가로채므로, 여기로 오는 건 강조 없는 제출뿐.
+    e.preventDefault();
+    goTo(value);
   }
 
   return (
@@ -129,7 +122,7 @@ export default function StockSearchBar() {
           onChange={(e) => {
             setValue(e.target.value);
             setShowSuggest(true);
-            setHighlight(-1);
+            reset();
           }}
           onFocus={() => setShowSuggest(true)}
           onKeyDown={onKeyDown}
@@ -147,14 +140,17 @@ export default function StockSearchBar() {
       </form>
 
       {showSuggest && (suggestLoading || suggestions.length > 0) && (
-        <ul className="absolute left-0 right-0 top-full mt-2 z-30 max-h-72 overflow-y-auto rounded-xl border border-border bg-popover shadow-lg">
+        <ul
+          ref={listRef}
+          className="absolute left-0 right-0 top-full mt-2 z-30 max-h-72 overflow-y-auto rounded-xl border border-border bg-popover shadow-lg"
+        >
           {suggestLoading ? (
             <li className="px-4 py-3 text-sm text-muted-foreground/60">
               검색 중…
             </li>
           ) : (
             suggestions.map((item, i) => (
-              <li key={`${item.symbol}-${i}`}>
+              <li key={`${item.symbol}-${i}`} data-typeahead-item>
                 <button
                   type="button"
                   onMouseDown={(e) => e.preventDefault()}

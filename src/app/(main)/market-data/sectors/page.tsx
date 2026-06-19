@@ -66,7 +66,7 @@ export default function Page() {
 
   const meta = {
     onRowClick: (row: { original: SectorPerformance }) =>
-      router.push(`/market/stocks/${row.original.ticker}`),
+      router.push(`/market-data/stocks/${row.original.ticker}`),
   };
   const sectorTable = useReactTable({
     data: sectorRows,

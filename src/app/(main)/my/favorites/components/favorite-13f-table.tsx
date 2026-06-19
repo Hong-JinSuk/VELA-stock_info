@@ -5,7 +5,7 @@
 import {
   thirteenFColumns,
   thirteenFFavoriteColumn,
-} from '@/app/(main)/market/13f/columns';
+} from '@/app/(main)/market-data/13f/columns';
 import DataTable from '@/components/common/data-table/data-table';
 import { useThirteenFByCiks } from '@/lib/services/market/use-thirteenf-by-ciks';
 import type { ThirteenFListItem } from '@/types/thirteenf';
@@ -30,7 +30,7 @@ export default function FavoriteThirteenFTable({ ciks }: { ciks: string[] }) {
     meta: {
       onRowClick: (row) => {
         const { accession } = row.original;
-        if (accession) router.push(`/market/13f/${accession}`);
+        if (accession) router.push(`/market-data/13f/${accession}`);
       },
     },
   });

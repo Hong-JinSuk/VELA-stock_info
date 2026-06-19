@@ -135,8 +135,9 @@ model StockValuation {
   symbol       String   @id // = StockSymbol.symbol
   price        Float // 스냅샷 시점 현재가 (Finnhub /quote .c)
   forwardPe    Float? // forward P/E
-  growthPct    Float? // 적정PER 계산에 쓴 EPS 성장률(%)
-  growthSource String // 'EPS_5Y' | 'EPS_3Y' | 'EPS_TTM'
+  growthPct    Float? // 적정PER 계산에 실제 쓴 EPS 성장률(%)
+  growthOverride Float? // 수동 조정 성장률(%) — 시트 '평균성장률 조정'. 있으면 자동성장률 대신 이 값 사용. 배치가 덮어쓰지 X(admin이 입력)
+  growthSource String // 'EPS_5Y' | 'EPS_3Y' | 'EPS_TTM' | 'MANUAL'
   roaTtm       Float? // ROA(TTM) — 수익성 품질 배지용
   high52w      Float? // 52주 최고가 (참고)
   targetPeg    Float // 목표 PEG (현재 1.0). 모델 변경 추적용

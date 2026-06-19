@@ -150,6 +150,19 @@ POST / PATCH / PUT / DELETE:
 - 좁은 폭에서 깨지기 쉬운 곳을 항상 점검: 가로 배치(`justify-between`) 카드, 버튼 토글 그룹, 제목+칩 한 줄, 긴 라벨 → 필요하면 `flex-wrap`·`break-keep`·세로 스택(`flex-col sm:flex-row`)으로 처리.
 - 터치 환경에서는 hover가 동작하지 않으므로 **Tooltip 대신 Popover** 사용.
 
+### 공용화로 UX 일관성 확보 — ⚠️ CRITICAL
+
+**반복되는 인터랙션·UX 패턴(검색 자동완성, 키보드 네비게이션, 드롭다운, 모달, 페이지네이션 등)은 그 자리에서 즉석 구현하지 말고 공용 훅/컴포넌트로 만들어 모든 화면이 동일하게 동작하게 할 것.** 한 곳만 좋고 다른 곳은 빠지는 일이 없어야 한다 — UX는 앱 전체에서 일관돼야 한다.
+
+- 새 UX를 붙일 때 먼저 **이미 공용 훅/컴포넌트가 있는지 확인**하고 있으면 재사용한다. 없는데 두 곳 이상에서 쓸 패턴이면 **공용으로 추출**한 뒤 적용한다.
+- 기존에 한 곳에만 있던 좋은 동작은, 같은 류의 다른 UI에도 **빠짐없이 적용**한다 (예: 검색창 키보드 네비게이션).
+- 적용 예:
+  - **검색 자동완성 키보드 네비게이션**(↑/↓/Enter/Esc): 공용 훅 `src/hooks/use-typeahead-nav.ts`(`useTypeaheadNav`)를 쓴다. 모든 검색창은 이 동작을 지원해야 한다 (종목찾기·13F·섹터 관리에 적용됨). [[종목 검색 한국어 입력 지원]]과 함께 검색 UI의 baseline.
+  - **종목 검색 데이터 소스**: `useStockSuggestions`(한글/영문 자동 분기) 공용 훅.
+  - **삭제(되돌릴 수 없는 액션) 확인**: 모든 삭제·제거 기능은 실행 전 반드시 한 번 더 확인을 받는다. `window.confirm` 같은 브라우저 기본 대화상자를 쓰지 말고 공용 컴포넌트 `src/components/common/confirm-dialog.tsx`(`ConfirmDialog`, shadcn AlertDialog 기반)로 모달을 띄울 것. 삭제 버튼을 `trigger`로 넘기고 `onConfirm`에 실제 mutation을 연결한다. (섹터/섹터 항목/메뉴 삭제에 적용됨.) 토글성 가역 액션(즐겨찾기 on/off 등)은 예외.
+  - **아코디언/펼침은 항상 부드럽게**: 모든 아코디언·collapsible·펼침 영역은 즉시 토글(display none↔block)하지 말고 **높이 기반 애니메이션으로 부드럽게** 열고 닫는다. 두 가지 공용 방식 중 하나를 쓸 것: ① shadcn `Collapsible`(`src/components/ui/collapsible.tsx`) — `CollapsibleContent`에 부드러운 애니메이션(`animate-collapsible-down/up`, tw-animate-css 제공)이 **기본 내장**되어 있으니 그냥 쓰면 된다. ② Collapsible을 안 쓰는 곳은 `grid-rows-[0fr]`↔`grid-rows-[1fr]` + `transition-[grid-template-rows] duration-200`(내부 wrapper `overflow-hidden`) 패턴(menus 관리·섹터 분석 상세에 적용됨). 펼침 화살표(chevron)는 `transition-transform`으로 함께 회전시킨다.
+- **단, 사용자가 지정한 방식보다 더 나은 패턴/추상화가 있다고 판단되면 그대로 따르지 말고 먼저 제안할 것.** (예: 더 적합한 기존 컴포넌트, 접근성·일관성·유지보수에서 나은 구조). 근거를 들어 제안하고, 사용자가 선택하게 한다.
+
 ### Table 컬럼 정렬
 
 테이블 컬럼 정렬은 데이터 성격으로 결정한다. DataTable(`src/components/common/data-table`)에서는 columnDef의 `meta.align`으로 지정 (헤더/셀에 함께 적용됨). 셀 안 wrapper div나 커스텀 header 함수로 정렬을 우회하지 말 것.

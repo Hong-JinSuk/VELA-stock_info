@@ -1,6 +1,12 @@
 'use client';
 
+import ConfirmDialog from '@/components/common/confirm-dialog';
 import { Button } from '@/components/ui/button';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -9,69 +15,120 @@ import {
   useCreateSector,
   useDeleteSector,
   useRemoveSectorItem,
+  useUpdateSectorItem,
 } from '@/lib/services/admin/use-admin-sectors';
 import { useStockSuggestions } from '@/lib/services/stock/use-stock-suggestions';
-import type { AdminSector } from '@/types/analysis';
-import { Trash2, X } from 'lucide-react';
-import { useState } from 'react';
+import { useTypeaheadNav } from '@/hooks/use-typeahead-nav';
+import type { StockSuggestion } from '@/lib/services/stock/use-stock-suggestions';
+import type { AdminSector, AdminSectorItem } from '@/types/analysis';
+import { cn } from '@/lib/utils';
+import { ChevronRight, Pencil, Trash2, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 // 섹터에 종목/ETF를 검색해서 추가하는 입력 (기존 종목검색 자동완성 재사용).
 function SectorItemAdder({ sectorId }: { sectorId: string }) {
   const [q, setQ] = useState('');
+  const [note, setNote] = useState('');
   const [open, setOpen] = useState(false);
-  const { suggestions: results, isLoading } = useStockSuggestions(q, 12);
+  const { suggestions, isLoading } = useStockSuggestions(q, 12);
   const addItem = useAddSectorItem();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const results = suggestions.slice(0, 12);
+  const isAddable = (r: StockSuggestion) => r.inDirectory !== false;
 
   const add = (symbol: string) => {
     addItem.mutate(
-      { id: sectorId, symbol },
+      { id: sectorId, symbol, note: note.trim() || undefined },
       {
         onSuccess: () => {
           setQ('');
+          setNote('');
           setOpen(false);
         },
       },
     );
   };
 
+  const showSuggest = open && q.trim().length >= 2;
+
+  // 종목찾기와 동일한 키보드 네비게이션(↑/↓/Enter/Esc). 추가 불가 항목 Enter는 무시.
+  const { highlight, setHighlight, onKeyDown, reset } = useTypeaheadNav({
+    items: results,
+    isOpen: showSuggest,
+    onClose: () => setOpen(false),
+    listRef,
+    onSelect: (r) => {
+      if (isAddable(r) && !addItem.isPending) add(r.symbol);
+    },
+  });
+
+  // 바깥 클릭으로 드롭다운 닫기.
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
+
   return (
-    <div className="relative">
+    <div className="flex flex-col gap-2">
       <Input
-        value={q}
-        onChange={(e) => {
-          setQ(e.target.value);
-          setOpen(true);
-        }}
-        onFocus={() => setOpen(true)}
-        placeholder="종목/ETF 검색 후 추가 (예: RKLB)"
+        value={note}
+        onChange={(e) => setNote(e.target.value)}
+        placeholder="설명 (선택) — 검색해서 추가하면 함께 저장됩니다"
         className="h-9 text-sm"
+        maxLength={300}
       />
-      {open && q.trim().length >= 2 && (
-        <div className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-border bg-popover shadow-lg">
+      <div ref={rootRef} className="relative">
+        <Input
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value);
+            setOpen(true);
+            reset();
+          }}
+          onFocus={() => setOpen(true)}
+          onKeyDown={onKeyDown}
+          placeholder="종목/ETF 검색 후 추가 (예: RKLB)"
+          className="h-9 text-sm"
+          autoComplete="off"
+        />
+      {showSuggest && (
+        <div
+          ref={listRef}
+          className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-border bg-popover shadow-lg"
+        >
           {isLoading ? (
             <div className="px-3 py-2 text-xs text-muted-foreground">
               검색 중...
             </div>
-          ) : (results?.length ?? 0) === 0 ? (
+          ) : results.length === 0 ? (
             <div className="px-3 py-2 text-xs text-muted-foreground">
               결과 없음
             </div>
           ) : (
-            results!.slice(0, 12).map((r) => {
+            results.map((r, i) => {
               // 디렉터리(StockSymbol)에 없는 폴백 결과는 추가 불가 → 비활성 + 안내.
-              const addable = r.inDirectory !== false;
+              const addable = isAddable(r);
               return (
                 <button
                   key={r.symbol}
                   type="button"
+                  data-typeahead-item
                   disabled={addItem.isPending || !addable}
                   onClick={() => addable && add(r.symbol)}
+                  onMouseEnter={() => setHighlight(i)}
                   title={
                     addable
                       ? undefined
                       : '디렉터리에 없는 종목입니다(상장폐지/미수록). 추가할 수 없습니다.'
                   }
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent/50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent ${
+                    i === highlight ? 'bg-accent' : 'hover:bg-accent/50'
+                  }`}
                 >
                   <span className="font-mono font-medium">{r.symbol}</span>
                   <span className="truncate text-xs text-muted-foreground">
@@ -88,62 +145,151 @@ function SectorItemAdder({ sectorId }: { sectorId: string }) {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }
 
-function SectorCard({ sector }: { sector: AdminSector }) {
+// 추가된 항목 1건 — 심볼 + 설명(인라인 편집) + 제거.
+function SectorItemRow({
+  sectorId,
+  item,
+}: {
+  sectorId: string;
+  item: AdminSectorItem;
+}) {
+  const updateItem = useUpdateSectorItem();
   const removeItem = useRemoveSectorItem();
-  const deleteSector = useDeleteSector();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(item.note ?? '');
+
+  const startEdit = () => {
+    setDraft(item.note ?? '');
+    setEditing(true);
+  };
+  const save = () => {
+    const next = draft.trim() || null;
+    if (next !== (item.note ?? null)) {
+      updateItem.mutate({ id: sectorId, symbol: item.symbol, note: next });
+    }
+    setEditing(false);
+  };
 
   return (
-    <div className="rounded-2xl border border-border bg-card/40 p-5">
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-foreground">{sector.name}</p>
-          <p className="font-mono text-[11px] text-muted-foreground/70">
-            /{sector.slug} · {sector.items.length}개
+    <li className="flex items-start gap-2 rounded-lg border border-border bg-background/40 px-3 py-2">
+      <div className="min-w-0 flex-1">
+        <span className="font-mono text-xs font-medium">{item.symbol}</span>
+        {editing ? (
+          <Input
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') save();
+              if (e.key === 'Escape') setEditing(false);
+            }}
+            onBlur={save}
+            autoFocus
+            placeholder="설명 입력"
+            maxLength={300}
+            className="mt-1 h-8 text-xs"
+            disabled={updateItem.isPending}
+          />
+        ) : item.note ? (
+          <p className="mt-0.5 text-xs text-muted-foreground break-keep">
+            {item.note}
           </p>
-        </div>
+        ) : (
+          <p className="mt-0.5 text-xs text-muted-foreground/50">설명 없음</p>
+        )}
+      </div>
+      {!editing && (
         <button
           type="button"
-          onClick={() => {
-            if (confirm(`"${sector.name}" 섹터를 삭제할까요?`)) {
-              deleteSector.mutate(sector.id);
-            }
-          }}
-          className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500"
-          aria-label="섹터 삭제"
+          onClick={startEdit}
+          className="shrink-0 rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+          aria-label={`${item.symbol} 설명 편집`}
         >
-          <Trash2 className="size-4" />
+          <Pencil className="size-3.5" />
         </button>
+      )}
+      <ConfirmDialog
+        title={<>&ldquo;{item.symbol}&rdquo; 항목을 제거할까요?</>}
+        description="섹터에서 이 종목을 제거합니다. 이 작업은 되돌릴 수 없습니다."
+        confirmLabel="제거"
+        onConfirm={() =>
+          removeItem.mutate({ id: sectorId, symbol: item.symbol })
+        }
+        trigger={
+          <button
+            type="button"
+            className="shrink-0 rounded p-1 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500"
+            aria-label={`${item.symbol} 제거`}
+          >
+            <X className="size-3.5" />
+          </button>
+        }
+      />
+    </li>
+  );
+}
+
+function SectorCard({ sector }: { sector: AdminSector }) {
+  const deleteSector = useDeleteSector();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      className="rounded-2xl border border-border bg-card/40"
+    >
+      <div className="flex items-center gap-2 px-4 py-3">
+        <CollapsibleTrigger className="flex min-w-0 flex-1 items-center gap-2.5 text-left">
+          <ChevronRight
+            className={cn(
+              'size-4 shrink-0 text-muted-foreground transition-transform',
+              open && 'rotate-90',
+            )}
+          />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-foreground">
+              {sector.name}
+            </p>
+            <p className="font-mono text-[11px] text-muted-foreground/70">
+              /{sector.slug} · {sector.items.length}개
+            </p>
+          </div>
+        </CollapsibleTrigger>
+        <ConfirmDialog
+          title={<>&ldquo;{sector.name}&rdquo; 섹터를 삭제할까요?</>}
+          description="섹터와 담긴 종목 목록이 모두 삭제됩니다. 이 작업은 되돌릴 수 없습니다."
+          onConfirm={() => deleteSector.mutate(sector.id)}
+          trigger={
+            <button
+              type="button"
+              className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500"
+              aria-label="섹터 삭제"
+            >
+              <Trash2 className="size-4" />
+            </button>
+          }
+        />
       </div>
 
-      {sector.items.length > 0 && (
-        <ul className="mb-3 flex flex-wrap gap-1.5">
-          {sector.items.map((it) => (
-            <li
-              key={it.id}
-              className="flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs"
-            >
-              <span className="font-mono font-medium">{it.symbol}</span>
-              <button
-                type="button"
-                onClick={() =>
-                  removeItem.mutate({ id: sector.id, symbol: it.symbol })
-                }
-                className="text-muted-foreground hover:text-rose-500"
-                aria-label={`${it.symbol} 제거`}
-              >
-                <X className="size-3" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <CollapsibleContent>
+        <div className="border-t border-border px-4 py-4">
+          {sector.items.length > 0 && (
+            <ul className="mb-3 flex flex-col gap-1.5">
+              {sector.items.map((it) => (
+                <SectorItemRow key={it.id} sectorId={sector.id} item={it} />
+              ))}
+            </ul>
+          )}
 
-      <SectorItemAdder sectorId={sector.id} />
-    </div>
+          <SectorItemAdder sectorId={sector.id} />
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -208,11 +354,11 @@ export default function AdminSectorsPage() {
         />
       </div>
 
-      {/* 섹터 목록 */}
+      {/* 섹터 목록 — 리스트 + 아코디언 */}
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <Skeleton key={i} className="h-40 rounded-2xl" />
+        <div className="flex flex-col gap-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-16 rounded-2xl" />
           ))}
         </div>
       ) : (data?.length ?? 0) === 0 ? (
@@ -220,7 +366,7 @@ export default function AdminSectorsPage() {
           아직 섹터가 없습니다. 위에서 만들어 보세요.
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="flex flex-col gap-2">
           {data!.map((s) => (
             <SectorCard key={s.id} sector={s} />
           ))}

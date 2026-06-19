@@ -45,9 +45,10 @@ export async function GET(
   const items: AnalysisSectorRow[] = sector.items.map((it) => {
     const symbol = it.symbol;
     const name = TICKER_KR[symbol] ?? descBySym.get(symbol) ?? symbol;
+    const note = it.note;
 
     if (typeBySym.get(symbol) === 'ETP') {
-      return { kind: 'ETF', symbol, name };
+      return { kind: 'ETF', symbol, name, note };
     }
 
     const v = valBySym.get(symbol);
@@ -56,6 +57,7 @@ export async function GET(
         kind: 'STOCK',
         symbol,
         name,
+        note,
         status: 'PENDING',
         price: null,
         roaTtm: null,
@@ -71,6 +73,7 @@ export async function GET(
       kind: 'STOCK',
       symbol,
       name,
+      note,
       status: v.status as StockReportStatus,
       price: v.price,
       roaTtm: v.roaTtm,

@@ -15,7 +15,7 @@ export default function HeroContent({ session }: Props) {
 
   const onClickStart = () => {
     if (session) {
-      router.push('/overview');
+      router.push('/dashboard');
     } else {
       router.push('/login');
     }

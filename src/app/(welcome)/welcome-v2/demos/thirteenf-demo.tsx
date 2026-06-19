@@ -3,7 +3,7 @@
 'use no memo';
 
 import DataTable from '@/components/common/data-table/data-table';
-import { thirteenFColumns } from '@/app/(main)/market/13f/columns';
+import { thirteenFColumns } from '@/app/(main)/market-data/13f/columns';
 import type { ThirteenFListItem } from '@/types/thirteenf';
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { SAMPLE_13F } from './sample-data';

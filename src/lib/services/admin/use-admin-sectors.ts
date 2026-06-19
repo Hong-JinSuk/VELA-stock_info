@@ -79,6 +79,30 @@ export function useAddSectorItem() {
   });
 }
 
+export function useUpdateSectorItem() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      symbol: string;
+      note: string | null;
+    }) => {
+      const { id, ...body } = input;
+      const { data } = await api.patch(
+        `/admin/analysis/sectors/${id}/items`,
+        body,
+      );
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('설명이 저장되었습니다.');
+      invalidate();
+    },
+    meta: { ignoreGlobalError: true },
+    onError: (e: Error) => toast.error(e.message || '저장 실패'),
+  });
+}
+
 export function useRemoveSectorItem() {
   const invalidate = useInvalidate();
   return useMutation({

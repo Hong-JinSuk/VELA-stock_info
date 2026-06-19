@@ -11,45 +11,45 @@ type SeedLeaf = {
 type SeedGroup = SeedLeaf & { icon?: string; children?: SeedLeaf[] };
 
 export const DEFAULT_MENU_SEED: SeedGroup[] = [
-  { key: 'dashboard', title: '대시보드', path: '/overview', icon: 'dashboard' },
+  { key: 'dashboard', title: '대시보드', path: '/dashboard', icon: 'dashboard' },
   {
     key: 'group-market',
     title: '시장 데이터',
-    path: '/market',
+    path: '/market-data',
     icon: 'market',
     children: [
-      { key: 'market-indicators', title: '경제 지표', path: '/market/indicators' },
-      { key: 'market-sectors', title: '섹터 지표', path: '/market/sectors' },
-      { key: 'market-13f', title: '13F', path: '/market/13f' },
-      { key: 'market-stocks', title: '종목찾기', path: '/market/stocks' },
+      { key: 'market-indicators', title: '경제 지표', path: '/market-data/indicators' },
+      { key: 'market-sectors', title: '섹터 지표', path: '/market-data/sectors' },
+      { key: 'market-13f', title: '13F', path: '/market-data/13f' },
+      { key: 'market-stocks', title: '종목찾기', path: '/market-data/stocks' },
     ],
   },
   {
     key: 'group-analysis',
     title: '데이터 분석',
-    path: '/analysis',
+    path: '/data-analysis',
     icon: 'analysis',
     children: [
-      { key: 'analysis-sectors', title: '섹터 분석', path: '/analysis/sectors' },
+      { key: 'analysis-sectors', title: '섹터 분석', path: '/data-analysis/sectors' },
     ],
   },
   {
     key: 'group-ai',
     title: 'AI 분석',
-    path: '/ai/stocks',
+    path: '/ai-analysis/stocks',
     icon: 'ai',
     children: [
-      { key: 'ai-predict', title: '주가 예측', path: '/ai/stocks/predict' },
+      { key: 'ai-predict', title: '주가 예측', path: '/ai-analysis/stocks/predict' },
       {
         key: 'ai-valuation',
         title: '적정 주가 평가',
-        path: '/ai/stocks/valuation',
+        path: '/ai-analysis/stocks/valuation',
         disabled: true,
       },
       {
         key: 'ai-compare',
         title: '종목 비교',
-        path: '/ai/stocks/compare',
+        path: '/ai-analysis/stocks/compare',
         disabled: true,
       },
     ],

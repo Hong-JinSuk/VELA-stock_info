@@ -30,7 +30,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <Link href="/overview">
+              <Link href="/dashboard">
                 <VelaLogo className="size-7!" />
                 <span className="text-base font-semibold tracking-widest">
                   VELA
