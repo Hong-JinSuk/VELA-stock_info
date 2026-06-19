@@ -1,6 +1,6 @@
 'use client';
 
-import EtfHoldingsCard from '@/app/(main)/market/stocks/components/etf-holdings-card';
+import EtfHoldingsCard from '@/app/(main)/market-data/stocks/components/etf-holdings-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Sparkline from '@/components/common/sparkline';
 import { useAnalysisSectorDetail } from '@/lib/services/analysis/use-analysis-sectors';
@@ -106,7 +106,7 @@ export default function AnalysisSectorDetailPage() {
     <main className="flex flex-1 min-h-0 flex-col gap-6 overflow-y-auto no-scrollbar p-6">
       <header>
         <Link
-          href="/analysis/sectors"
+          href="/data-analysis/sectors"
           className="text-xs text-muted-foreground hover:text-foreground"
         >
           ← 섹터 분석
@@ -267,6 +267,11 @@ function StockRow({
             {item.symbol}
             {date && <span className="ml-1.5">· {date} 기준</span>}
           </span>
+          {item.note && (
+            <span className="mt-0.5 truncate text-[11px] text-muted-foreground break-keep">
+              {item.note}
+            </span>
+          )}
         </div>
         <div className="text-right">
           {item.price != null && item.price > 0 ? (
@@ -335,7 +340,7 @@ function StockRow({
       <ExpandPanel isOpen={isOpen}>
         <StockDetail item={item} />
         <Link
-          href={`/market/stocks/${item.symbol}`}
+          href={`/market-data/stocks/${item.symbol}`}
           className="mt-3 inline-block text-xs text-blue-500 hover:underline"
         >
           종목 상세 보기 →
@@ -372,6 +377,11 @@ function EtfRow({
           <span className="font-mono text-[11px] text-muted-foreground/70">
             {item.symbol}
           </span>
+          {item.note && (
+            <span className="mt-0.5 truncate text-[11px] text-muted-foreground break-keep">
+              {item.note}
+            </span>
+          )}
         </div>
         <div className="text-right">
           {perf?.price != null ? (
@@ -403,7 +413,7 @@ function EtfRow({
       <ExpandPanel isOpen={isOpen}>
         <EtfHoldingsCard ticker={item.symbol} />
         <Link
-          href={`/market/stocks/${item.symbol}`}
+          href={`/market-data/stocks/${item.symbol}`}
           className="mt-3 inline-block text-xs text-blue-500 hover:underline"
         >
           ETF 상세 보기 →

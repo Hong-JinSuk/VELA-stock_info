@@ -26,7 +26,7 @@ export function Header({ session }: Props) {
 
   const onClickStart = () => {
     if (session) {
-      router.push('/overview');
+      router.push('/dashboard');
     } else {
       router.push('/login');
     }

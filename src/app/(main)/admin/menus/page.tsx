@@ -1,16 +1,6 @@
 'use client';
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+import ConfirmDialog from '@/components/common/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -533,8 +523,11 @@ function DeleteButton({
   onConfirm: () => void;
 }) {
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
+    <ConfirmDialog
+      title={<>&ldquo;{label}&rdquo; 메뉴를 삭제할까요?</>}
+      description={note ?? '이 작업은 되돌릴 수 없습니다.'}
+      onConfirm={onConfirm}
+      trigger={
         <button
           type="button"
           title="삭제"
@@ -543,25 +536,8 @@ function DeleteButton({
         >
           <Trash2 className="size-4" />
         </button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>&ldquo;{label}&rdquo; 메뉴를 삭제할까요?</AlertDialogTitle>
-          <AlertDialogDescription>
-            {note ?? '이 작업은 되돌릴 수 없습니다.'}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>취소</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onConfirm}
-            className="bg-red-600 text-white hover:bg-red-600/90"
-          >
-            삭제
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      }
+    />
   );
 }
 
@@ -655,7 +631,7 @@ function MenuFormDialog({
             <Input {...register('title')} placeholder="메뉴 이름" />
           </Field>
           <Field label="경로" error={errors.path?.message}>
-            <Input {...register('path')} placeholder="/market/13f" />
+            <Input {...register('path')} placeholder="/market-data/13f" />
           </Field>
 
           <div className="grid grid-cols-2 gap-3">

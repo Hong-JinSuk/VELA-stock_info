@@ -74,7 +74,7 @@ export default function StockPreviewTeaser() {
             실시간 시세 · 차트 · 재무 지표 · 애널리스트 의견 · 내부자 거래 · 뉴스
           </p>
           <Button asChild size="sm" className="pointer-events-auto mt-1">
-            <Link href={`/market/stocks/${TEASER_SYMBOL}`}>
+            <Link href={`/market-data/stocks/${TEASER_SYMBOL}`}>
               {TEASER_SYMBOL} 상세 보기
             </Link>
           </Button>

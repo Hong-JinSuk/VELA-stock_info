@@ -19,7 +19,7 @@ export default function StocksReportPage() {
     columns: stocksReportColumns,
     getCoreRowModel: getCoreRowModel(),
     meta: {
-      onRowClick: (row) => router.push(`/market/stocks/${row.original.symbol}`),
+      onRowClick: (row) => router.push(`/market-data/stocks/${row.original.symbol}`),
     },
   });
 
@@ -42,7 +42,7 @@ export default function StocksReportPage() {
         <div className="rounded-xl border border-border p-8 text-center text-sm text-muted-foreground">
           <p className="break-keep">즐겨찾기한 종목이 없습니다.</p>
           <Link
-            href="/market/stocks"
+            href="/market-data/stocks"
             className="mt-2 inline-block text-foreground underline underline-offset-4"
           >
             종목 찾으러 가기

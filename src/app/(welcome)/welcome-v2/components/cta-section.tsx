@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 // 페이지 하단 마무리 CTA.
 export default function CtaSection({ session }: { session?: Session | null }) {
   const router = useRouter();
-  const onStart = () => router.push(session ? '/overview' : '/login');
+  const onStart = () => router.push(session ? '/dashboard' : '/login');
 
   return (
     <section className="border-t border-border px-6 py-24">

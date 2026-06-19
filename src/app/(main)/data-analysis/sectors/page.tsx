@@ -36,7 +36,7 @@ export default function AnalysisSectorsPage() {
           {data!.map((s) => (
             <Link
               key={s.id}
-              href={`/analysis/sectors/${s.slug}`}
+              href={`/data-analysis/sectors/${s.slug}`}
               className="group flex items-start gap-3 rounded-2xl border border-border bg-card/40 p-5 transition-colors hover:bg-accent/40"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">

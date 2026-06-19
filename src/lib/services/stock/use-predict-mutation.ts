@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useAiLogMutation } from './use-ai-log';
 
-const PREDICT_PATH = '/ai/stocks/predict';
+const PREDICT_PATH = '/ai-analysis/stocks/predict';
 
 type PredictData = {
   stockName: string;

@@ -1,6 +1,12 @@
 'use client';
 
-import { ListChecks, Settings2, ShieldCheck, type LucideIcon } from 'lucide-react';
+import {
+  Calculator,
+  ListChecks,
+  Settings2,
+  ShieldCheck,
+  type LucideIcon,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -10,6 +16,7 @@ const TABS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/admin', label: '관리 홈', icon: Settings2 },
   { href: '/admin/menus', label: '메뉴 관리', icon: ShieldCheck },
   { href: '/admin/sectors', label: '섹터 분석 관리', icon: ListChecks },
+  { href: '/admin/valuation', label: '적정주가 조정', icon: Calculator },
 ];
 
 export default function AdminTabs() {

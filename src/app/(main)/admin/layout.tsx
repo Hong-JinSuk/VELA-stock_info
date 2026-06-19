@@ -11,7 +11,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
   const session = await getServerSession(authOptions);
   const role = (session?.user?.role ?? 'FREE') as UserRole;
   if (!session?.user || role !== 'ADMIN') {
-    redirect('/overview');
+    redirect('/dashboard');
   }
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col">

@@ -83,7 +83,7 @@ export function LoginForm({
   };
 
   const handleGoogleSignIn = async () => {
-    await toast.promise(signIn('google', { callbackUrl: '/overview' }), {
+    await toast.promise(signIn('google', { callbackUrl: '/dashboard' }), {
       loading: '구글 로그인으로 이동 중...',
       success: '구글 로그인 페이지로 이동합니다!',
       error: '연결에 실패했습니다. 다시 시도해 주세요.',
@@ -91,7 +91,7 @@ export function LoginForm({
   };
 
   const handleNaverSignIn = async () => {
-    await toast.promise(signIn('naver', { callbackUrl: '/overview' }), {
+    await toast.promise(signIn('naver', { callbackUrl: '/dashboard' }), {
       loading: '네이버 로그인으로 이동 중...',
       success: '네이버 로그인 페이지로 이동합니다!',
       error: '연결에 실패했습니다. 다시 시도해 주세요.',
@@ -166,7 +166,7 @@ export function LoginForm({
         <Field>
           <Button
             variant={'outline'}
-            onClick={() => router.push('/overview')}
+            onClick={() => router.push('/dashboard')}
             type="button"
           >
             <IconUserCircle />

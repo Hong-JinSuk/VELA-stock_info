@@ -4,6 +4,7 @@
 'use no memo';
 
 import DataTable from '@/components/common/data-table/data-table';
+import { useTypeaheadNav } from '@/hooks/use-typeahead-nav';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -34,10 +35,10 @@ export default function Page() {
     pageSize: PAGE_SIZE,
   });
   const [showSuggest, setShowSuggest] = useState(false);
-  const [highlight, setHighlight] = useState(-1);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
 
   // 입력 → debounce → 서버 사이드 검색.
   useEffect(() => {
@@ -64,7 +65,7 @@ export default function Page() {
     setQ(value.trim());
     setPagination((p) => ({ ...p, pageIndex: 0 }));
     setShowSuggest(false);
-    setHighlight(-1);
+    reset();
     inputRef.current?.blur();
   }
 
@@ -73,22 +74,14 @@ export default function Page() {
     runSearch(f.name);
   }
 
-  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (!showSuggest || suggestions.length === 0) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setHighlight((h) => (h + 1) % suggestions.length);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setHighlight((h) => (h - 1 + suggestions.length) % suggestions.length);
-    } else if (e.key === 'Enter' && highlight >= 0) {
-      e.preventDefault();
-      onSelectSuggestion(suggestions[highlight]);
-    } else if (e.key === 'Escape') {
-      setShowSuggest(false);
-      setHighlight(-1);
-    }
-  }
+  // 종목찾기/섹터 관리와 공용 키보드 네비게이션(↑/↓/Enter/Esc).
+  const { highlight, setHighlight, onKeyDown, reset } = useTypeaheadNav({
+    items: suggestions,
+    isOpen: showSuggest,
+    onClose: () => setShowSuggest(false),
+    listRef,
+    onSelect: onSelectSuggestion,
+  });
 
   const { data, isLoading, isFetching, isError, error } = useThirteenFList({
     searchKey: q,
@@ -108,7 +101,7 @@ export default function Page() {
     state: { pagination },
     onPaginationChange: setPagination,
     meta: {
-      onRowClick: (row) => router.push(`/market/13f/${row.original.accession}`),
+      onRowClick: (row) => router.push(`/market-data/13f/${row.original.accession}`),
     },
   });
 
@@ -148,7 +141,7 @@ export default function Page() {
           onChange={(e) => {
             setInput(e.target.value);
             setShowSuggest(true);
-            setHighlight(-1);
+            reset();
           }}
           onFocus={() => setShowSuggest(true)}
           onKeyDown={onKeyDown}
@@ -171,7 +164,10 @@ export default function Page() {
           </button>
         )}
         {showSuggest && (suggestLoading || suggestions.length > 0) && (
-          <ul className="absolute left-0 right-0 top-full mt-1 z-20 max-h-72 overflow-y-auto rounded-md border border-border bg-popover shadow-md">
+          <ul
+            ref={listRef}
+            className="absolute left-0 right-0 top-full mt-1 z-20 max-h-72 overflow-y-auto rounded-md border border-border bg-popover shadow-md"
+          >
             {suggestLoading
               ? Array.from({ length: 5 }).map((_, i) => (
                   <li
@@ -183,7 +179,7 @@ export default function Page() {
                   </li>
                 ))
               : suggestions.map((f, i) => (
-                  <li key={f.cik}>
+                  <li key={f.cik} data-typeahead-item>
                     <button
                       type="button"
                       onMouseDown={(e) => e.preventDefault()}

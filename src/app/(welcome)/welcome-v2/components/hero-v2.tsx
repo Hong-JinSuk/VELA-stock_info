@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 // welcome-v2 히어로 — 간결한 카피 + CTA로 바로 아래 실사용 쇼케이스로 유도.
 export default function HeroV2({ session }: { session?: Session | null }) {
   const router = useRouter();
-  const onStart = () => router.push(session ? '/overview' : '/login');
+  const onStart = () => router.push(session ? '/dashboard' : '/login');
   const onSeeMore = () => {
     document.getElementById('showcase')?.scrollIntoView({ behavior: 'smooth' });
   };

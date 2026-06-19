@@ -13,6 +13,7 @@ export type AnalysisSectorListItem = {
 // 성장률·ROA·52주최고 같은 표시용 펀더멘털은 펼침 패널에 노출한다.
 export type AnalysisSectorStockRow = StockReportItem & {
   kind: 'STOCK';
+  note: string | null; // ADMIN이 적은 항목 설명
   growthPct: number | null; // 성장성: 적정PER에 쓴 EPS 성장률(%)
   growthSource: string | null; // 'EPS_TTM' | 'EPS_3Y' | 'EPS_5Y'
   high52w: number | null; // 52주 최고가(참고)
@@ -23,6 +24,7 @@ export type AnalysisSectorEtfRow = {
   kind: 'ETF';
   symbol: string;
   name: string;
+  note: string | null; // ADMIN이 적은 항목 설명
 };
 
 export type AnalysisSectorRow = AnalysisSectorStockRow | AnalysisSectorEtfRow;
