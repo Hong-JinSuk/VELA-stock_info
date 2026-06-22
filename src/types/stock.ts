@@ -62,6 +62,7 @@ export type StockMetrics = {
   netMarginTTM: number | null;
   roiTTM: number | null;
   roeTTM: number | null;
+  roaTTM: number | null;
   currentRatioQuarterly: number | null;
 };
 

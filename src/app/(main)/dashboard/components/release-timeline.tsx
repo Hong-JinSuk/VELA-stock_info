@@ -1,6 +1,7 @@
 'use client';
 
 import SkeletonCard from '@/components/common/skeleton-card';
+import { Switch } from '@/components/ui/switch';
 import { getIndicatorScenario } from '@/constants/indicator-scenarios';
 import {
   getUpcomingMarketEvents,
@@ -8,12 +9,15 @@ import {
   type MarketEventCategory,
 } from '@/constants/market-events';
 import { useMacroIndicators } from '@/lib/services/stock/use-macro-indicators';
+import { cn } from '@/lib/utils';
 import type {
   IndicatorCategory,
   MacroIndicator,
   SignalThresholds,
 } from '@/types/macro-indicator';
-import { useMemo } from 'react';
+import { CalendarDays, List } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import ScheduleCalendar, { type CalendarItem } from './schedule-calendar';
 
 type ChangeDirection = 'up' | 'down' | 'flat';
 type ChangeMagnitude = 'minor' | 'notable' | 'clear';
@@ -152,6 +156,30 @@ function getCategoryStyle(category: IndicatorCategory | null) {
   );
 }
 
+// 캘린더 뷰에서 날짜 칸에 찍는 점 색(카테고리별 solid bg). 지표·이벤트 카테고리 공용.
+const DOT_CLASS: Record<string, string> = {
+  inflation: 'bg-red-400',
+  inflation_expectations: 'bg-red-400',
+  employment: 'bg-blue-400',
+  growth: 'bg-emerald-400',
+  fed: 'bg-purple-400',
+  business_cycle: 'bg-cyan-400',
+  consumer: 'bg-pink-400',
+  housing: 'bg-amber-400',
+  rates: 'bg-yellow-400',
+  sentiment: 'bg-green-400',
+  credit: 'bg-orange-400',
+  currency: 'bg-indigo-400',
+  commodities: 'bg-amber-400',
+  policy_event: 'bg-violet-400',
+  fomc: 'bg-purple-400',
+  expiry: 'bg-fuchsia-400',
+  rebalance: 'bg-teal-400',
+};
+function dotClassFor(category: string | null): string {
+  return (category && DOT_CLASS[category]) || 'bg-muted-foreground';
+}
+
 // "YYYY-MM-DD" → daysUntil (로컬 기준, 시간 정보 제거).
 function getDaysUntil(dateStr: string): number {
   const [y, m, d] = dateStr.split('-').map(Number);
@@ -270,8 +298,61 @@ export default function ReleaseTimeline() {
     [data],
   );
 
+  // 리스트(타임라인) ↔ 캘린더(월간) 전환.
+  const [view, setView] = useState<'list' | 'calendar'>('list');
+
+  // 캘린더 뷰용 — 같은 entries를 날짜·제목·색 형태로 평탄화.
+  const calendarItems: CalendarItem[] = useMemo(
+    () =>
+      entries.map((entry) =>
+        entry.kind === 'indicator'
+          ? {
+              id: entry.item.indicatorId,
+              date: entry.item.nextReleaseDate,
+              title: entry.item.displayMeta.cardName,
+              categoryLabel: getCategoryStyle(entry.item.category).label,
+              dotClass: dotClassFor(entry.item.category),
+              dDay: formatDDay(
+                entry.item.daysUntil,
+                entry.item.daysSinceRelease,
+              ),
+            }
+          : {
+              id: entry.event.id,
+              date: entry.event.date,
+              title: entry.event.name,
+              categoryLabel: EVENT_STYLE[entry.event.category].label,
+              dotClass: dotClassFor(entry.event.category),
+              dDay: formatDDay(entry.daysUntil, null),
+              detail: entry.event.impact,
+            },
+      ),
+    [entries],
+  );
+
   return (
     <section className="flex flex-col w-full sm:min-h-0">
+      {/* 보기 전환: 리스트 ⇄ 캘린더 */}
+      <div className="mb-3 flex items-center justify-end gap-2">
+        <List
+          className={cn(
+            'size-4',
+            view === 'list' ? 'text-foreground' : 'text-muted-foreground/40',
+          )}
+        />
+        <Switch
+          checked={view === 'calendar'}
+          onCheckedChange={(c) => setView(c ? 'calendar' : 'list')}
+          aria-label="리스트/캘린더 보기 전환"
+        />
+        <CalendarDays
+          className={cn(
+            'size-4',
+            view === 'calendar' ? 'text-foreground' : 'text-muted-foreground/40',
+          )}
+        />
+      </div>
+
       {isLoading ? (
         <SkeletonCard rows={6} cols={1} />
       ) : isError ? (
@@ -280,12 +361,14 @@ export default function ReleaseTimeline() {
         <div className="p-6 text-sm text-muted-foreground">
           예정된 발표가 없습니다.
         </div>
+      ) : view === 'calendar' ? (
+        <ScheduleCalendar items={calendarItems} />
       ) : (
         <section className="sm:flex-1 sm:min-h-0 no-scrollbar overflow-y-auto">
           <ol className="relative pl-6">
             <span
               aria-hidden
-              className="absolute left-[7px] top-1 bottom-1 w-px bg-border"
+              className="absolute left-[6px] top-1 bottom-1 w-0.5 bg-border"
             />
             {entries.map((entry) =>
               entry.kind === 'indicator' ? (
@@ -326,7 +409,7 @@ function EventCard({
     <li className="relative mb-3 last:mb-0">
       <span
         aria-hidden
-        className="absolute -left-[18px] top-3 size-2 rounded-full ring-2 ring-background bg-foreground/40"
+        className="absolute -left-[22px] top-3 size-2.5 rounded-full border-2 border-foreground/40 bg-background"
       />
       <article className="rounded-lg border border-border bg-card/40 backdrop-blur-md px-4 py-3 transition-colors hover:border-foreground/20">
         <header className="flex items-center justify-between gap-3 mb-2">
@@ -421,8 +504,8 @@ function TimelineCard({ item }: { item: TimelineItem }) {
     <li className="relative mb-3 last:mb-0">
       <span
         aria-hidden
-        className={`absolute -left-[18px] top-3 size-2 rounded-full ring-2 ring-background ${
-          releasedRecently ? 'bg-emerald-400' : 'bg-foreground/40'
+        className={`absolute -left-[22px] top-3 size-2.5 rounded-full border-2 bg-background ${
+          releasedRecently ? 'border-emerald-400' : 'border-foreground/40'
         }`}
       />
       <article

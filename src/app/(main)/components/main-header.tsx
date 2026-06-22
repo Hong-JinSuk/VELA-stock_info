@@ -1,5 +1,6 @@
 'use client';
 
+import NotificationBell from './notification-bell';
 import { ThemeToggleButton } from '@/components/common/theme-button';
 import {
   Popover,
@@ -175,6 +176,7 @@ export function MainHeader() {
               )}
             </span>
           </div>
+          <NotificationBell />
           <ThemeToggleButton />
         </div>
       </div>

@@ -140,6 +140,7 @@ export async function getMetrics(symbol: string): Promise<StockMetrics> {
     netMarginTTM: pick(m, ['netProfitMarginTTM', 'netMarginTTM']),
     roiTTM: pick(m, ['roiTTM']),
     roeTTM: pick(m, ['roeTTM']),
+    roaTTM: pick(m, ['roaTTM']),
     currentRatioQuarterly: pick(m, ['currentRatioQuarterly']),
   };
 }

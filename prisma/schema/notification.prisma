@@ -1,0 +1,35 @@
+// 인앱(웹) 알림. 즐겨찾기 기반 이벤트(13F 변동·상승여력 전환 등)를 배치가 감지해 행을 생성하고,
+// 벨 UI가 이 테이블을 조회한다. 알림 "내용"(title/body/data)을 행에 담아두므로, 추후 카카오톡/이메일
+// 채널은 detection 변경 없이 dispatcher만 얹으면 된다(확장 seam).
+enum NotificationType {
+  THIRTEENF_CHANGE // 즐겨찾기 13F 새 분기 보고서
+  UPSIDE_TURN_POSITIVE // 즐겨찾기 종목 상승여력 −→+ 전환
+  INSIDER_TX // (다음 단계) 내부자거래
+}
+
+// 전송 채널. 현재는 IN_APP만 사용. 카카오/이메일은 값만 추가하면 됨.
+enum NotificationChannel {
+  IN_APP
+  KAKAO
+  EMAIL
+}
+
+model Notification {
+  id       String           @id @default(uuid())
+  userId   String
+  type     NotificationType
+  title    String
+  body     String
+  linkPath String? // 앱 내 딥링크 (예: "/my/favorites", "/market-data/stocks/AAPL")
+  data     Json? // 페이로드(cik/periodEnding, symbol/upside 등) — 딥링크·채널 렌더용
+  // 재실행 중복 방지 자연키 (예: "13f:0001067983:2026-03-31"). (userId, dedupeKey) 유니크.
+  dedupeKey String
+  readAt    DateTime? // 읽음 시각(KST). null = 안 읽음
+  createdAt DateTime // KST 벽시계 — 배치/서버가 명시 주입(@default(now())는 UTC라 사용 안 함)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dedupeKey]) // 같은 이벤트 1회만
+  @@index([userId, readAt]) // 안 읽음 카운트
+  @@index([userId, createdAt(sort: Desc)]) // 목록 정렬
+}
