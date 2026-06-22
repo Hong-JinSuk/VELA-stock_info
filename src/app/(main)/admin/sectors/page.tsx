@@ -99,7 +99,7 @@ function SectorItemAdder({ sectorId }: { sectorId: string }) {
       {showSuggest && (
         <div
           ref={listRef}
-          className="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-border bg-popover shadow-lg"
+          className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-border bg-popover shadow-lg"
         >
           {isLoading ? (
             <div className="px-3 py-2 text-xs text-muted-foreground">
@@ -276,7 +276,9 @@ function SectorCard({ sector }: { sector: AdminSector }) {
         />
       </div>
 
-      <CollapsibleContent>
+      {/* 열린 상태에선 overflow-visible — 안의 종목검색 드롭다운이 카드 밖으로 떠야 함.
+          닫힘 애니메이션은 base의 overflow-hidden이 그대로 적용돼 깔끔하게 유지됨. */}
+      <CollapsibleContent className="data-[state=open]:overflow-visible">
         <div className="border-t border-border px-4 py-4">
           {sector.items.length > 0 && (
             <ul className="mb-3 flex flex-col gap-1.5">

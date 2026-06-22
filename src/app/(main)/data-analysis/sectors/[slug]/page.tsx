@@ -153,7 +153,9 @@ export default function AnalysisSectorDetailPage() {
                     <span className="text-right">현재가</span>
                     <span className="text-right">적정주가</span>
                     <span className="text-center">상승여력</span>
-                    <span className="text-center">ROA</span>
+                    <span className="text-center leading-tight break-keep">
+                      수익성 (ROA)
+                    </span>
                     <span />
                   </div>
                   {stocks.map((item) => (

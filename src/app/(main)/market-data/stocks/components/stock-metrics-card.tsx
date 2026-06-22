@@ -38,6 +38,7 @@ export default function StockMetricsCard({
 
         <Cell label="투자수익률 (ROI)" value={fmtPct(metrics.roiTTM)} />
         <Cell label="자기자본이익률 (ROE)" value={fmtPct(metrics.roeTTM)} />
+        <Cell label="총자산이익률 (ROA)" value={fmtPct(metrics.roaTTM)} />
         <Cell label="유동비율 (분기)" value={fmtNum(metrics.currentRatioQuarterly)} />
       </div>
     </div>
