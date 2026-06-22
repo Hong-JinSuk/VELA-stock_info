@@ -35,6 +35,9 @@ model User {
 
   // 개인화 즐겨찾기(종목·13F 등). 유료 전용 게이팅은 앱 레벨.
   favorites Favorite[]
+
+  // 인앱 알림
+  notifications Notification[]
 }
 
 // 💡 소셜 로그인(OAuth) 정보를 저장하는 전용 테이블

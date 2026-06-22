@@ -368,7 +368,7 @@ export default function ReleaseTimeline() {
           <ol className="relative pl-6">
             <span
               aria-hidden
-              className="absolute left-[7px] top-1 bottom-1 w-px bg-border"
+              className="absolute left-[6px] top-1 bottom-1 w-0.5 bg-border"
             />
             {entries.map((entry) =>
               entry.kind === 'indicator' ? (
@@ -409,7 +409,7 @@ function EventCard({
     <li className="relative mb-3 last:mb-0">
       <span
         aria-hidden
-        className="absolute -left-[18px] top-3 size-2 rounded-full ring-2 ring-background bg-foreground/40"
+        className="absolute -left-[22px] top-3 size-2.5 rounded-full border-2 border-foreground/40 bg-background"
       />
       <article className="rounded-lg border border-border bg-card/40 backdrop-blur-md px-4 py-3 transition-colors hover:border-foreground/20">
         <header className="flex items-center justify-between gap-3 mb-2">
@@ -504,8 +504,8 @@ function TimelineCard({ item }: { item: TimelineItem }) {
     <li className="relative mb-3 last:mb-0">
       <span
         aria-hidden
-        className={`absolute -left-[18px] top-3 size-2 rounded-full ring-2 ring-background ${
-          releasedRecently ? 'bg-emerald-400' : 'bg-foreground/40'
+        className={`absolute -left-[22px] top-3 size-2.5 rounded-full border-2 bg-background ${
+          releasedRecently ? 'border-emerald-400' : 'border-foreground/40'
         }`}
       />
       <article

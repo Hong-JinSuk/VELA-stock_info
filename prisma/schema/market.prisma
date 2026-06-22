@@ -144,6 +144,7 @@ model StockValuation {
   fairPe       Float? // 적정 PER
   fairValue    Float? // 적정주가
   upsidePct    Float? // 상승여력(%)
+  prevUpsidePct Float? // 직전 스냅샷 upsidePct — −→+ 전환 감지용(단일행 덮어쓰기라 비교값 보존)
   status       String // 'OK' | 'NO_EARNINGS'
   snapshotAt   DateTime // KST 벽시계 (배치 시점). 신선도 회전 정렬 기준
   updatedAt    DateTime @updatedAt
