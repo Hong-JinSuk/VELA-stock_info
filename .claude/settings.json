@@ -36,7 +36,13 @@
       "Bash(awk '/^\\\\/Users/{f=$0} /error/ && !/warning/ && /[0-9]+:[0-9]+/ {print f}')",
       "Bash(curl -s \"http://localhost:3000/vela/api/overview/macro-indicators\")",
       "Bash(node -e \"let s='';process.stdin.on\\('data',d=>s+=d\\).on\\('end',\\(\\)=>{try{const j=JSON.parse\\(s\\);const a=Array.isArray\\(j\\)?j:\\(j.items||[]\\);const f=a.find\\(x=>x.indicatorId==='fed_funds'\\);console.log\\(f?\\('fed_funds: value='+f.value+' prev='+f.previousValue+' decimals='+f.displayMeta?.valueDecimals+' unit='+JSON.stringify\\(f.displayMeta?.unitSuffix\\)+' cardName='+f.displayMeta?.cardName\\):'fed_funds 없음 / 총 '+a.length+'개'\\);}catch\\(e\\){console.log\\('파싱 실패\\(서버 안떠있거나 경로 다름\\):',s.slice\\(0,120\\)\\);}}\\)\")",
-      "WebFetch(domain:www.chorokpen.com)"
+      "WebFetch(domain:www.chorokpen.com)",
+      "Bash(grep -rn \"function usd\\\\|const usd\\\\|function pct\\\\|const pct\\\\|function fmtUsd\\\\|toLocaleString\\('en-US'\\\\|toLocaleString\\(\\\\\"en-US\\\\\"\\\\|\\\\$\\\\${\" src/app src/components)",
+      "Bash(echo \"=== TSC done \\($?\\) ===\")",
+      "Bash(curl -s -m 4 \"http://localhost:3000/vela/api/stock/AAPL/earnings\")",
+      "Bash(echo \"=== gemini tsc exit $? ===\")",
+      "Bash(command -v deno)",
+      "Bash(deno check *)"
     ],
     "additionalDirectories": [
       "/Users/hjs/projects/gemini-server/src",

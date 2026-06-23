@@ -4,6 +4,7 @@
 enum NotificationType {
   THIRTEENF_CHANGE // 즐겨찾기 13F 새 분기 보고서
   UPSIDE_TURN_POSITIVE // 즐겨찾기 종목 상승여력 −→+ 전환
+  EARNINGS_RELEASE // 즐겨찾기 종목 신규 분기 실적 발표
   INSIDER_TX // (다음 단계) 내부자거래
 }
 

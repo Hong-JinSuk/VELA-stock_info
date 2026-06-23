@@ -2,12 +2,14 @@
 
 import type { CandleRange } from '@/lib/services/stock/use-stock-candle';
 import { useStockDetail } from '@/lib/services/stock/use-stock-detail';
+import { useStockEarnings } from '@/lib/services/stock/use-stock-earnings';
 import { useStockInsider } from '@/lib/services/stock/use-stock-insider';
 import { useStockNews } from '@/lib/services/stock/use-stock-news';
 import { Info } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import AnalystRecommendationCard from '../components/analyst-recommendation-card';
+import EarningsSurpriseCard from '../components/earnings-surprise-card';
 import EtfHoldingsCard from '../components/etf-holdings-card';
 import InsiderDetailCard from '../components/insider-detail-card';
 import InsiderTrendCard from '../components/insider-trend-card';
@@ -26,6 +28,7 @@ export default function StockDetailPage() {
   const [range, setRange] = useState<CandleRange>('6mo');
   const detail = useStockDetail(symbol);
   const insider = useStockInsider(symbol);
+  const earnings = useStockEarnings(symbol);
   const news = useStockNews(symbol, detail.data?.profile.name);
 
   if (detail.isLoading) {
@@ -94,6 +97,11 @@ export default function StockDetailPage() {
           <StockMetricsCard metrics={metrics} />
         </div>
       </div>
+
+      <EarningsSurpriseCard
+        earnings={earnings.data}
+        loading={earnings.isLoading}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AnalystRecommendationCard rec={recommendation} />
