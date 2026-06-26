@@ -1,6 +1,7 @@
 'use client';
 
 import { MacroCard } from '@/components/common/macro-card';
+import { useKeyIndicators } from '@/lib/services/stock/use-key-indicators';
 import { useMacroIndicators } from '@/lib/services/stock/use-macro-indicators';
 import type { MacroIndicator } from '@/types/macro-indicator';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -8,7 +9,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 // catalog IndicatorCategory와 같은 순서. 표시 순서 + nav 정렬에 사용.
 const CATEGORY_ORDER = [
   'inflation',
-  'inflation_expectations',
   'employment',
   'growth',
   'fed',
@@ -26,8 +26,8 @@ const CATEGORY_ORDER = [
 ] as const;
 
 const CATEGORY_LABEL: Record<string, string> = {
+  __key: '⭐ 중요 지표',
   inflation: '인플레이션',
-  inflation_expectations: '인플레 기대',
   employment: '고용',
   growth: '성장',
   fed: 'Fed',
@@ -44,12 +44,21 @@ const CATEGORY_LABEL: Record<string, string> = {
   other: '기타',
 };
 
+// 카테고리 통합 별칭 — 인플레 기대를 인플레이션으로 합쳐 한 섹션으로 노출.
+const CATEGORY_ALIAS: Record<string, string> = {
+  inflation_expectations: 'inflation',
+};
+
+// 중요 지표 가상 섹션 키 (실제 카테고리가 아닌, 큐레이션된 상단 묶음).
+const KEY_CATEGORY = '__key';
+
 type Group = { category: string; items: MacroIndicator[] };
 
 function groupByCategory(items: MacroIndicator[]): Group[] {
   const map = new Map<string, MacroIndicator[]>();
   for (const ind of items) {
-    const cat = ind.category ?? 'other';
+    const raw = ind.category ?? 'other';
+    const cat = CATEGORY_ALIAS[raw] ?? raw;
     if (!map.has(cat)) map.set(cat, []);
     map.get(cat)!.push(ind);
   }
@@ -65,10 +74,24 @@ function groupByCategory(items: MacroIndicator[]): Group[] {
 
 export default function Page() {
   const { data: macroIndicators } = useMacroIndicators();
-  const groups = useMemo(
-    () => groupByCategory(macroIndicators ?? []),
-    [macroIndicators],
-  );
+  const { data: keyIds } = useKeyIndicators();
+
+  const groups = useMemo(() => {
+    const base = groupByCategory(macroIndicators ?? []);
+    // ADMIN이 큐레이션한 중요 지표를 맨 위 가상 섹션으로 prepend (카테고리 섹션은 그대로 유지).
+    if (keyIds && keyIds.length > 0) {
+      const byId = new Map(
+        (macroIndicators ?? []).map((i) => [i.indicatorId, i]),
+      );
+      const keyItems = keyIds
+        .map((id) => byId.get(id))
+        .filter((i): i is MacroIndicator => i !== undefined);
+      if (keyItems.length > 0) {
+        return [{ category: KEY_CATEGORY, items: keyItems }, ...base];
+      }
+    }
+    return base;
+  }, [macroIndicators, keyIds]);
 
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const scrollRef = useRef<HTMLDivElement>(null);

@@ -69,6 +69,34 @@ model ThirteenFSectorPoint {
 
 // ticker → 섹터 캐시. Finnhub raw 라벨(finnhubIndustry)을 저장, GICS 버킷화는 코드(sector-bucket).
 // finnhubIndustry=null은 "조회했으나 섹터 없음"(ETF/지수 등) → 재조회 방지용으로도 행 유지.
+// 종목찾기 빈 랜딩에 노출하는 인기 대형주 TOP20 시세 스냅샷 + 추후 통계 소스.
+// gemini-server 배치(top-stocks)가 큐레이션된 고정 심볼 시세를 받아 upsert.
+// vela는 이 테이블만 읽어 외부 API 호출 없이 즉시 렌더한다.
+model TopStockQuote {
+  symbol        String   @id // StockSymbol.symbol (예: "AAPL")
+  rank          Int // 표시 순서 (큐레이션 리스트 인덱스)
+  name          String // 표시용 영문 회사명 스냅샷 (한국어명은 vela가 매핑)
+  price         Float? // Finnhub /quote .c (현재가)
+  change        Float? // /quote .d (전일 대비 변화)
+  changePercent Float? // /quote .dp (전일 대비 %)
+  snapshotAt    DateTime // KST 벽시계 (시세 배치 시점)
+
+  // ── enrich 필드 (저빈도 — 배치가 회전 갱신, enrichedAt로 신선도 관리) ──
+  marketCap      Float? // 시가총액 (백만 USD, Finnhub /profile2 marketCapitalization)
+  logo           String? // 회사 로고 URL (/profile2 logo)
+  high52w        Float? // 52주 최고가 (/stock/metric)
+  low52w         Float? // 52주 최저가
+  priceReturn52w Float? // 52주 수익률 % (52WeekPriceReturnDaily)
+  recBuy         Int? // 애널리스트 매수(=strongBuy+buy) 수
+  recHold        Int? // 보유 수
+  recSell        Int? // 매도(=sell+strongSell) 수
+  spark          Float[] @default([]) // 최근 일별 종가 (스파크라인용, 오래된→최신)
+  enrichedAt     DateTime? // KST 벽시계 (enrich 마지막 갱신). NULL=미갱신
+
+  @@index([rank])
+  @@index([enrichedAt]) // 회전 갱신: 가장 오래된 것부터
+}
+
 model TickerSector {
   ticker          String   @id
   finnhubIndustry String?

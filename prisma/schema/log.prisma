@@ -43,7 +43,20 @@ model Indicator {
 
   updatedAt DateTime @updatedAt @db.Timestamptz(3)
 
-  history IndicatorHistory[]
+  history      IndicatorHistory[]
+  keyIndicator KeyIndicator?
+}
+
+// 경제지표 페이지 상단에 고정 노출하는 "중요 지표" — ADMIN이 손으로 큐레이션(유저별 아님).
+// indicatorId = Indicator.id. 카테고리 섹션과 별개로 맨 위에 모아 보여주는 용도.
+model KeyIndicator {
+  indicatorId String   @id // Indicator.id (예: "ust_10y")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  indicator Indicator @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+
+  @@index([sortOrder])
 }
 
 // daily/realtime 지표의 7일치 시계열 (sparkline/차트용).

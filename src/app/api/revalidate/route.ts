@@ -10,6 +10,7 @@ const ALLOWED_TAGS = new Set([
   '13f-detail',
   '13f-comparison',
   '13f-sectors',
+  'top-stocks',
   'stock-detail',
   'stock-insider',
   'stock-news',

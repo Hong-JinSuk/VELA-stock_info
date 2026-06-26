@@ -5,6 +5,7 @@ import {
   ListChecks,
   Settings2,
   ShieldCheck,
+  Star,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -16,6 +17,7 @@ const TABS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/admin', label: '관리 홈', icon: Settings2 },
   { href: '/admin/menus', label: '메뉴 관리', icon: ShieldCheck },
   { href: '/admin/sectors', label: '섹터 분석 관리', icon: ListChecks },
+  { href: '/admin/key-indicators', label: '중요 지표 관리', icon: Star },
   { href: '/admin/valuation', label: '적정주가 조정', icon: Calculator },
 ];
 

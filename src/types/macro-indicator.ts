@@ -70,6 +70,12 @@ export type IndicatorFrequency =
 // catalog category. UI 그룹핑 용도.
 export type IndicatorCategory = string;
 
+// ADMIN이 큐레이션하는 "중요 지표" 한 건 (관리 화면용). sortOrder 오름차순 노출.
+export type KeyIndicatorRef = {
+  indicatorId: string;
+  sortOrder: number;
+};
+
 export type MacroIndicator = {
   indicatorId: string;
   source: string;

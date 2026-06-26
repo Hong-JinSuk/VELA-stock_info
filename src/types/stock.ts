@@ -2,6 +2,28 @@
 // 모든 외부 호출은 서버사이드(src/lib/api/finnhub.ts)에서만 일어나고,
 // 클라는 우리 /api/stock/* route를 통해 이 정규화된 타입만 받는다.
 
+// 종목찾기 빈 랜딩의 인기 대형주 TOP20 한 줄. 배치 스냅샷(TopStockQuote)에서 읽음.
+export type TopStock = {
+  symbol: string;
+  rank: number;
+  name: string; // 영문 회사명 스냅샷
+  kr: string | null; // 한국어명 (vela 매핑)
+  price: number | null;
+  change: number | null;
+  changePercent: number | null;
+  snapshotAt: string | null; // ISO timestamp
+  // enrich 필드 (저빈도 회전 갱신). 아직 안 채워졌으면 null/빈배열.
+  marketCap: number | null; // 백만 USD
+  logo: string | null;
+  high52w: number | null;
+  low52w: number | null;
+  priceReturn52w: number | null; // %
+  recBuy: number | null;
+  recHold: number | null;
+  recSell: number | null;
+  spark: number[]; // 일별 종가 (오래된→최신)
+};
+
 export type StockSearchItem = {
   symbol: string;
   displaySymbol: string;
