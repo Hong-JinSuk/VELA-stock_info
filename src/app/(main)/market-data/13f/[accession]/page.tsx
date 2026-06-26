@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { sectorColor } from '@/constants/sector-colors';
+import { krNameOf } from '@/constants/stock-korean-names';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -463,7 +464,7 @@ function ChangeRow({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium text-foreground truncate">
-            {row.nameOfIssuer}
+            {(row.ticker ? krNameOf(row.ticker) : undefined) ?? row.nameOfIssuer}
             {row.ticker && (
               <span className="ml-1.5 text-[11px] font-mono text-muted-foreground/80">
                 ({row.ticker})
