@@ -1,3 +1,4 @@
+import { capture } from '@/lib/analytics';
 import { api } from '@/lib/api/axios';
 import type { FavoriteItem, FavoriteType } from '@/types/favorite';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -17,8 +18,10 @@ export function useAddFavorite() {
       const { data } = await api.post<FavoriteItem>('/favorites', input);
       return data;
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['favorites'] }),
+    onSuccess: (_data, input) => {
+      capture('favorite_added', { itemType: input.type, itemKey: input.itemKey });
+      queryClient.invalidateQueries({ queryKey: ['favorites'] });
+    },
   });
 }
 
@@ -32,7 +35,9 @@ export function useRemoveFavorite() {
       );
       return input;
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ['favorites'] }),
+    onSuccess: (input) => {
+      capture('favorite_removed', { itemType: input.type, itemKey: input.itemKey });
+      queryClient.invalidateQueries({ queryKey: ['favorites'] });
+    },
   });
 }

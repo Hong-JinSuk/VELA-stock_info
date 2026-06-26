@@ -16,36 +16,47 @@ export async function loadValuations(
     prisma.stockValuation.findMany({ where: { symbol: { in: symbols } } }),
     prisma.stockSymbol.findMany({
       where: { symbol: { in: symbols } },
-      select: { symbol: true, description: true },
+      select: { symbol: true, description: true, type: true },
     }),
   ]);
   const valBySymbol = new Map(valuations.map((v) => [v.symbol, v]));
   const descBySymbol = new Map(stockRows.map((s) => [s.symbol, s.description]));
+  // ETF/펀드(ETP)는 적정주가 개념이 없어 화면에서 "—"로 구분 표시한다.
+  const typeBySymbol = new Map(stockRows.map((s) => [s.symbol, s.type]));
 
   return entries.map(({ symbol, label }): StockReportItem => {
     const name =
       TICKER_KR[symbol] ?? label ?? descBySymbol.get(symbol) ?? symbol;
+    const isEtf = typeBySymbol.get(symbol) === 'ETP';
     const v = valBySymbol.get(symbol);
     if (!v) {
       return {
         symbol,
         name,
+        isEtf,
         status: 'PENDING',
         price: null,
         roaTtm: null,
         fairValue: null,
         upsidePct: null,
+        high52w: null,
+        growthPct: null,
+        growthSource: null,
         snapshotAt: null,
       };
     }
     return {
       symbol,
       name,
+      isEtf,
       status: v.status as StockReportItem['status'],
       price: v.price,
       roaTtm: v.roaTtm,
       fairValue: v.fairValue,
       upsidePct: v.upsidePct,
+      high52w: v.high52w,
+      growthPct: v.growthPct,
+      growthSource: v.growthSource,
       snapshotAt: v.snapshotAt.toISOString(),
     };
   });

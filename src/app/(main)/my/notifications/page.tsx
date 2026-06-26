@@ -1,5 +1,6 @@
 'use client';
 
+import { capture } from '@/lib/analytics';
 import { formatRelativeFromKstIso } from '@/lib/kst';
 import {
   useMarkAllRead,
@@ -20,6 +21,7 @@ export default function NotificationsPage() {
   const hasUnread = items.some((n) => !n.read);
 
   const onItemClick = (n: NotificationItem) => {
+    capture('notification_clicked', { type: n.type, surface: 'page' });
     if (!n.read) markRead.mutate(n.id);
     if (n.linkPath) router.push(n.linkPath);
   };

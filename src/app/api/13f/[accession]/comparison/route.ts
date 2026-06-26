@@ -1,6 +1,7 @@
 import { cachedLoadDetail } from '@/app/api/13f/[accession]/route';
 import { secFetchJson } from '@/lib/api/sec-edgar';
 import type {
+  ThirteenFActivity,
   ThirteenFChangeRow,
   ThirteenFComparison,
   ThirteenFDetail,
@@ -172,9 +173,125 @@ function buildComparisonRows(
   return { buys, sells, holds };
 }
 
-async function loadComparison(
+// 활동 요약용 instrument 집계. comparison rows(가치 기반)와 달리 주식수도 합산해
+// 매수/매도 분류를 주식수 변동으로 판정한다.
+type ShareAgg = { shares: number; valueUsd: number };
+
+function aggregateShares(holdings: ThirteenFHolding[]): Map<string, ShareAgg> {
+  const map = new Map<string, ShareAgg>();
+  for (const h of holdings) {
+    const key = `${h.cusip}|${h.putCall ?? ''}`;
+    const e = map.get(key);
+    if (e) {
+      e.shares += h.shares;
+      e.valueUsd += h.valueUsd;
+    } else {
+      map.set(key, { shares: h.shares, valueUsd: h.valueUsd });
+    }
+  }
+  return map;
+}
+
+// 13F Activity 패널 산출. 보유명세가 비공개(holdings 비어 있음)면 null.
+function computeActivity(
+  current: ThirteenFDetail,
+  previous: ThirteenFDetail | null,
+): ThirteenFActivity | null {
+  if (current.holdings.length === 0) return null;
+
+  const curr = aggregateShares(current.holdings);
+  const prev: Map<string, ShareAgg> = previous
+    ? aggregateShares(previous.holdings)
+    : new Map();
+
+  const currTotal = Array.from(curr.values()).reduce(
+    (s, v) => s + v.valueUsd,
+    0,
+  );
+  const prevTotal = previous
+    ? Array.from(prev.values()).reduce((s, v) => s + v.valueUsd, 0)
+    : null;
+
+  let newPurchases = 0;
+  let addedTo = 0;
+  let soldOut = 0;
+  let reducedHoldings = 0;
+  let buyValue = 0; // 매수 추정액 (Δ주식수 × 추정단가)
+  let sellValue = 0; // 매도 추정액
+
+  const allKeys = new Set([...curr.keys(), ...prev.keys()]);
+  for (const key of allKeys) {
+    const c = curr.get(key);
+    const p = prev.get(key);
+    const cShares = c?.shares ?? 0;
+    const pShares = p?.shares ?? 0;
+    // 단가: 현재가 우선, 없으면 직전. 둘 다 주식수 0이면 0.
+    const price =
+      c && c.shares > 0
+        ? c.valueUsd / c.shares
+        : p && p.shares > 0
+          ? p.valueUsd / p.shares
+          : 0;
+    const shareDelta = cShares - pShares;
+    const tradedValue = Math.abs(shareDelta) * price;
+
+    if (pShares === 0 && cShares > 0) {
+      newPurchases++;
+      buyValue += tradedValue;
+    } else if (pShares > 0 && cShares === 0) {
+      soldOut++;
+      sellValue += tradedValue;
+    } else if (shareDelta > 0) {
+      addedTo++;
+      buyValue += tradedValue;
+    } else if (shareDelta < 0) {
+      reducedHoldings++;
+      sellValue += tradedValue;
+    }
+  }
+
+  const holdingCount = curr.size;
+  const top10Value = Array.from(curr.values())
+    .map((v) => v.valueUsd)
+    .sort((a, b) => b - a)
+    .slice(0, 10)
+    .reduce((s, v) => s + v, 0);
+
+  return {
+    marketValueUsd: currTotal,
+    priorMarketValueUsd: prevTotal,
+    netFlowPct:
+      previous && currTotal > 0
+        ? ((buyValue - sellValue) / currTotal) * 100
+        : null,
+    newPurchases,
+    addedTo,
+    soldOut,
+    reducedHoldings,
+    top10Pct: currTotal > 0 ? (top10Value / currTotal) * 100 : 0,
+    turnoverPct:
+      holdingCount > 0
+        ? ((newPurchases + soldOut) / holdingCount) * 100
+        : 0,
+    altTurnoverPct:
+      currTotal > 0 ? (Math.min(buyValue, sellValue) / currTotal) * 100 : 0,
+  };
+}
+
+// 캡 없는 전체 비교 결과 + 원본 detail. 미리보기(comparison)와 전체보기(changes)가 공유.
+// cachedLoadDetail/cachedSubmissions가 SEC 호출을 캐시하므로, 페이지 요청마다 diff만 재계산(저렴).
+export type FullComparison = {
+  current: ThirteenFDetail;
+  previousDetail: ThirteenFDetail | null;
+  buys: ThirteenFChangeRow[];
+  sells: ThirteenFChangeRow[];
+  holds: ThirteenFChangeRow[];
+  activity: ThirteenFActivity | null;
+};
+
+export async function loadFullComparison(
   accession: string,
-): Promise<ThirteenFComparison | null> {
+): Promise<FullComparison | null> {
   const current = await cachedLoadDetail(accession);
   if (!current) return null;
 
@@ -182,6 +299,16 @@ async function loadComparison(
   const previousDetail = prev ? await cachedLoadDetail(prev.accession) : null;
 
   const { buys, sells, holds } = buildComparisonRows(current, previousDetail);
+  const activity = computeActivity(current, previousDetail);
+  return { current, previousDetail, buys, sells, holds, activity };
+}
+
+async function loadComparison(
+  accession: string,
+): Promise<ThirteenFComparison | null> {
+  const full = await loadFullComparison(accession);
+  if (!full) return null;
+  const { current, previousDetail, buys, sells, holds, activity } = full;
 
   return {
     current: {
@@ -209,11 +336,12 @@ async function loadComparison(
     holdingsWithheld: current.holdingsWithheld,
     reportedValueUsd: current.reportedValueUsd,
     reportedEntryCount: current.reportedEntryCount,
+    activity,
   };
 }
 
 const cachedLoadComparison = unstable_cache(
   loadComparison,
-  ['13f-comparison-v12'],
+  ['13f-comparison-v13'],
   { revalidate: COMPARISON_CACHE, tags: ['13f-comparison'] },
 );

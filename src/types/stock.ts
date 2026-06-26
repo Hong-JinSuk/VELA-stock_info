@@ -155,6 +155,24 @@ export type EtfHoldingsData = {
   updatedAt: string; // ISO
 };
 
+// ---- 실적 서프라이즈 (Finnhub /stock/earnings 기반) ----
+
+// 분기별 예상 vs 실제 EPS. 시간순(오래된→최신)으로 정렬해 전달.
+export type EarningsSurprisePoint = {
+  period: string; // 분기말 YYYY-MM-DD
+  label: string; // 표시용 라벨 (예: "26 Q2" — 회계연도/분기)
+  estimate: number | null; // 예상(컨센서스) EPS
+  actual: number | null; // 실제 EPS
+  surprisePercent: number | null; // 서프라이즈 % (실제가 예상보다 얼마나)
+  beat: boolean | null; // 예상 상회 여부 (actual >= estimate). 데이터 없으면 null
+};
+
+export type EarningsSurprise = {
+  points: EarningsSurprisePoint[]; // 시간순(오래된→최신)
+  beatCount: number; // 예상 상회 분기 수
+  total: number; // 비교 가능한 분기 수
+};
+
 export type StockNewsItem = {
   source: string;
   headline: string;

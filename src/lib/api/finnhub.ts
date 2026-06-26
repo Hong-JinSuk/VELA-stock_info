@@ -189,6 +189,25 @@ export async function getInsiderTransactions(
   return data.data ?? [];
 }
 
+// Finnhub earnings-surprise 원본 (분기별 예상/실제 EPS). 무료티어 제공, 보통 최근 4분기.
+export type RawEarnings = {
+  symbol: string;
+  period: string; // 분기말 YYYY-MM-DD
+  year: number; // 회계연도
+  quarter: number; // 회계분기 1~4
+  actual: number | null; // 실제 EPS
+  estimate: number | null; // 예상(컨센서스) EPS
+  surprise: number | null; // 실제 - 예상
+  surprisePercent: number | null; // 서프라이즈 %
+};
+
+export async function getEarnings(symbol: string): Promise<RawEarnings[]> {
+  const { data } = await finnhub.get<RawEarnings[]>('/stock/earnings', {
+    params: { symbol, token: token() },
+  });
+  return data ?? [];
+}
+
 export type RawCompanyNews = {
   category: string;
   datetime: number; // unix sec

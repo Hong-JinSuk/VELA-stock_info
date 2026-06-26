@@ -6,6 +6,7 @@ import {
   searchKrTickers,
 } from '@/constants/stock-korean-names';
 import { useTypeaheadNav } from '@/hooks/use-typeahead-nav';
+import { capture } from '@/lib/analytics';
 import { useStockSearch } from '@/lib/services/stock/use-stock-search';
 import type { StockSearchItem } from '@/types/stock';
 import { Search } from 'lucide-react';
@@ -83,6 +84,7 @@ export default function StockSearchBar() {
   function goTo(symbol: string) {
     const ticker = symbol.trim().toUpperCase();
     if (!ticker) return;
+    capture('stock_selected', { symbol: ticker });
     setShowSuggest(false);
     reset();
     inputRef.current?.blur();
