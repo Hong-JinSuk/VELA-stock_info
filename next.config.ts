@@ -1,6 +1,6 @@
 import type { NextConfig } from 'next';
 
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH;
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? '';
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -12,6 +12,17 @@ const nextConfig: NextConfig = {
       {
         source: '/vela/api/:path*',
         destination: '/api/:path*',
+      },
+      // PostHog 리버스 프록시(광고/추적 차단기 우회). 클라 api_host = `${BASE_PATH}/ingest`.
+      // static(에셋)은 us-assets, 나머지(capture/flags 등)는 us 호스트로. (US Cloud 기준)
+      // static 규칙이 catch-all보다 먼저 와야 함.
+      {
+        source: `${BASE_PATH}/ingest/static/:path*`,
+        destination: 'https://us-assets.i.posthog.com/static/:path*',
+      },
+      {
+        source: `${BASE_PATH}/ingest/:path*`,
+        destination: 'https://us.i.posthog.com/:path*',
       },
       // Fear & Greed 로직
       // {

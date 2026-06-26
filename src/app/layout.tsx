@@ -1,4 +1,5 @@
 import ModalProvider from '@/components/providers/modal-provider';
+import PostHogProvider from '@/components/providers/posthog-provider';
 import QueryProvider from '@/components/providers/query-provider';
 import ToastProvider from '@/components/providers/toast-provider';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -36,19 +37,21 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <AuthContext>
-          <QueryProvider>
-            <TooltipProvider>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-              >
-                {children}
-              </ThemeProvider>
-              <ModalProvider />
-            </TooltipProvider>
-          </QueryProvider>
+          <PostHogProvider>
+            <QueryProvider>
+              <TooltipProvider>
+                <ThemeProvider
+                  attribute="class"
+                  defaultTheme="system"
+                  enableSystem
+                  disableTransitionOnChange
+                >
+                  {children}
+                </ThemeProvider>
+                <ModalProvider />
+              </TooltipProvider>
+            </QueryProvider>
+          </PostHogProvider>
         </AuthContext>
         <ToastProvider />
       </body>

@@ -5,6 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { capture } from '@/lib/analytics';
 import { formatRelativeFromKstIso } from '@/lib/kst';
 import {
   useMarkAllRead,
@@ -29,6 +30,7 @@ export default function NotificationBell() {
   const items = data?.items ?? [];
 
   const onItemClick = (n: NotificationItem) => {
+    capture('notification_clicked', { type: n.type, surface: 'bell' });
     if (!n.read) markRead.mutate(n.id);
     setOpen(false);
     if (n.linkPath) router.push(n.linkPath);

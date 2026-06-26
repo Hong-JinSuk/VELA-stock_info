@@ -54,6 +54,19 @@ model ThirteenFAumPoint {
   @@index([cik, periodEnding(sort: Desc)])
 }
 
+// 분기별 섹터 배분 시계열 ("Sector Allocation Over Time" 누적 막대용). AumPoint 패턴 —
+// gemini-server 배치가 raw SQL로 분기마다 전체 섹터 비중을 적재(최근 N분기 백필).
+// 미분류/ETF/상위 N 밖 꼬리는 sector='Other'로 합산해 합이 ~100% 유지된다.
+model ThirteenFSectorPoint {
+  cik           String @db.VarChar(10)
+  periodEnding  String @db.VarChar(10) // 분기말 "YYYY-MM-DD"
+  sector        String // 섹터 버킷명("Technology" 등) 또는 'Other'
+  weightPercent Float
+
+  @@id([cik, periodEnding, sector])
+  @@index([cik, periodEnding(sort: Desc)])
+}
+
 // ticker → 섹터 캐시. Finnhub raw 라벨(finnhubIndustry)을 저장, GICS 버킷화는 코드(sector-bucket).
 // finnhubIndustry=null은 "조회했으나 섹터 없음"(ETF/지수 등) → 재조회 방지용으로도 행 유지.
 model TickerSector {

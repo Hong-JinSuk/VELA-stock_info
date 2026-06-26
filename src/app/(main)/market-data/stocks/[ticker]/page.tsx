@@ -19,6 +19,7 @@ import StockMetricsCard from '../components/stock-metrics-card';
 import StockNewsList from '../components/stock-news-list';
 import StockPriceChart from '../components/stock-price-chart';
 import StockQuoteCard from '../components/stock-quote-card';
+import TechnicalAnalysisCard from '../components/technical-analysis-card';
 
 export default function StockDetailPage() {
   const { ticker } = useParams<{ ticker: string }>();
@@ -102,6 +103,8 @@ export default function StockDetailPage() {
         earnings={earnings.data}
         loading={earnings.isLoading}
       />
+
+      <TechnicalAnalysisCard ticker={symbol} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <AnalystRecommendationCard rec={recommendation} />

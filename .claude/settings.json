@@ -42,7 +42,8 @@
       "Bash(curl -s -m 4 \"http://localhost:3000/vela/api/stock/AAPL/earnings\")",
       "Bash(echo \"=== gemini tsc exit $? ===\")",
       "Bash(command -v deno)",
-      "Bash(deno check *)"
+      "Bash(deno check *)",
+      "Bash(curl -s -m 6 -o /dev/null -w \"/my/favorites -> %{http_code}\\\\n\" \"http://localhost:3000/my/favorites\")"
     ],
     "additionalDirectories": [
       "/Users/hjs/projects/gemini-server/src",

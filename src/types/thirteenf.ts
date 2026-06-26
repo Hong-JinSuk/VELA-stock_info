@@ -6,6 +6,12 @@ import type { PaginatedResponse } from '@/lib/api/pagination';
 
 // 리스트 행의 리치 요약 컬럼 (ThirteenFSummary Json 컬럼들의 항목 타입).
 export type ThirteenFTopSector = { sector: string; weightPercent: number };
+
+// "Sector Allocation Over Time" 한 분기치. sectors는 'Other' 포함, 합 ~100%.
+export type ThirteenFSectorQuarter = {
+  periodEnding: string; // "YYYY-MM-DD"
+  sectors: ThirteenFTopSector[];
+};
 export type ThirteenFTopHolding = {
   ticker: string | null;
   name: string;
@@ -98,6 +104,22 @@ export type ThirteenFChangeRow = {
   weightPercent: number; // 현재 분기 비중 (현재 portfolio 기준). 완전 매도는 0
 };
 
+// 13F Activity 패널 (WhaleWisdom 스타일). 현재 분기 holdings + 직전 분기 대비로 산출.
+// 매수/매도 분류는 가격 변동이 아닌 실제 주식수(shares) 변동 기준 — 가격이 올라 가치만
+// 커진 것은 "매수"로 치지 않는다.
+export type ThirteenFActivity = {
+  marketValueUsd: number; // 현재 분기 13F 총가치 (holdings 가치 합)
+  priorMarketValueUsd: number | null; // 직전 분기 총가치. 직전 13F 없으면 null
+  netFlowPct: number | null; // 순유입(+)/유출(-) as % of 현재 MV. 직전 없으면 null
+  newPurchases: number; // 신규 매수 종목 수 (직전 0주 → 현재 보유)
+  addedTo: number; // 비중 늘린 종목 수 (주식수 증가)
+  soldOut: number; // 전량 매도 종목 수 (현재 0주)
+  reducedHoldings: number; // 비중 줄인 종목 수 (주식수 감소)
+  top10Pct: number; // 상위 10 종목 비중 합 (%)
+  turnoverPct: number; // (신규 + 전량매도) / 현재 보유종목수 (%)
+  altTurnoverPct: number; // min(매수 추정액, 매도 추정액) / 현재 MV (%)
+};
+
 export type ThirteenFComparison = {
   current: {
     accession: string;
@@ -119,6 +141,8 @@ export type ThirteenFComparison = {
   buysCount: number; // delta > 0 종목 전체 수
   sellsCount: number; // delta < 0 종목 전체 수
   holdsCount: number; // 현재 보유 종목 전체 수
+  // 분기 활동 요약. 보유명세 비공개(holdingsWithheld)면 산출 불가 → null.
+  activity: ThirteenFActivity | null;
   // 현재 분기가 비밀유지로 명세 비공개인 경우 (buys/sells/holds는 비어 있음).
   holdingsWithheld: boolean;
   reportedValueUsd: number | null; // 표지 신고총액
