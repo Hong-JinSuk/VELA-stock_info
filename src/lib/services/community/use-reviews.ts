@@ -4,7 +4,7 @@ import type {
   CreateReviewInput,
   UpdateReviewInput,
 } from '@/schemas/community-schema';
-import type { ReviewItem } from '@/types/community';
+import type { ReviewItem, ReviewStats } from '@/types/community';
 import {
   keepPreviousData,
   useMutation,
@@ -26,6 +26,17 @@ export function useReviews(page = 1, size = 20) {
       return data;
     },
     placeholderData: keepPreviousData,
+  });
+}
+
+// 후기 평점 집계(전체 평균). 후기 변경 시 함께 무효화되도록 REVIEWS_KEY 하위 키 사용.
+export function useReviewStats() {
+  return useQuery({
+    queryKey: [...REVIEWS_KEY, 'stats'],
+    queryFn: async (): Promise<ReviewStats> => {
+      const { data } = await api.get<ReviewStats>('/community/reviews/stats');
+      return data;
+    },
   });
 }
 

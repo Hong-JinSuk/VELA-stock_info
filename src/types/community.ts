@@ -33,6 +33,12 @@ export type CommentNode = {
   children: CommentNode[];
 };
 
+// 후기 평점 집계(전체). 헤더에 별 + 평균 표시.
+export type ReviewStats = {
+  ratingAverage: number; // 별점 있는 후기 평균(없으면 0)
+  ratingCount: number; // 별점이 매겨진 후기 수
+};
+
 // 보드 설정 (관리탭에서 별점 권한·댓글 깊이 노출). 후기 페이지가 별점 입력 노출 판단에도 사용.
 export type BoardSettings = {
   key: string;

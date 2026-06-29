@@ -2,7 +2,12 @@
 
 import { Button } from '@/components/ui/button';
 import { useBoardSettings } from '@/lib/services/community/use-board-settings';
-import { useMyReview, useReviews } from '@/lib/services/community/use-reviews';
+import {
+  useMyReview,
+  useReviews,
+  useReviewStats,
+} from '@/lib/services/community/use-reviews';
+import { Star } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import ReviewCard from './components/review-card';
@@ -17,6 +22,7 @@ export default function ReviewsPage() {
 
   const { data: board } = useBoardSettings();
   const { data: myReview } = useMyReview(isLoggedIn);
+  const { data: stats } = useReviewStats();
 
   const [page, setPage] = useState(1);
   const { data, isLoading } = useReviews(page, PAGE_SIZE);
@@ -32,7 +38,20 @@ export default function ReviewsPage() {
   return (
     <main className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-4 sm:p-6">
       <header>
-        <h1 className="font-serif text-xl tracking-tight">사용 후기</h1>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h1 className="font-serif text-xl tracking-tight">사용 후기</h1>
+          {stats && stats.ratingCount > 0 && (
+            <span className="inline-flex items-center gap-1">
+              <Star className="size-5 fill-amber-400 text-amber-400" />
+              <span className="text-lg font-semibold tracking-tight">
+                {stats.ratingAverage.toFixed(1)}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                ({stats.ratingCount})
+              </span>
+            </span>
+          )}
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">
           VELA를 사용해 본 소감을 남겨주세요.
         </p>
