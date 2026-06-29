@@ -6,13 +6,16 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { useSession } from 'next-auth/react';
 
 const LIST_KEY = ['notifications'];
 const UNREAD_KEY = ['notifications', 'unread-count'];
 const UNREAD_POLL_MS = 60_000; // 안 읽음 수 폴링 주기
 
 // 안 읽음 알림 수 — 벨 배지용. 주기적으로 폴링.
+// ⚠️ 로그인 상태에서만 호출(알림 API는 requireUser) — 비로그인 시 401 전역 토스트 방지.
 export function useUnreadCount() {
+  const { status } = useSession();
   return useQuery({
     queryKey: UNREAD_KEY,
     queryFn: async (): Promise<number> => {
@@ -21,13 +24,16 @@ export function useUnreadCount() {
       );
       return data.count;
     },
+    enabled: status === 'authenticated',
     refetchInterval: UNREAD_POLL_MS,
     refetchOnWindowFocus: true,
   });
 }
 
 // 알림 목록(최신순). size로 드롭다운(작게)/페이지(크게) 모두 사용.
+// ⚠️ 로그인 상태에서만 호출 — 비로그인 시 401 전역 토스트 방지.
 export function useNotifications(size = 10) {
+  const { status } = useSession();
   return useQuery({
     queryKey: [...LIST_KEY, size],
     queryFn: async (): Promise<PaginatedResponse<NotificationItem>> => {
@@ -37,6 +43,7 @@ export function useNotifications(size = 10) {
       );
       return data;
     },
+    enabled: status === 'authenticated',
   });
 }
 
