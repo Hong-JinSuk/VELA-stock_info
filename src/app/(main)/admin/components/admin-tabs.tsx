@@ -3,6 +3,7 @@
 import {
   Calculator,
   ListChecks,
+  MessagesSquare,
   Settings2,
   ShieldCheck,
   Star,
@@ -19,6 +20,7 @@ const TABS: { href: string; label: string; icon: LucideIcon }[] = [
   { href: '/admin/sectors', label: '섹터 분석 관리', icon: ListChecks },
   { href: '/admin/key-indicators', label: '중요 지표 관리', icon: Star },
   { href: '/admin/valuation', label: '적정주가 조정', icon: Calculator },
+  { href: '/admin/community', label: '커뮤니티 관리', icon: MessagesSquare },
 ];
 
 export default function AdminTabs() {

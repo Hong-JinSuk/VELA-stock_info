@@ -67,6 +67,15 @@ export const DEFAULT_MENU_SEED: SeedGroup[] = [
       { key: 'my-setting', title: '환경 설정', path: '/my/setting', disabled: true },
     ],
   },
+  {
+    key: 'group-community',
+    title: '커뮤니티',
+    path: '/community',
+    icon: 'globe',
+    children: [
+      { key: 'community-reviews', title: '사용 후기', path: '/community/reviews' },
+    ],
+  },
 ];
 
 // 테이블이 비어 있을 때만 기본 트리를 삽입(멱등). 정상 환경에서는 마이그레이션 시드로 이미 채워져 skip된다.
