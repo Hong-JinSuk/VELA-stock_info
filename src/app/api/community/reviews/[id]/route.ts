@@ -40,21 +40,35 @@ export async function PATCH(
   if (!existing) {
     return NextResponse.json({ message: '후기를 찾을 수 없습니다.' }, { status: 404 });
   }
-  if (existing.userId !== session.user.id && !isAdmin) {
+  const isOwner = existing.userId === session.user.id;
+  if (!isOwner && !isAdmin) {
     return NextResponse.json({ message: '권한이 없습니다.' }, { status: 403 });
   }
 
   const board = await getReviewsBoard();
-  const canRate =
-    board.enableRating && (board.ratingWritePolicy === 'ALL' || isAdmin);
   const { title, content, rating } = parsed.data;
+
+  // 제목/내용은 작성자 본인만 수정 가능 (ADMIN이라도 남의 글 내용은 못 고침).
+  const canEditText = isOwner;
+  // 별점은 보드 정책: ADMIN이거나, 정책이 ALL이면서 본인일 때.
+  const canEditRating =
+    board.enableRating && (isAdmin || (board.ratingWritePolicy === 'ALL' && isOwner));
+
+  // 요청에 들어온 필드 중 실제로 권한 있는 변경이 하나도 없으면 거부.
+  const hasTextChange = title !== undefined || content !== undefined;
+  const hasRatingChange = rating !== undefined;
+  const permitted =
+    (canEditText && hasTextChange) || (canEditRating && hasRatingChange);
+  if (!permitted) {
+    return NextResponse.json({ message: '권한이 없습니다.' }, { status: 403 });
+  }
 
   const updated = await prisma.communityPost.update({
     where: { id },
     data: {
-      ...(title !== undefined ? { title } : {}),
-      ...(content !== undefined ? { content } : {}),
-      ...(rating !== undefined && canRate ? { rating } : {}),
+      ...(canEditText && title !== undefined ? { title } : {}),
+      ...(canEditText && content !== undefined ? { content } : {}),
+      ...(canEditRating && rating !== undefined ? { rating } : {}),
       updatedAt: kstNow(),
     },
     include: postInclude,

@@ -8,6 +8,7 @@ import {
   type MarketEvent,
   type MarketEventCategory,
 } from '@/constants/market-events';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { useMacroIndicators } from '@/lib/services/stock/use-macro-indicators';
 import { cn } from '@/lib/utils';
 import type {
@@ -298,8 +299,14 @@ export default function ReleaseTimeline() {
     [data],
   );
 
+  // 캘린더 뷰는 좁은 화면에 맞지 않아 모바일에서는 제공하지 않는다 (리스트 강제).
+  const isMobile = useIsMobile();
+
   // 리스트(타임라인) ↔ 캘린더(월간) 전환.
   const [view, setView] = useState<'list' | 'calendar'>('list');
+
+  // 모바일에서는 캘린더를 막고 항상 리스트로 본다.
+  const effectiveView = isMobile ? 'list' : view;
 
   // 캘린더 뷰용 — 같은 entries를 날짜·제목·색 형태로 평탄화.
   const calendarItems: CalendarItem[] = useMemo(
@@ -332,26 +339,30 @@ export default function ReleaseTimeline() {
 
   return (
     <section className="flex flex-col w-full sm:min-h-0">
-      {/* 보기 전환: 리스트 ⇄ 캘린더 */}
-      <div className="mb-3 flex items-center justify-end gap-2">
-        <List
-          className={cn(
-            'size-4',
-            view === 'list' ? 'text-foreground' : 'text-muted-foreground/40',
-          )}
-        />
-        <Switch
-          checked={view === 'calendar'}
-          onCheckedChange={(c) => setView(c ? 'calendar' : 'list')}
-          aria-label="리스트/캘린더 보기 전환"
-        />
-        <CalendarDays
-          className={cn(
-            'size-4',
-            view === 'calendar' ? 'text-foreground' : 'text-muted-foreground/40',
-          )}
-        />
-      </div>
+      {/* 보기 전환: 리스트 ⇄ 캘린더 (캘린더는 데스크톱 전용) */}
+      {!isMobile && (
+        <div className="mb-3 flex items-center justify-end gap-2">
+          <List
+            className={cn(
+              'size-4',
+              view === 'list' ? 'text-foreground' : 'text-muted-foreground/40',
+            )}
+          />
+          <Switch
+            checked={view === 'calendar'}
+            onCheckedChange={(c) => setView(c ? 'calendar' : 'list')}
+            aria-label="리스트/캘린더 보기 전환"
+          />
+          <CalendarDays
+            className={cn(
+              'size-4',
+              view === 'calendar'
+                ? 'text-foreground'
+                : 'text-muted-foreground/40',
+            )}
+          />
+        </div>
+      )}
 
       {isLoading ? (
         <SkeletonCard rows={6} cols={1} />
@@ -361,7 +372,7 @@ export default function ReleaseTimeline() {
         <div className="p-6 text-sm text-muted-foreground">
           예정된 발표가 없습니다.
         </div>
-      ) : view === 'calendar' ? (
+      ) : effectiveView === 'calendar' ? (
         <ScheduleCalendar items={calendarItems} />
       ) : (
         <section className="sm:flex-1 sm:min-h-0 no-scrollbar overflow-y-auto">

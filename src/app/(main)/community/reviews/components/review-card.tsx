@@ -10,7 +10,10 @@ import {
 } from '@/components/ui/collapsible';
 import { formatRelativeFromKstIso } from '@/lib/kst';
 import { useReviewComments } from '@/lib/services/community/use-review-comments';
-import { useDeleteReview } from '@/lib/services/community/use-reviews';
+import {
+  useDeleteReview,
+  useUpdateReview,
+} from '@/lib/services/community/use-reviews';
 import { cn } from '@/lib/utils';
 import type { BoardSettings, ReviewItem } from '@/types/community';
 import { ChevronDown, MessageSquare } from 'lucide-react';
@@ -29,13 +32,24 @@ export default function ReviewCard({
   const { data: session } = useSession();
   const myId = session?.user?.id;
   const isAdmin = (session?.user?.role ?? 'FREE') === 'ADMIN';
-  const canManage = myId === review.author.id || isAdmin;
+  const isOwner = myId === review.author.id;
+  // 제목/내용 수정은 작성자 본인만. ADMIN은 별점 매기기 + 삭제만(남의 글 내용은 못 고침).
+  const canEditText = isOwner;
+  // 본인 편집 폼에서 별점 입력 노출 여부(본인이 별점 매길 수 있는 경우).
   const canRate =
     board.enableRating && (board.ratingWritePolicy === 'ALL' || isAdmin);
+  // ADMIN이 남의 후기에 헤더 별점을 인라인으로 매기는 경우(본인 글은 폼에서 처리).
+  const adminCanRate = isAdmin && !isOwner && board.enableRating;
+
+  // 생성 시 createdAt==updatedAt이므로 1초 넘게 차이 나면 "수정됨"으로 본다.
+  const isEdited =
+    new Date(review.updatedAt).getTime() - new Date(review.createdAt).getTime() >
+    1000;
 
   const [editing, setEditing] = useState(false);
   const [open, setOpen] = useState(false);
   const del = useDeleteReview();
+  const update = useUpdateReview();
   const { data: comments, isLoading } = useReviewComments(review.id, open);
 
   if (editing) {
@@ -62,10 +76,21 @@ export default function ReviewCard({
                 {review.author.name ?? '익명'}
               </span>
               <span>{formatRelativeFromKstIso(review.createdAt)}</span>
+              {isEdited && (
+                <span className="text-muted-foreground/80">
+                  · 수정됨 {formatRelativeFromKstIso(review.updatedAt)}
+                </span>
+              )}
             </div>
           </div>
-          {review.rating != null && (
-            <StarRating value={review.rating} size="sm" />
+          {adminCanRate ? (
+            <StarRating
+              value={review.rating}
+              onChange={(v) => update.mutate({ id: review.id, rating: v })}
+              size="sm"
+            />
+          ) : (
+            review.rating != null && <StarRating value={review.rating} size="sm" />
           )}
         </div>
 
@@ -93,16 +118,18 @@ export default function ReviewCard({
               </Button>
             </CollapsibleTrigger>
 
-            {canManage && (
+            {(canEditText || isAdmin) && (
               <div className="ml-auto flex items-center gap-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="xs"
-                  onClick={() => setEditing(true)}
-                >
-                  수정
-                </Button>
+                {canEditText && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="xs"
+                    onClick={() => setEditing(true)}
+                  >
+                    수정
+                  </Button>
+                )}
                 <ConfirmDialog
                   title="후기를 삭제할까요?"
                   description="삭제하면 이 후기와 모든 댓글이 사라집니다."

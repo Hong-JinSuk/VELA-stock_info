@@ -69,6 +69,14 @@ src/
 - `durationMs`처럼 **기간(diff) 계산은 tz와 무관**하므로 실제 instant(`Date.getTime()`)로 계산할 것. 변환은 컬럼에 넣는 값에만 적용.
 - ⚠️ 알려진 잔여 이슈: 일부 테이블의 `createdAt @default(now())`/`CURRENT_TIMESTAMP`는 아직 DB default가 UTC다. 새 timestamp를 추가하거나 기존 것을 고칠 때 위 규칙으로 맞출 것.
 
+## 테이블 공통 컬럼 (createdAt / updatedAt) — ⚠️ CRITICAL
+
+**모든 Prisma 모델에는 `createdAt`과 `updatedAt`을 둔다.** (생성·수정 시각 추적 — 예외는 순수 N:M 조인 테이블 정도.)
+
+- 두 값 모두 **KST 벽시계**로 저장(위 시간대 규칙). `@default(now())`/`@updatedAt`는 UTC라 쓰지 말고, 앱에서 `kstNow()`(`src/lib/kst.ts`)로 **생성 시 둘 다 주입**, **update할 때마다 `updatedAt: kstNow()`를 갱신**한다. (레퍼런스: `src/app/api/community/**`.)
+- **수정 가능한 리소스는 UI에 "마지막 수정" 표시를 한다.** 생성 시 두 값이 같으므로 `updatedAt > createdAt`(여유로 1초 초과)면 수정된 것 → "수정됨 · {상대시각}"을 노출. 상대시각은 `formatRelativeFromKstIso`(`src/lib/kst.ts`). (적용 예: 사용 후기 카드 `review-card.tsx`.)
+- 응답 DTO에 `createdAt`·`updatedAt`을 **둘 다 ISO로** 내려, 클라가 수정 여부·시각을 판단할 수 있게 한다.
+
 ## API Calls — ⚠️ CRITICAL
 
 - **HTTP 클라이언트**: 모든 API 호출은 `src/lib/api/axios.ts`의 `api` 인스턴스를 사용한다. `fetch`는 사용하지 말 것 (서버/클라이언트 모두).
@@ -161,6 +169,7 @@ POST / PATCH / PUT / DELETE:
   - **종목 검색 데이터 소스**: `useStockSuggestions`(한글/영문 자동 분기) 공용 훅.
   - **삭제(되돌릴 수 없는 액션) 확인**: 모든 삭제·제거 기능은 실행 전 반드시 한 번 더 확인을 받는다. `window.confirm` 같은 브라우저 기본 대화상자를 쓰지 말고 공용 컴포넌트 `src/components/common/confirm-dialog.tsx`(`ConfirmDialog`, shadcn AlertDialog 기반)로 모달을 띄울 것. 삭제 버튼을 `trigger`로 넘기고 `onConfirm`에 실제 mutation을 연결한다. (섹터/섹터 항목/메뉴 삭제에 적용됨.) 토글성 가역 액션(즐겨찾기 on/off 등)은 예외.
   - **아코디언/펼침은 항상 부드럽게**: 모든 아코디언·collapsible·펼침 영역은 즉시 토글(display none↔block)하지 말고 **높이 기반 애니메이션으로 부드럽게** 열고 닫는다. 두 가지 공용 방식 중 하나를 쓸 것: ① shadcn `Collapsible`(`src/components/ui/collapsible.tsx`) — `CollapsibleContent`에 부드러운 애니메이션(`animate-collapsible-down/up`, tw-animate-css 제공)이 **기본 내장**되어 있으니 그냥 쓰면 된다. ② Collapsible을 안 쓰는 곳은 `grid-rows-[0fr]`↔`grid-rows-[1fr]` + `transition-[grid-template-rows] duration-200`(내부 wrapper `overflow-hidden`) 패턴(menus 관리·섹터 분석 상세에 적용됨). 펼침 화살표(chevron)는 `transition-transform`으로 함께 회전시킨다.
+  - **가역적 mutation은 낙관적 업데이트(optimistic update) 기본**: 즐겨찾기 on/off·읽음 처리·토글·제거 등 **되돌릴 수 있는 액션은 서버 응답을 기다리지 말고 즉시 UI에 반영**한다(긍정적 반영 우선 — 사용자가 누르면 바로 사라지거나 바뀌게). react-query `useMutation` 패턴: `onMutate`에서 `cancelQueries` → 관련 쿼리 스냅샷 저장 → 캐시 즉시 수정(연관 캐시가 여러 개면 `setQueriesData`로 전체/타입별 등 **모두** 갱신), `onError`에서 스냅샷으로 **롤백**(+전역 에러 토스트), `onSettled`에서 `invalidateQueries`로 서버와 reconcile. 레퍼런스 구현: `src/lib/services/favorites/use-favorite-mutation.ts`의 `useRemoveFavorite`. ⚠️ 목록이 **2차 파생 fetch**(예: 즐겨찾기 cik 집합 → 13F by-ciks)에 의존하면, 그 쿼리에 `placeholderData: keepPreviousData`를 줘 키 변경 시 스켈레톤 깜빡임을 막고 + 화면단에서 현재 키 집합으로 한 번 더 필터해 잔여 행을 제거한다(`use-thirteenf-by-ciks.ts` + `favorite-13f-table.tsx`). (비가역·위험 액션의 사전 확인은 위 ConfirmDialog 규칙, 낙관적 반영과 병행 가능.)
 - **단, 사용자가 지정한 방식보다 더 나은 패턴/추상화가 있다고 판단되면 그대로 따르지 말고 먼저 제안할 것.** (예: 더 적합한 기존 컴포넌트, 접근성·일관성·유지보수에서 나은 구조). 근거를 들어 제안하고, 사용자가 선택하게 한다.
 
 ### Table 컬럼 정렬
@@ -207,6 +216,7 @@ POST / PATCH / PUT / DELETE:
   - 훅 이름: `use`로 시작 (예: `useVelaData`)
 - **구조 분해**: import 및 props에서 가능하면 구조 분해 사용.
 - **상수**: 매직 넘버·문자열은 상수로 분리.
+- **파일 내 함수 배치 — `export default function`을 맨 위에**: 파일의 주(主) 컴포넌트인 `export default function`을 (상수/타입 정의 바로 다음의) **파일 상단에 둔다.** 그 파일에서만 쓰는 헬퍼 함수·서브 컴포넌트(예: `Section`, `SectionNav`, `Sparkline`, 행 컴포넌트 등)는 **default export 함수 아래에 정의한다.** 파일을 열면 그 파일이 무엇인지(엔트리 컴포넌트)가 먼저 보이도록 하기 위함. (함수 선언은 호이스팅되므로 아래에 둬도 위에서 참조 가능하다.)
 
 ## What Claude Gets Wrong (Known Issues)
 

@@ -66,6 +66,8 @@ export default function PostHogProvider({
       capture_pageleave: true,
       autocapture: true, // 클릭·입력 등 자동 수집
       person_profiles: 'identified_only', // 익명은 person 미생성(쿼터 절약)
+      // TEMP: 세션 레코딩(rrweb) 끔 — 같은-탭 이동 시 DOM 직렬화로 멈춤이 나는지 확인용.
+      disable_session_recording: true,
     });
   }, []);
 
