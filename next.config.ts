@@ -25,22 +25,16 @@ const nextConfig: NextConfig = {
         destination: 'https://us.i.posthog.com/:path*',
       },
       // Fear & Greed 로직
-      // {
-      //   source: '/api-fng/:path*', // 호출할 주소
-      //   destination: 'https://feargreedchart.com/api/:path*', // 실제 외부 주소
-      // },
+      // 소스는 CNN 공식 API. rewrite로 직접 못 보냄(응답 형태 변환 + anti-bot 헤더 필요)이라,
+      // 정규화 라우트 `/api/fear-greed`로 보내고 거기서 CNN을 호출해 `[{date, score}]`로 맞춰 준다.
       {
-        // 1. 프론트엔드에서 정확히 '/api-fng' 로만 호출할 때
+        // 프론트(useFng) / gemini fngAdapter가 '/api-fng'로 호출.
         source: '/api-fng',
-        // 2. 외부 서버의 기본 주소 (끝에 슬래시 포함)로 보냄
-        // (?action=history 같은 쿼리는 Next.js가 알아서 뒤에 붙여줍니다)
-        destination: 'https://feargreedchart.com/api/',
+        destination: '/api/fear-greed',
       },
       {
-        // 💡 :path* 를 제거하고 정확히 이 경로로 시작할 때 매칭되게 합니다.
-        // 쿼리 스트링(?action=...)은 Next.js가 자동으로 뒤에 붙여줍니다.
         source: '/vela/api/api-fng',
-        destination: 'https://feargreedchart.com/api/',
+        destination: '/api/fear-greed',
       },
     ];
   },

@@ -10,8 +10,9 @@
 - **Web**: Next.js (App Router) + TypeScript (strict) + Tailwind CSS v4 · base path `/vela` (`NEXT_PUBLIC_BASE_PATH`) · 패키지 매니저 `yarn`
 - **DB**: Supabase (PostgreSQL) + Prisma ORM — 스키마는 `prisma/schema/` 분할 관리, 클라이언트 생성물은 `src/generated/`에 커밋됨
 - **Auth**: NextAuth (Google OAuth + Credentials)
-- **AI Server**: 별도 레포 `gemini-server` (Supabase Edge Functions + 로컬 Express)
+- **AI Server**: 별도 레포 `gemini-server`. **프로덕션 배포 대상은 Supabase Edge Functions** (Render는 더 이상 사용하지 않음 — 관련 코드/URL 모두 제거됨). 로컬 개발만 Express(`localhost:3001`).
   - Endpoint base: `NEXT_PUBLIC_GEMINI_SERVER` — 로컬 `http://localhost:3001/ai`, 프로덕션 `https://<project-ref>.supabase.co/functions/v1`
+  - ⚠️ **새 Edge Function 추가 시 2가지 필수**: ① `supabase functions deploy <name>`로 실제 배포, ② cron(pg_cron)이 **무인증** `net.http_post`로 호출하므로 `supabase/config.toml`에 `[functions.<name>] verify_jwt = false`를 추가(없으면 배포돼도 cron이 **401/404로 조용히 실패**). cron은 fire-and-forget이라 함수가 죽어도 `cron.job_run_details`엔 `succeeded`로 찍히니, 실패 진단은 `net._http_response`의 `status_code`로 확인할 것.
 - **Cron**: Supabase `pg_cron` + `pg_net`으로 Edge Function 호출 (예: `overview-snapshot` 08:00 KST)
 - **State**: 서버 상태 TanStack Query (`staleTime` 명시) · 클라 상태 jotai (`src/store/`) · Form react-hook-form + zod (`src/schemas/`)
 
