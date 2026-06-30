@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 
 import DotLoader from '@/components/common/dot-loader';
+import InAppBrowserNotice from '@/components/common/in-app-browser-notice';
 import { Button } from '@/components/ui/button';
 import {
   Field,
@@ -13,6 +14,7 @@ import {
   FieldSeparator,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { useInAppBrowser } from '@/hooks/use-in-app-browser';
 import useModal from '@/hooks/use-modal';
 import { cn } from '@/lib/utils';
 import { loginSchema, LoginSchema } from '@/schemas/login-schema';
@@ -30,6 +32,7 @@ export function LoginForm({
 }: React.ComponentProps<'form'>) {
   const router = useRouter();
   const { openSignupModal } = useModal();
+  const { isInApp, canAutoEscape, openExternal } = useInAppBrowser();
   const { resolvedTheme } = useTheme();
   // SSR 시점엔 theme이 undefined여서 서버/클라이언트 src가 갈리며 hydration mismatch 발생
   // mounted 이후에만 실제 테마를 반영
@@ -83,6 +86,20 @@ export function LoginForm({
   };
 
   const handleGoogleSignIn = async () => {
+    // 인앱 웹뷰에서는 구글이 disallowed_useragent(403)로 막으므로
+    // 외부 브라우저로 탈출시키거나(가능한 경우) 안내한다.
+    if (isInApp) {
+      if (canAutoEscape) {
+        toast.info('외부 브라우저로 이동합니다...');
+        openExternal();
+      } else {
+        toast.warning(
+          '인앱 브라우저에서는 구글 로그인이 제한됩니다. 다른 브라우저(Safari 등)로 열어주세요.',
+        );
+      }
+      return;
+    }
+
     await toast.promise(signIn('google', { callbackUrl: '/dashboard' }), {
       loading: '구글 로그인으로 이동 중...',
       success: '구글 로그인 페이지로 이동합니다!',
@@ -105,6 +122,7 @@ export function LoginForm({
       {...props}
     >
       <FieldGroup>
+        <InAppBrowserNotice />
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Login to your account</h1>
           <p className="text-sm text-balance text-muted-foreground">
