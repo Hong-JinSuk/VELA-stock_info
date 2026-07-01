@@ -21,11 +21,16 @@ import {
 } from 'recharts';
 
 export const RANGES: Array<{ value: CandleRange; label: string }> = [
+  { value: '1d', label: '1일' },
+  { value: '5d', label: '1주일' },
   { value: '1mo', label: '1개월' },
   { value: '6mo', label: '6개월' },
   { value: '1y', label: '1년' },
   { value: 'ytd', label: 'YTD' },
 ];
+
+// intraday(분봉) 여부 — 데이터/축 포맷/목표주가 팬 표시를 분기한다.
+const INTRADAY_RANGES = new Set<CandleRange>(['1d', '5d']);
 
 const TARGET_COLOR = '#10b981'; // 기본(매수) 폴백
 // 목표가 팬이 차지할 우측 폭 비율 (히스토리 길이 대비).
@@ -133,8 +138,28 @@ export default function StockPriceChart({
   const [showTarget, setShowTarget] = useState(false);
   const { data, isLoading } = useStockCandle(ticker, range);
   const points = data ?? [];
+  const isIntraday = INTRADAY_RANGES.has(range);
 
-  const canTarget = !!priceTarget;
+  // x축 라벨(ET 기준): 일봉은 월/일, 1일은 시:분, 1주일은 월/일.
+  const xTickFmt = (v: string): string => {
+    if (!isIntraday) return toMonthDay(v);
+    const d = new Date(v);
+    return range === '1d'
+      ? d.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false,
+          timeZone: 'America/New_York',
+        })
+      : d.toLocaleDateString('en-US', {
+          month: 'numeric',
+          day: 'numeric',
+          timeZone: 'America/New_York',
+        });
+  };
+
+  // 목표주가 팬은 ~12개월 미래 투사라 intraday(1일/1주일) 차트엔 의미가 없어 숨긴다.
+  const canTarget = !!priceTarget && !isIntraday;
   const show = showTarget && canTarget;
   const { data: chartData, horizonDate, anchorDate } = buildChartData(
     points,
@@ -173,7 +198,7 @@ export default function StockPriceChart({
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <BarChart3 className="w-4 h-4" />
-          주가 추이 (일봉)
+          주가 추이 {isIntraday ? '(장중)' : '(일봉)'}
         </div>
         <div className="flex items-center gap-2">
           {canTarget && (
@@ -235,7 +260,7 @@ export default function StockPriceChart({
               </defs>
               <XAxis
                 dataKey="date"
-                tickFormatter={toMonthDay}
+                tickFormatter={xTickFmt}
                 stroke="#71717a"
                 fontSize={11}
                 tickLine={false}
@@ -259,6 +284,19 @@ export default function StockPriceChart({
                   fontSize: 12,
                 }}
                 labelStyle={{ color: '#a1a1aa' }}
+                labelFormatter={
+                  isIntraday
+                    ? (l) =>
+                        new Date(String(l)).toLocaleString('en-US', {
+                          month: 'numeric',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: false,
+                          timeZone: 'America/New_York',
+                        })
+                    : undefined
+                }
                 formatter={(value, name) => {
                   if (value == null) return ['', ''];
                   return [

@@ -1,10 +1,14 @@
 'use client';
 
 import { MacroCard } from '@/components/common/macro-card';
+import MacroList from '@/components/common/macro-list';
 import { useKeyIndicators } from '@/lib/services/stock/use-key-indicators';
 import { useMacroIndicators } from '@/lib/services/stock/use-macro-indicators';
 import type { MacroIndicator } from '@/types/macro-indicator';
+import { LayoutGrid, List } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+
+type IndicatorView = 'card' | 'list';
 
 // catalog IndicatorCategory와 같은 순서. 표시 순서 + nav 정렬에 사용.
 const CATEGORY_ORDER = [
@@ -96,6 +100,7 @@ export default function Page() {
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [view, setView] = useState<IndicatorView>('card');
 
   // 첫 카테고리 active 초기화.
   useEffect(() => {
@@ -184,6 +189,11 @@ export default function Page() {
         ref={scrollRef}
         className="flex-1 min-h-0 overflow-y-auto no-scrollbar"
       >
+        {/* 카드 / 리스트 뷰 토글 — 상단 고정 (모바일엔 좌측 nav가 없어 여기서만 노출됨) */}
+        <div className="sticky top-0 z-20 mb-4 flex justify-end bg-background/80 py-1 backdrop-blur">
+          <ViewToggle view={view} onChange={setView} />
+        </div>
+
         <div className="space-y-10">
           {groups.map(({ category, items }) => (
             <section
@@ -192,7 +202,7 @@ export default function Page() {
               ref={(el) => {
                 sectionRefs.current[category] = el;
               }}
-              className="scroll-mt-4"
+              className="scroll-mt-14"
             >
               <header className="mb-3 flex items-baseline gap-2">
                 <h2 className="text-base font-semibold text-foreground">
@@ -202,19 +212,59 @@ export default function Page() {
                   {items.length}
                 </span>
               </header>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
-                {items.map((indicator) => (
-                  <MacroCard
-                    key={indicator.indicatorId}
-                    indicator={indicator}
-                    showFavorite
-                  />
-                ))}
-              </div>
+              {view === 'card' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 lg:gap-6">
+                  {items.map((indicator) => (
+                    <MacroCard
+                      key={indicator.indicatorId}
+                      indicator={indicator}
+                      showFavorite
+                    />
+                  ))}
+                </div>
+              ) : (
+                <MacroList indicators={items} showFavorite />
+              )}
             </section>
           ))}
         </div>
       </div>
     </main>
+  );
+}
+
+// 카드 / 리스트 뷰 세그먼트 토글. (동적 아이콘 렌더는 React Compiler와 충돌 소지가 있어 버튼을 명시적으로 둔다.)
+function ViewToggle({
+  view,
+  onChange,
+}: {
+  view: IndicatorView;
+  onChange: (v: IndicatorView) => void;
+}) {
+  const btnClass = (active: boolean) =>
+    `flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors ${
+      active
+        ? 'bg-foreground text-background font-medium'
+        : 'text-muted-foreground hover:text-foreground'
+    }`;
+  return (
+    <div className="flex items-center gap-0.5 rounded-lg border border-border bg-secondary/40 p-0.5">
+      <button
+        type="button"
+        onClick={() => onChange('card')}
+        className={btnClass(view === 'card')}
+      >
+        <LayoutGrid className="size-3.5" />
+        카드
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange('list')}
+        className={btnClass(view === 'list')}
+      >
+        <List className="size-3.5" />
+        리스트
+      </button>
+    </div>
   );
 }

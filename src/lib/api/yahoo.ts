@@ -25,10 +25,12 @@ type YahooChartResponse = {
   };
 };
 
-// symbol의 일봉 종가 시계열. range 예: '6mo', '1y'.
+// symbol의 종가 시계열. interval 기본 일봉('1d'); '5m'/'15m' 등이면 intraday.
+// range 예: 일봉 '6mo'·'1y'·'ytd', intraday '1d'(당일)·'5d'(주간).
 export async function getDailyCloses(
   symbol: string,
   range = '6mo',
+  interval = '1d',
 ): Promise<StockCandlePoint[]> {
   // Yahoo는 클래스 주식에 점(.) 대신 대시(-)를 쓴다 (BRK.B → BRK-B, BF.B → BF-B).
   const yahooSymbol = symbol.replace(/\./g, '-');
@@ -36,7 +38,7 @@ export async function getDailyCloses(
     const { data } = await axios.get<YahooChartResponse>(
       `${YAHOO_CHART_BASE}/${encodeURIComponent(yahooSymbol)}`,
       {
-        params: { interval: '1d', range },
+        params: { interval, range },
         headers: { 'User-Agent': USER_AGENT },
         timeout: 10000,
       },
@@ -46,12 +48,15 @@ export async function getDailyCloses(
     const closes = result?.indicators?.quote?.[0]?.close;
     if (!ts || !closes) return [];
 
+    const isDaily = interval === '1d';
     const points: StockCandlePoint[] = [];
     for (let i = 0; i < ts.length; i++) {
       const c = closes[i];
-      if (c == null || !Number.isFinite(c)) continue; // 휴장일 등 null 스킵
+      if (c == null || !Number.isFinite(c)) continue; // 휴장일/거래 없는 구간 null 스킵
+      const iso = new Date(ts[i] * 1000).toISOString();
       points.push({
-        date: new Date(ts[i] * 1000).toISOString().slice(0, 10),
+        // 일봉은 날짜(YYYY-MM-DD), intraday(분/시간봉)는 고유+시각표시용 ISO datetime.
+        date: isDaily ? iso.slice(0, 10) : iso,
         close: c,
       });
     }

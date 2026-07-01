@@ -1,13 +1,9 @@
 'use client';
 
-import {
-  TICKER_KR,
-  krNameOf,
-  searchKrTickers,
-} from '@/constants/stock-korean-names';
+import { searchKrTickers } from '@/constants/stock-korean-names';
 import { useTypeaheadNav } from '@/hooks/use-typeahead-nav';
 import { capture } from '@/lib/analytics';
-import { useStockSearch } from '@/lib/services/stock/use-stock-search';
+import { useStockSuggestions } from '@/lib/services/stock/use-stock-suggestions';
 import type { StockSearchItem } from '@/types/stock';
 import { Search } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
@@ -16,33 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 const SUGGEST_DEBOUNCE_MS = 400;
 const SUGGEST_LIMIT = 8;
 
-type Suggestion = StockSearchItem & { kr?: string };
-
 const HANGUL_RE = /[가-힣]/;
-
-// 한글 입력이면 정적 한국어명 맵으로 매칭(API 미호출), 아니면 서버(/stock/search) 결과를
-// 그대로 사용한다. 서버가 이미 매치품질(exact > prefix > contains)·인기·타입으로 랭킹하므로
-// 클라에서 재정렬하지 않는다 — 재정렬하면 exact 심볼 매치인 ADR(TSM 등)이 보통주에 밀려
-// 맨 아래로 내려가는 문제가 있었다. 어느 쪽이든 한국어명(kr)을 붙여 표시한다.
-function buildSuggestions(
-  query: string,
-  serverItems: StockSearchItem[],
-): Suggestion[] {
-  if (HANGUL_RE.test(query.trim())) {
-    return searchKrTickers(query)
-      .slice(0, SUGGEST_LIMIT)
-      .map((ticker) => ({
-        symbol: ticker,
-        displaySymbol: ticker,
-        description: '',
-        type: 'Common Stock',
-        kr: TICKER_KR[ticker],
-      }));
-  }
-  return serverItems
-    .slice(0, SUGGEST_LIMIT)
-    .map((it) => ({ ...it, kr: krNameOf(it.symbol) }));
-}
 
 // stocks 레이아웃에 상주하는 검색바. 입력 티커로 /market/stocks/{TICKER} 이동.
 // 입력 중에는 Finnhub /search 자동완성 드롭다운을 표시(debounce).
@@ -65,12 +35,11 @@ export default function StockSearchBar() {
     return () => clearTimeout(t);
   }, [value]);
 
-  // 한글 입력은 Finnhub를 부르지 않고 정적 맵으로만 매칭(레이트리밋 절약).
-  const isHangul = HANGUL_RE.test(debounced.trim());
-  const { data, isFetching } = useStockSearch(isHangul ? '' : debounced);
-  const suggestions = buildSuggestions(debounced, data ?? []);
-  const suggestLoading =
-    !isHangul && isFetching && debounced.trim().length >= 1 && !data;
+  // 한글이면 정적 맵, 영문/티커면 서버 — 공용 훅이 자동 분기하고 한국어명(kr)을 붙인다.
+  const { suggestions, isLoading: suggestLoading } = useStockSuggestions(
+    debounced,
+    SUGGEST_LIMIT,
+  );
 
   // 바깥 클릭으로 드롭다운 닫기.
   useEffect(() => {
@@ -108,7 +77,18 @@ export default function StockSearchBar() {
   function handleSubmit(e: React.FormEvent) {
     // 강조 항목 Enter는 onKeyDown이 가로채므로, 여기로 오는 건 강조 없는 제출뿐.
     e.preventDefault();
-    goTo(value);
+    const raw = value.trim();
+    // ⚠️ 한글은 티커가 아니므로 원문(예: "엔비디아")으로 이동하면 URL이 깨진다.
+    // 정적 맵으로 즉시 해석해 최상단 매칭 종목으로 이동(디바운스/후보 상태와 무관하게 확실).
+    if (HANGUL_RE.test(raw)) {
+      const top = searchKrTickers(raw)[0];
+      if (top) {
+        goTo(top);
+        return;
+      }
+    }
+    // 영문: 후보 최상단이 있으면 우선(부분 입력 보정), 없으면 입력 원문(티커 직접 입력).
+    goTo(suggestions[0]?.symbol ?? raw);
   }
 
   return (

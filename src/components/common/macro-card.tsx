@@ -40,20 +40,30 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { createElement } from 'react';
 import { Card } from '../ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import FavoriteButton from './favorite-button';
 
-type Status = 'VeryGood' | 'Good' | 'Neutral' | 'Bad' | 'VeryBad';
+export type Status = 'VeryGood' | 'Good' | 'Neutral' | 'Bad' | 'VeryBad';
 
-const STATUS_LABELS: Record<Status, string> = {
+export const STATUS_LABELS: Record<Status, string> = {
   VeryGood: '매우 좋음',
   Good: '좋음',
   Neutral: '보통',
   Bad: '안좋음',
   VeryBad: '매우 안좋음',
+};
+
+// 상태별 색(텍스트/배경/보더). 카드·리스트 공용.
+export const STATUS_COLORS: Record<Status, string> = {
+  VeryGood: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
+  Good: 'text-lime-500 bg-lime-500/10 border-lime-500/20',
+  Neutral: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
+  Bad: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
+  VeryBad: 'text-red-500 bg-red-500/10 border-red-500/20',
 };
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -104,7 +114,6 @@ type MacroCardProps = {
 };
 
 export function MacroCard({ indicator, showFavorite = false }: MacroCardProps) {
-  const isMobile = useIsMobile();
   const { displayMeta, value } = indicator;
   const status = computeStatus(indicator);
   const currentState = pickState(displayMeta.states, status);
@@ -117,16 +126,6 @@ export function MacroCard({ indicator, showFavorite = false }: MacroCardProps) {
   const fontClass = valueFontClass(main.length + valueSuffix.length);
   const name = displayMeta.cardName;
   const nextRelease = formatNextRelease(indicator.nextReleaseDate);
-
-  const statusColors: Record<Status, string> = {
-    VeryGood: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20',
-    Good: 'text-lime-500 bg-lime-500/10 border-lime-500/20',
-    Neutral: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
-    Bad: 'text-orange-500 bg-orange-500/10 border-orange-500/20',
-    VeryBad: 'text-red-500 bg-red-500/10 border-red-500/20',
-  };
-
-  const [descTitle, descBody] = displayMeta.description.split(' - ');
 
   return (
     <Card className="border border-border bg-card/40 backdrop-blur-md rounded-2xl p-5 lg:p-6 group hover:border-border transition-colors relative overflow-hidden flex flex-col h-full min-h-[160px] shadow-none ring-0 gap-0">
@@ -163,156 +162,11 @@ export function MacroCard({ indicator, showFavorite = false }: MacroCardProps) {
               size={16}
             />
           )}
-          {isMobile ? (
-          <Popover>
-            <PopoverTrigger asChild>
-              <button className="text-muted-foreground hover:text-foreground transition-colors outline-none -mr-1 -mt-1 p-1 rounded-md hover:bg-secondary shrink-0">
-                <HelpCircle className="w-4 h-4" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-80 p-5 border-border bg-card shadow-lg rounded-xl"
-              align="end"
-            >
-              <div className="space-y-3.5">
-                <h4 className="font-semibold text-sm flex items-center gap-2.5 text-foreground">
-                  <div className="w-7 h-7 rounded-md bg-secondary flex items-center justify-center border border-border">
-                    <MacroIcon
-                      iconName={displayMeta.iconName}
-                      className="w-3.5 h-3.5"
-                    />
-                  </div>
-                  {name}
-                </h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {descBody ? (
-                    <>
-                      <span className="text-foreground font-medium">
-                        {descTitle}
-                      </span>
-                      {' - '}
-                      {descBody}
-                    </>
-                  ) : (
-                    descTitle
-                  )}
-                </p>
-                <div className="bg-secondary/50 rounded-lg p-3.5 border border-border/50 text-xs text-muted-foreground leading-relaxed">
-                  <span className="font-semibold text-foreground mr-1.5">
-                    시장 영향:
-                  </span>
-                  {displayMeta.marketImpact}
-                </div>
-
-                <div className="space-y-1.5">
-                  <p className="text-[11px] font-semibold text-muted-foreground tracking-wide">
-                    상태별 해석
-                  </p>
-                  <StateRow
-                    state={displayMeta.states?.veryGood}
-                    tone="veryGood"
-                    active={status === 'VeryGood'}
-                  />
-                  <StateRow
-                    state={displayMeta.states?.good}
-                    tone="good"
-                    active={status === 'Good'}
-                  />
-                  <StateRow
-                    state={displayMeta.states?.neutral}
-                    tone="neutral"
-                    active={status === 'Neutral'}
-                  />
-                  <StateRow
-                    state={displayMeta.states?.bad}
-                    tone="bad"
-                    active={status === 'Bad'}
-                  />
-                  <StateRow
-                    state={displayMeta.states?.veryBad}
-                    tone="veryBad"
-                    active={status === 'VeryBad'}
-                  />
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button>
-                <HelpCircle className="w-4 h-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent
-              className="w-80 p-5 border-border bg-card shadow-lg rounded-xl"
-              align="end"
-              showArrow={false}
-            >
-              <div className="space-y-3.5">
-                <h4 className="font-semibold text-sm flex items-center gap-2.5 text-foreground">
-                  <div className="w-7 h-7 rounded-md bg-secondary flex items-center justify-center border border-border">
-                    <MacroIcon
-                      iconName={displayMeta.iconName}
-                      className="w-3.5 h-3.5"
-                    />
-                  </div>
-                  {name}
-                </h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {descBody ? (
-                    <>
-                      <span className="text-foreground font-medium">
-                        {descTitle}
-                      </span>
-                      {' - '}
-                      {descBody}
-                    </>
-                  ) : (
-                    descTitle
-                  )}
-                </p>
-                <div className="bg-secondary/50 rounded-lg p-3.5 border border-border/50 text-xs text-muted-foreground leading-relaxed">
-                  <span className="font-semibold text-foreground mr-1.5">
-                    시장 영향:
-                  </span>
-                  {displayMeta.marketImpact}
-                </div>
-
-                <div className="space-y-1.5">
-                  <p className="text-[11px] font-semibold text-muted-foreground tracking-wide">
-                    상태별 해석
-                  </p>
-                  <StateRow
-                    state={displayMeta.states?.veryGood}
-                    tone="veryGood"
-                    active={status === 'VeryGood'}
-                  />
-                  <StateRow
-                    state={displayMeta.states?.good}
-                    tone="good"
-                    active={status === 'Good'}
-                  />
-                  <StateRow
-                    state={displayMeta.states?.neutral}
-                    tone="neutral"
-                    active={status === 'Neutral'}
-                  />
-                  <StateRow
-                    state={displayMeta.states?.bad}
-                    tone="bad"
-                    active={status === 'Bad'}
-                  />
-                  <StateRow
-                    state={displayMeta.states?.veryBad}
-                    tone="veryBad"
-                    active={status === 'VeryBad'}
-                  />
-                </div>
-              </div>
-            </TooltipContent>
-          </Tooltip>
-          )}
+          <IndicatorHelp
+            indicator={indicator}
+            status={status}
+            className="-mr-1 -mt-1"
+          />
         </div>
       </div>
 
@@ -327,7 +181,7 @@ export function MacroCard({ indicator, showFavorite = false }: MacroCardProps) {
             </span>
           </h2>
           <span
-            className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase border shrink-0 ${statusColors[status]}`}
+            className={`px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase border shrink-0 ${STATUS_COLORS[status]}`}
           >
             {STATUS_LABELS[status]}
           </span>
@@ -356,6 +210,116 @@ export function MacroCard({ indicator, showFavorite = false }: MacroCardProps) {
         </div>
       </div>
     </Card>
+  );
+}
+
+// 지표 도움말 — "?" 버튼 + 상세(설명·시장 영향·상태별 해석). 카드·리스트 공용.
+// 터치(hover 불가)에선 Popover, 데스크톱에선 Tooltip. className으로 트리거 위치 미세조정.
+export function IndicatorHelp({
+  indicator,
+  status,
+  className,
+}: {
+  indicator: MacroIndicator;
+  status: Status;
+  className?: string;
+}) {
+  const isMobile = useIsMobile();
+  const { displayMeta } = indicator;
+  const [descTitle, descBody] = displayMeta.description.split(' - ');
+
+  const detail = (
+    <div className="space-y-3.5">
+      <h4 className="font-semibold text-sm flex items-center gap-2.5 text-foreground">
+        <div className="w-7 h-7 rounded-md bg-secondary flex items-center justify-center border border-border">
+          <MacroIcon iconName={displayMeta.iconName} className="w-3.5 h-3.5" />
+        </div>
+        {displayMeta.cardName}
+      </h4>
+      <p className="text-sm text-muted-foreground leading-relaxed">
+        {descBody ? (
+          <>
+            <span className="text-foreground font-medium">{descTitle}</span>
+            {' - '}
+            {descBody}
+          </>
+        ) : (
+          descTitle
+        )}
+      </p>
+      <div className="bg-secondary/50 rounded-lg p-3.5 border border-border/50 text-xs text-muted-foreground leading-relaxed">
+        <span className="font-semibold text-foreground mr-1.5">시장 영향:</span>
+        {displayMeta.marketImpact}
+      </div>
+      <div className="space-y-1.5">
+        <p className="text-[11px] font-semibold text-muted-foreground tracking-wide">
+          상태별 해석
+        </p>
+        <StateRow
+          state={displayMeta.states?.veryGood}
+          tone="veryGood"
+          active={status === 'VeryGood'}
+        />
+        <StateRow
+          state={displayMeta.states?.good}
+          tone="good"
+          active={status === 'Good'}
+        />
+        <StateRow
+          state={displayMeta.states?.neutral}
+          tone="neutral"
+          active={status === 'Neutral'}
+        />
+        <StateRow
+          state={displayMeta.states?.bad}
+          tone="bad"
+          active={status === 'Bad'}
+        />
+        <StateRow
+          state={displayMeta.states?.veryBad}
+          tone="veryBad"
+          active={status === 'VeryBad'}
+        />
+      </div>
+    </div>
+  );
+
+  const trigger = (
+    <button
+      type="button"
+      className={cn(
+        'text-muted-foreground hover:text-foreground transition-colors outline-none p-1 rounded-md hover:bg-secondary shrink-0',
+        className,
+      )}
+    >
+      <HelpCircle className="w-4 h-4" />
+    </button>
+  );
+
+  if (isMobile) {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>{trigger}</PopoverTrigger>
+        <PopoverContent
+          className="w-80 p-5 border-border bg-card shadow-lg rounded-xl"
+          align="end"
+        >
+          {detail}
+        </PopoverContent>
+      </Popover>
+    );
+  }
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{trigger}</TooltipTrigger>
+      <TooltipContent
+        className="w-80 p-5 border-border bg-card shadow-lg rounded-xl"
+        align="end"
+        showArrow={false}
+      >
+        {detail}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -408,7 +372,7 @@ function resolveIcon(name: string): LucideIcon {
 // 동적 아이콘 렌더 래퍼. 호출부에서 `const Icon = resolveIcon(...)` 후 <Icon/>으로 쓰면
 // React Compiler가 capitalized-local을 "render 중 컴포넌트 생성"으로 오인하므로,
 // 모듈 레벨 컴포넌트 안에서 createElement로 우회한다.
-function MacroIcon({
+export function MacroIcon({
   iconName,
   className,
 }: {
@@ -439,7 +403,7 @@ function bandStatus(v: number, bands: IndicatorBands, invert: boolean): Status {
 //  2. thresholds가 있으면 value 절대값 기준
 //  3. 구버전(3단계) 필드 폴백 — 다음 indicator-snapshot 배치 전까지 DB에 남은 meta 대응
 //  4. 아무것도 없으면 Neutral
-function computeStatus(indicator: MacroIndicator): Status {
+export function computeStatus(indicator: MacroIndicator): Status {
   const { value, changePercent, displayMeta } = indicator;
   const { thresholds, trends, invertThreshold, invertTrend } = displayMeta;
 
@@ -482,7 +446,7 @@ function computeStatus(indicator: MacroIndicator): Status {
 
 // 큰 숫자는 K/M/B 단축. 1000 단위 그룹화 (,).
 // unitSuffix가 'K호' 같이 이미 K/M 포함된 경우 단축 안 함(중복 방지).
-function formatValue(
+export function formatValue(
   value: number,
   decimals: number,
   unitSuffix: string,
@@ -530,7 +494,7 @@ function valueFontClass(displayLength: number): string {
   return 'text-4xl';
 }
 
-function formatNextRelease(
+export function formatNextRelease(
   date: string | null,
 ): { mmdd: string; daysUntil: number } | null {
   if (!date) return null;
@@ -546,11 +510,11 @@ function formatNextRelease(
 }
 
 // D-day 라벨: 당일은 D-DAY, 미래는 D-N. (과거 = 음수는 호출 측에서 줄 자체를 미표시)
-function formatDday(daysUntil: number): string {
+export function formatDday(daysUntil: number): string {
   return daysUntil === 0 ? 'D-DAY' : `D-${daysUntil}`;
 }
 
-function pickState(
+export function pickState(
   states: MacroIndicator['displayMeta']['states'] | undefined,
   status: Status,
 ): IndicatorState {
