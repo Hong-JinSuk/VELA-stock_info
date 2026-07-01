@@ -9,11 +9,12 @@ export type ThirteenFFiler = {
   lastFiledDate: string;
 };
 
-const SUGGEST_LIMIT = 8;
+// 드롭다운 표시 상한. 초과분 존재 여부(hasMore) 판단을 위해 실제로는 +1개(21)를 받아온다.
+export const SUGGEST_LIMIT = 20;
 
 async function fetchFilers(searchKey: string): Promise<ThirteenFFiler[]> {
   const { data } = await api.get<{ filers: ThirteenFFiler[] }>('/13f/filers', {
-    params: { searchKey, limit: SUGGEST_LIMIT },
+    params: { searchKey, limit: SUGGEST_LIMIT + 1 },
   });
   return data.filers;
 }

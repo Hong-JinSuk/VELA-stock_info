@@ -15,7 +15,7 @@ import {
 import { cn } from '@/lib/utils';
 import { type Column, flexRender } from '@tanstack/react-table';
 import { motion } from 'motion/react';
-import type { CSSProperties } from 'react';
+import { type CSSProperties, useEffect, useRef } from 'react';
 import DataTablePagination from './data-table-pagination';
 import type { DataTableProps } from './types';
 
@@ -68,10 +68,19 @@ export default function DataTable<TData>({
     (table.options.manualPagination === true ||
       Boolean(table.options.getPaginationRowModel));
 
+  // 페이지가 바뀌면 스크롤 영역을 최상단으로 리셋 (새 페이지는 위에서부터 보이게).
+  // 페이지네이션 없는 테이블은 pageIndex가 0에 고정이라 마운트 시 1회만(무해) 실행.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const pageIndex = table.getState().pagination.pageIndex;
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 });
+  }, [pageIndex]);
+
   return (
     <div className={cn('flex min-h-0 flex-1 flex-col', className)}>
       {/* 세로 스크롤 영역: 헤더는 sticky로 이 영역 상단에 고정, body만 스크롤. */}
       <div
+        ref={scrollRef}
         className={cn(
           'scrollbar-subtle min-h-0 flex-1 overflow-y-auto',
           scrollX ? 'overflow-x-auto' : 'overflow-x-hidden',

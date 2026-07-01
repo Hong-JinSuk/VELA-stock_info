@@ -8,6 +8,7 @@ import { useTypeaheadNav } from '@/hooks/use-typeahead-nav';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  SUGGEST_LIMIT,
   type ThirteenFFiler,
   useThirteenFFilers,
 } from '@/lib/services/market/use-thirteenf-filers';
@@ -48,7 +49,9 @@ export default function Page() {
 
   const { data: filers, isFetching: filersFetching } =
     useThirteenFFilers(debouncedInput);
-  const suggestions = filers ?? [];
+  // 드롭다운은 SUGGEST_LIMIT개까지 미리보기. 훅이 +1개를 받아오므로 초과하면 "더 있음"만 표시.
+  const suggestions = (filers ?? []).slice(0, SUGGEST_LIMIT);
+  const hasMoreSuggest = (filers?.length ?? 0) > SUGGEST_LIMIT;
   const suggestLoading =
     filersFetching && debouncedInput.trim().length >= 1 && !filers;
 
@@ -164,51 +167,70 @@ export default function Page() {
           </button>
         )}
         {showSuggest && (suggestLoading || suggestions.length > 0) && (
-          <ul
-            ref={listRef}
-            className="absolute left-0 right-0 top-full mt-1 z-20 max-h-72 overflow-y-auto rounded-md border border-border bg-popover shadow-md"
-          >
-            {suggestLoading
-              ? Array.from({ length: 5 }).map((_, i) => (
-                  <li
-                    key={`s-${i}`}
-                    className="px-3 py-2 flex items-center justify-between gap-5"
-                  >
-                    <Skeleton className="h-4 w-2/3" />
-                    <Skeleton className="h-3 w-16 shrink-0" />
-                  </li>
-                ))
-              : suggestions.map((f, i) => (
-                  <li key={f.cik} data-typeahead-item>
-                    <button
-                      type="button"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => onSelectSuggestion(f)}
-                      onMouseEnter={() => setHighlight(i)}
-                      className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between gap-3 ${
-                        i === highlight ? 'bg-accent' : 'hover:bg-accent/60'
-                      }`}
+          <div className="absolute left-0 right-0 top-full mt-1 z-20 overflow-hidden rounded-md border border-border bg-popover shadow-md">
+            <ul
+              ref={listRef}
+              className="scrollbar-subtle max-h-72 overflow-y-auto"
+            >
+              {suggestLoading
+                ? Array.from({ length: 5 }).map((_, i) => (
+                    <li
+                      key={`s-${i}`}
+                      className="px-3 py-2 flex items-center justify-between gap-5"
                     >
-                      <span className="truncate">
-                        {f.name}
-                        {f.krName && (
-                          <span className="text-muted-foreground/70 ml-2">
-                            · {f.krName}
-                          </span>
-                        )}
-                        {f.krNickname && (
-                          <span className="text-muted-foreground/60 ml-2">
-                            · {f.krNickname}
-                          </span>
-                        )}
-                      </span>
-                      <code className="text-[10px] text-muted-foreground/70 shrink-0">
-                        {f.cik}
-                      </code>
-                    </button>
-                  </li>
-                ))}
-          </ul>
+                      <Skeleton className="h-4 w-2/3" />
+                      <Skeleton className="h-3 w-16 shrink-0" />
+                    </li>
+                  ))
+                : suggestions.map((f, i) => (
+                    <li key={f.cik} data-typeahead-item>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => onSelectSuggestion(f)}
+                        onMouseEnter={() => setHighlight(i)}
+                        className={`w-full text-left px-3 py-2 text-sm flex items-center justify-between gap-3 ${
+                          i === highlight ? 'bg-accent' : 'hover:bg-accent/60'
+                        }`}
+                      >
+                        <span className="truncate">
+                          {f.name}
+                          {f.krName && (
+                            <span className="text-muted-foreground/70 ml-2">
+                              · {f.krName}
+                            </span>
+                          )}
+                          {f.krNickname && (
+                            <span className="text-muted-foreground/60 ml-2">
+                              · {f.krNickname}
+                            </span>
+                          )}
+                        </span>
+                        <code className="text-[10px] text-muted-foreground/70 shrink-0">
+                          {f.cik}
+                        </code>
+                      </button>
+                    </li>
+                  ))}
+            </ul>
+            {/* 미리보기 상한(20) 초과 안내 — 스크롤 영역(ul) 바깥에 둬서 마지막 항목을
+                가리지 않고 스크롤바와도 겹치지 않는다. Enter(=검색 실행)로 전체 확인. */}
+            {!suggestLoading && hasMoreSuggest && (
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => runSearch(input)}
+                className="flex w-full items-center justify-between gap-2 border-t border-border px-3 py-2 text-xs text-muted-foreground hover:bg-accent/60"
+              >
+                <span className="min-w-0 truncate">
+                  결과가 더 있어요 (상위 {SUGGEST_LIMIT}개만 표시)
+                </span>
+                <span className="shrink-0 text-muted-foreground/70">
+                  Enter로 전체 보기 ↵
+                </span>
+              </button>
+            )}
+          </div>
         )}
       </form>
 

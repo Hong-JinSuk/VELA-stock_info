@@ -134,6 +134,16 @@ POST / PATCH / PUT / DELETE:
 - **새 검색 UI는 `useStockSearch`를 직접 쓰지 말고 공용 훅 `src/lib/services/stock/use-stock-suggestions.ts`(`useStockSuggestions`)를 사용할 것.** 이 훅이 한글이면 정적 맵, 영문이면 서버 검색으로 자동 분기하고 `kr`(한국어명)·`inDirectory`(추가 가능 여부)를 붙여 준다.
 - 과거 실수: 섹터 분석 관리 종목검색이 `useStockSearch`를 직접 써서 한국어 검색이 안 됐음 → `useStockSuggestions`로 교체해 해결.
 
+## 검색 자동완성 (드롭다운) 표준 — ⚠️ CRITICAL
+
+**모든 검색 자동완성은 아래 3원칙을 따른다.** 레퍼런스 구현: 13F 검색 (`src/app/(main)/market-data/13f/page.tsx` + `/api/13f/filers` + `/api/13f`). 위 **키보드 네비게이션(`useTypeaheadNav`)** · **한국어 입력 지원**과 함께 검색 UI의 baseline이다.
+
+1. **자동완성(드롭다운) 매칭 규칙 = 실제 리스트 검색 매칭 규칙 (반드시 일치).** 드롭다운 후보는 자동완성 엔드포인트(예: `/api/13f/filers`), Enter/제출 결과는 리스트 엔드포인트(예: `/api/13f`)에서 오는데 **둘이 서로 다른 컬럼을 매칭하면 "후보는 뜨는데 Enter 결과는 0건"** 이 된다. 예: 드롭다운은 `name`+`krName`+`krNickname`을 ILIKE 매칭하는데 리스트는 `name`만 매칭 → 한글 검색이 Enter에서 깨짐. **새 검색을 만들거나 매칭 컬럼을 바꾸면 두 엔드포인트를 항상 같이 수정할 것.** (과거 실수: 13F 리스트가 영문 name만 매칭해 "버크셔" Enter가 0건이었음 → 양쪽 다 krName/krNickname 매칭으로 수정.)
+
+2. **드롭다운은 상한 미리보기 + "더 있음" 안내, 전체는 리스트가 담당.** 드롭다운에 전체 rows를 담지 말 것 (넓은 검색어는 수천 건 — 예: "a"가 8천+). 상한은 **20개**(`SUGGEST_LIMIT`)로 미리보기하고, 초과 여부는 **`limit+1`(21)개를 요청**해 판단한다(`fetched.length > SUGGEST_LIMIT` → `hasMore`). ⚠️ 초과 여부에 **`COUNT` 쿼리를 쓰지 말 것** — `ILIKE '%..%'`는 인덱스를 못 타 넓은 검색어에서 전 매칭 스캔이 되지만, `LIMIT 21`은 21개에서 조기 종료돼 싸다. `hasMore`면 드롭다운 하단에 **"결과가 더 있어요 · Enter로 전체 보기"** 안내를 노출하고, Enter(=폼 제출) 또는 안내 클릭이 리스트 전체 검색을 실행한다.
+
+3. **드롭다운 구조: 스크롤 영역과 푸터(안내)를 분리한다.** 푸터를 스크롤 컨테이너(`<ul>`) 안에 `sticky`로 넣으면 **마지막/포커스 항목을 덮고 스크롤바와 겹쳐 튄다.** 바깥 래퍼(`overflow-hidden rounded-md border`)로 감싸고, 그 안에 스크롤 `<ul>`(`scrollbar-subtle max-h-* overflow-y-auto`, `listRef`는 여기)과 **푸터를 `<ul>`의 형제로 아래에** 둔다 → 푸터가 항목을 안 가리고, 스크롤바는 리스트 영역에만 걸치며 둥근 모서리로 클리핑된다. `useTypeaheadNav`의 `scrollIntoView`도 푸터에 안 가림.
+
 ## Error Handling
 
 - API 호출은 hook 안에서 → 오류는 `throw new Error(message)`로 던질 것
@@ -166,7 +176,7 @@ POST / PATCH / PUT / DELETE:
 - 새 UX를 붙일 때 먼저 **이미 공용 훅/컴포넌트가 있는지 확인**하고 있으면 재사용한다. 없는데 두 곳 이상에서 쓸 패턴이면 **공용으로 추출**한 뒤 적용한다.
 - 기존에 한 곳에만 있던 좋은 동작은, 같은 류의 다른 UI에도 **빠짐없이 적용**한다 (예: 검색창 키보드 네비게이션).
 - 적용 예:
-  - **검색 자동완성 키보드 네비게이션**(↑/↓/Enter/Esc): 공용 훅 `src/hooks/use-typeahead-nav.ts`(`useTypeaheadNav`)를 쓴다. 모든 검색창은 이 동작을 지원해야 한다 (종목찾기·13F·섹터 관리에 적용됨). [[종목 검색 한국어 입력 지원]]과 함께 검색 UI의 baseline.
+  - **검색 자동완성 키보드 네비게이션**(↑/↓/Enter/Esc): 공용 훅 `src/hooks/use-typeahead-nav.ts`(`useTypeaheadNav`)를 쓴다. 모든 검색창은 이 동작을 지원해야 한다 (종목찾기·13F·섹터 관리에 적용됨). [[종목 검색 한국어 입력 지원]]과 함께 검색 UI의 baseline. **방향키는 wrap하지 않고 양 끝에서 멈춘다** — 최하단에서 ↓를 또 눌러도 최상단으로 순환하지 않고, 최상단에서 ↑도 마찬가지(순환은 어느 항목이 끝인지 헷갈리게 함).
   - **종목 검색 데이터 소스**: `useStockSuggestions`(한글/영문 자동 분기) 공용 훅.
   - **삭제(되돌릴 수 없는 액션) 확인**: 모든 삭제·제거 기능은 실행 전 반드시 한 번 더 확인을 받는다. `window.confirm` 같은 브라우저 기본 대화상자를 쓰지 말고 공용 컴포넌트 `src/components/common/confirm-dialog.tsx`(`ConfirmDialog`, shadcn AlertDialog 기반)로 모달을 띄울 것. 삭제 버튼을 `trigger`로 넘기고 `onConfirm`에 실제 mutation을 연결한다. (섹터/섹터 항목/메뉴 삭제에 적용됨.) 토글성 가역 액션(즐겨찾기 on/off 등)은 예외.
   - **아코디언/펼침은 항상 부드럽게**: 모든 아코디언·collapsible·펼침 영역은 즉시 토글(display none↔block)하지 말고 **높이 기반 애니메이션으로 부드럽게** 열고 닫는다. 두 가지 공용 방식 중 하나를 쓸 것: ① shadcn `Collapsible`(`src/components/ui/collapsible.tsx`) — `CollapsibleContent`에 부드러운 애니메이션(`animate-collapsible-down/up`, tw-animate-css 제공)이 **기본 내장**되어 있으니 그냥 쓰면 된다. ② Collapsible을 안 쓰는 곳은 `grid-rows-[0fr]`↔`grid-rows-[1fr]` + `transition-[grid-template-rows] duration-200`(내부 wrapper `overflow-hidden`) 패턴(menus 관리·섹터 분석 상세에 적용됨). 펼침 화살표(chevron)는 `transition-transform`으로 함께 회전시킨다.
@@ -194,6 +204,7 @@ POST / PATCH / PUT / DELETE:
 - 컬럼 정의는 `columns.tsx`로 분리. 정렬은 `meta.align`, 행 클릭은 table `meta.onRowClick`. 셀 내부에 자체 버튼이 있으면 `stopPropagation`으로 row 클릭과 구분.
 - `rowKey`: `row.original`에서 React key로 쓸 필드명 (예: `rowKey="cik"`).
 - **서버 페이지네이션**: `manualPagination: true` + `pageCount` + `state: { pagination }` + `onPaginationChange`. TanStack `pageIndex`는 0-based, API `page`는 1-based 변환 주의. react-query는 `placeholderData: keepPreviousData`, 페이지 전환 중 스켈레톤은 `isLoading || isFetching`을 `isLoading` prop으로 전달.
+- **페이지 전환 시 스크롤 최상단 리셋(내장)**: `pageIndex`가 바뀌면 DataTable이 세로 스크롤 영역을 자동으로 최상단(`scrollTo({ top: 0 })`)으로 되돌린다 — 새 페이지는 항상 위에서부터 보이게. 별도 설정 불필요(서버·클라 페이지네이션 공통). 페이지네이션 없는 테이블은 `pageIndex`가 0 고정이라 영향 없음.
 - `scrollX`: 기본(false)은 비율 폭이라 가로 스크롤 없음. true면 px 폭 + `min-width`로 컨테이너가 좁을 때만 가로 스크롤.
 - 페이지 크기를 바꾸면 항상 1페이지로 리셋된다 (pagination 컴포넌트 내장 동작).
 

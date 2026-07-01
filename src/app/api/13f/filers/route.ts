@@ -8,7 +8,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 // searchKey 비어있으면 빈 결과 (전체 9k건 통째로 안 보냄).
 
 const DEFAULT_LIMIT = 8;
-const MAX_LIMIT = 20;
+// 드롭다운이 20개 미리보기 + "더 있음" 판단용 +1(21)을 요청하므로 상한을 넉넉히.
+const MAX_LIMIT = 50;
 
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;

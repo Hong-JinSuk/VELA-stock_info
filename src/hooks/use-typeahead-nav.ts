@@ -43,10 +43,12 @@ export function useTypeaheadNav<T>({
       if (!isOpen || items.length === 0) return;
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setHighlight((h) => (h + 1) % items.length);
+        // wrap 없이 최하단에서 멈춘다 (-1 → 0 → … → 마지막 항목에서 정지).
+        setHighlight((h) => Math.min(h + 1, items.length - 1));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setHighlight((h) => (h - 1 + items.length) % items.length);
+        // wrap 없이 최상단(첫 항목)에서 멈춘다.
+        setHighlight((h) => Math.max(h - 1, 0));
       } else if (e.key === 'Enter') {
         // 강조된 항목이 있을 때만 가로채서 선택. 없으면 폼 submit 등 기본 동작을 막지 않는다.
         if (highlight >= 0 && items[highlight] !== undefined) {

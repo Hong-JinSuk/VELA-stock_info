@@ -75,13 +75,21 @@ export async function GET(req: NextRequest) {
     // tier0 대상 cik. 검색 중에는 핀 고정을 끄고 일반 검색 결과에 맡긴다.
     const priorityCiks = entityName ? [] : PRIORITY_FILLINGS.map((p) => p.cik);
 
+    // 검색어는 영문 name뿐 아니라 한글명(krName)·한글 별칭/CEO(krNickname)에도 매칭.
+    // (자동완성 /api/13f/filers와 동일 규칙 → "버크셔"·"워렌 버핏"으로 Enter 검색이 실제로 걸리게.)
+    const filerNameOr: Prisma.ThirteenFFilerWhereInput[] | null = entityName
+      ? [
+          { name: { contains: entityName, mode: 'insensitive' } },
+          { krName: { contains: entityName, mode: 'insensitive' } },
+          { krNickname: { contains: entityName, mode: 'insensitive' } },
+        ]
+      : null;
+
     // tier1: 최신 분기 summary 보유 (tier0 제외)
     const richWhere: Prisma.ThirteenFSummaryWhereInput = {
       periodEnding: period,
       ...(priorityCiks.length ? { cik: { notIn: priorityCiks } } : {}),
-      ...(entityName
-        ? { filer: { name: { contains: entityName, mode: 'insensitive' } } }
-        : {}),
+      ...(filerNameOr ? { filer: { OR: filerNameOr } } : {}),
     };
     // tier2: 최신 분기 summary 없는 filer (tier0 제외).
     // 1년 이상 보고가 없는 filer(활동 중단)는 목록·검색에서 제외.
@@ -91,9 +99,7 @@ export async function GET(req: NextRequest) {
       lastFiledDate: { gte: thirteenFStaleCutoff() },
       summaries: { none: { periodEnding: period } },
       ...(priorityCiks.length ? { cik: { notIn: priorityCiks } } : {}),
-      ...(entityName
-        ? { name: { contains: entityName, mode: 'insensitive' } }
-        : {}),
+      ...(filerNameOr ? { OR: filerNameOr } : {}),
     };
 
     const [richTotal, restTotal, priorityFilers, prioritySummaries] =
