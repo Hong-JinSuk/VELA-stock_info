@@ -44,28 +44,30 @@
 /* 2. VELA 테마 설정 */
 @layer base {
   :root {
-    /* [Light] 배경 및 텍스트 */
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
+    /* [Light] 배경 및 텍스트 — 따뜻한 종이(paper) 톤 (흰끼 제거, 눈이 편하게) */
+    --background: 40 24% 96%;
+    --foreground: 224 30% 12%;
 
-    /* [Light] 보더: border-black/10 스타일 */
-    --border: 0 0% 0% / 10%;
-    --input: 0 0% 0% / 10%;
+    /* [Light] 보더: 크림 배경에서 또렷하게 보이는 따뜻한 구분선 */
+    --border: 40 12% 84%;
+    --input: 40 12% 84%;
     --ring: 221.2 83.2% 53.3%;
 
     /* [Light] VELA Blue 및 기타 설정 */
     --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 210 40% 98%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* 카드/팝오버: 배경보다 밝은 종이-화이트로 콘텐츠가 떠 보이게 */
+    --card: 40 20% 98%;
+    --card-foreground: 224 30% 12%;
+    --popover: 40 20% 98%;
+    --popover-foreground: 224 30% 12%;
+    --secondary: 40 18% 92%;
+    --secondary-foreground: 222.2 30% 16%;
+    --muted: 40 18% 92%;
+    /* 보조 텍스트: 작은 글씨 가독성 위해 더 진한 warm gray */
+    --muted-foreground: 40 9% 36%;
+    --accent: 40 18% 92%;
+    --accent-foreground: 222.2 30% 16%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --radius: 0.625rem;
@@ -109,6 +111,24 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* 3-1. 종이 질감(paper grain) — 라이트 테마 전용, 눈이 편한 은은한 그레인.
+   fixed 오버레이 + pointer-events:none 이라 클릭/스크롤에 영향 없음. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.1; /* 질감 강도: 올리면 종이결 ↑, 내리면 ↓ (0.02~0.09 권장) */
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+/* 다크 테마에선 종이 질감 제거 */
+.dark body::after {
+  content: none;
 }
 
 /* --- 애니메이션 및 View Transition 생략 (기존과 동일) --- */

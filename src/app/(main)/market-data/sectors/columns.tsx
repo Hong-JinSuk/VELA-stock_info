@@ -90,7 +90,7 @@ export function buildSectorColumns(
           <span className="truncate text-sm font-medium">
             {row.original.nameKo}
           </span>
-          <span className="shrink-0 font-mono text-[10px] text-muted-foreground/70">
+          <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
             {row.original.ticker}
           </span>
         </div>
