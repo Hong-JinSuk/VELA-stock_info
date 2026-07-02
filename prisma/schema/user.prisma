@@ -39,9 +39,10 @@ model User {
   // 인앱 알림
   notifications Notification[]
 
-  // 커뮤니티(사용 후기) 글/댓글
-  communityPosts    CommunityPost[]
-  communityComments CommunityComment[]
+  // 커뮤니티(후기/건의사항) 글/댓글/공감
+  communityPosts     CommunityPost[]
+  communityComments  CommunityComment[]
+  communityPostLikes CommunityPostLike[]
 }
 
 // 💡 소셜 로그인(OAuth) 정보를 저장하는 전용 테이블

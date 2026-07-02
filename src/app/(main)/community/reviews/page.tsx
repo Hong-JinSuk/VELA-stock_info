@@ -1,12 +1,12 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { useBoardSettings } from '@/lib/services/community/use-board-settings';
+import { useBoardSettings } from '@/lib/services/community/use-community-board';
 import {
-  useMyReview,
-  useReviews,
-  useReviewStats,
-} from '@/lib/services/community/use-reviews';
+  useMyPost,
+  usePosts,
+  usePostStats,
+} from '@/lib/services/community/use-community-posts';
 import { Star } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
@@ -20,12 +20,12 @@ export default function ReviewsPage() {
   const isLoggedIn = Boolean(session?.user);
   const isAdmin = (session?.user?.role ?? 'FREE') === 'ADMIN';
 
-  const { data: board } = useBoardSettings();
-  const { data: myReview } = useMyReview(isLoggedIn);
-  const { data: stats } = useReviewStats();
+  const { data: board } = useBoardSettings('REVIEW');
+  const { data: myReview } = useMyPost('REVIEW', isLoggedIn);
+  const { data: stats } = usePostStats('REVIEW');
 
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useReviews(page, PAGE_SIZE);
+  const { data, isLoading } = usePosts('REVIEW', page, PAGE_SIZE);
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;

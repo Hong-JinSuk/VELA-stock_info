@@ -5,13 +5,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const commentsKey = (postId: string) => ['community', 'comments', postId];
 
-// 후기 댓글 트리(공개, bare array). enabled로 펼쳤을 때만 조회.
-export function useReviewComments(postId: string, enabled = true) {
+// 글 댓글 트리(공개, bare array). enabled로 펼쳤을 때만 조회.
+export function usePostComments(postId: string, enabled = true) {
   return useQuery({
     queryKey: commentsKey(postId),
     queryFn: async (): Promise<CommentNode[]> => {
       const { data } = await api.get<CommentNode[]>(
-        `/community/reviews/${postId}/comments`,
+        `/community/posts/${postId}/comments`,
       );
       return data;
     },
@@ -19,20 +19,20 @@ export function useReviewComments(postId: string, enabled = true) {
   });
 }
 
-// 댓글/대댓글 작성. 성공 시 해당 글 댓글 + 목록(댓글 수) 무효화.
+// 댓글/대댓글 작성. 성공 시 해당 글 댓글 + 글 목록(댓글 수) 무효화(모든 보드 타입).
 export function useAddComment(postId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreateCommentInput): Promise<CommentNode> => {
       const { data } = await api.post<CommentNode>(
-        `/community/reviews/${postId}/comments`,
+        `/community/posts/${postId}/comments`,
         input,
       );
       return data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: commentsKey(postId) });
-      qc.invalidateQueries({ queryKey: ['community', 'reviews'] });
+      qc.invalidateQueries({ queryKey: ['community', 'posts'] });
     },
   });
 }
@@ -47,7 +47,7 @@ export function useDeleteComment(postId: string) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: commentsKey(postId) });
-      qc.invalidateQueries({ queryKey: ['community', 'reviews'] });
+      qc.invalidateQueries({ queryKey: ['community', 'posts'] });
     },
   });
 }

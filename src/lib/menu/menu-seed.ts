@@ -74,6 +74,7 @@ export const DEFAULT_MENU_SEED: SeedGroup[] = [
     icon: 'globe',
     children: [
       { key: 'community-reviews', title: '사용 후기', path: '/community/reviews' },
+      { key: 'community-feedback', title: '건의사항', path: '/community/feedback' },
     ],
   },
 ];

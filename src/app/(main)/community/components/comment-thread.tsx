@@ -7,7 +7,7 @@ import { formatRelativeFromKstIso } from '@/lib/kst';
 import {
   useAddComment,
   useDeleteComment,
-} from '@/lib/services/community/use-review-comments';
+} from '@/lib/services/community/use-community-comments';
 import type { CommentNode } from '@/types/community';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';

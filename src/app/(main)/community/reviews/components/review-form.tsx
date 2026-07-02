@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  useCreateReview,
-  useUpdateReview,
-} from '@/lib/services/community/use-reviews';
-import { createReviewSchema } from '@/schemas/community-schema';
+  useCreatePost,
+  useUpdatePost,
+} from '@/lib/services/community/use-community-posts';
+import { createPostSchema } from '@/schemas/community-schema';
 import type { ReviewItem } from '@/types/community';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
@@ -16,7 +16,7 @@ import { useForm } from 'react-hook-form';
 import type { z } from 'zod';
 
 // 제목/내용만 폼 검증(zod), 별점은 별도 상태(StarRating 커스텀 위젯).
-const formSchema = createReviewSchema.pick({ title: true, content: true });
+const formSchema = createPostSchema.pick({ title: true, content: true });
 type FormValues = z.infer<typeof formSchema>;
 
 export default function ReviewForm({
@@ -30,8 +30,8 @@ export default function ReviewForm({
   canRate: boolean; // 별점 입력 노출 여부(보드 정책 통과 시 true)
   onDone?: () => void;
 }) {
-  const create = useCreateReview();
-  const update = useUpdateReview();
+  const create = useCreatePost('REVIEW');
+  const update = useUpdatePost('REVIEW');
   const [rating, setRating] = useState<number | null>(initial?.rating ?? null);
 
   const {

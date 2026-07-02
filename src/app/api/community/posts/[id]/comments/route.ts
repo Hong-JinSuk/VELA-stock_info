@@ -2,7 +2,6 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import {
   authorSelect,
   buildCommentTree,
-  getReviewsBoard,
   toAuthor,
 } from '@/lib/community/board';
 import { kstNow } from '@/lib/kst';
@@ -12,7 +11,7 @@ import type { CommentNode } from '@/types/community';
 import { getServerSession } from 'next-auth';
 import { NextResponse } from 'next/server';
 
-// GET /api/community/reviews/[id]/comments — 해당 후기 댓글 트리(공개, bare array).
+// GET /api/community/posts/[id]/comments — 해당 글 댓글 트리(공개, bare array).
 // 한 글의 전체 스레드는 bounded이므로 페이지네이션 envelope 미적용.
 export async function GET(
   _req: Request,
@@ -27,7 +26,7 @@ export async function GET(
   return NextResponse.json(buildCommentTree(rows));
 }
 
-// POST /api/community/reviews/[id]/comments — 댓글/대댓글 작성(로그인). 깊이는 보드 설정 이내.
+// POST /api/community/posts/[id]/comments — 댓글/대댓글 작성(로그인). 깊이는 글이 속한 보드 설정 이내.
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -49,13 +48,12 @@ export async function POST(
 
   const post = await prisma.communityPost.findUnique({
     where: { id: postId },
-    select: { id: true },
+    select: { id: true, board: { select: { commentMaxDepth: true } } },
   });
   if (!post) {
-    return NextResponse.json({ message: '후기를 찾을 수 없습니다.' }, { status: 404 });
+    return NextResponse.json({ message: '글을 찾을 수 없습니다.' }, { status: 404 });
   }
 
-  const board = await getReviewsBoard();
   let depth = 1;
   const { parentId, content } = parsed.data;
   if (parentId) {
@@ -70,7 +68,7 @@ export async function POST(
       );
     }
     depth = parent.depth + 1;
-    if (depth > board.commentMaxDepth) {
+    if (depth > post.board.commentMaxDepth) {
       return NextResponse.json(
         { message: '더 이상 답글을 달 수 없습니다.' },
         { status: 400 },

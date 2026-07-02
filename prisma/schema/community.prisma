@@ -1,9 +1,11 @@
-// 커뮤니티 — 게시판/후기 기능. 베이스(title/content + 보드 type)를 단일 구조로 두고
-// 게시판별 설정은 CommunityBoard에 둔다. 향후 자유게시판/Q&A 등은 BoardType만 추가.
+// 커뮤니티 — 게시판(후기/건의사항 등). 베이스(title/content + 보드 type)를 단일 구조로 두고
+// 게시판별 동작은 CommunityBoard의 config 플래그로 분기한다. 모든 보드 데이터는 이 한 세트의
+// 테이블에 있고 CommunityBoardType으로 구분한다. 새 게시판은 BoardType + config만 추가.
 // ⚠️ timestamp는 KST 벽시계로 저장 — 앱에서 kstNow()(src/lib/kst.ts) 주입 (@default(now()) 미사용).
 
 enum CommunityBoardType {
-  REVIEW // 사용 후기 (별점)
+  REVIEW // 사용 후기 (별점, 1인 1개)
+  FEEDBACK // 건의사항 (공감, 여러 개, 카테고리)
 }
 
 // 별점 작성 권한(관리탭 selection). ALL = 로그인 사용자 누구나, ADMIN = 관리자만.
@@ -12,13 +14,23 @@ enum RatingWritePolicy {
   ADMIN
 }
 
+// 건의사항 글 분류. REVIEW 글은 null.
+enum FeedbackCategory {
+  BUG // 버그 신고
+  FEATURE // 기능 요청
+  IMPROVEMENT // 개선 제안
+  ETC // 기타
+}
+
 model CommunityBoard {
   id                String             @id @default(uuid())
-  key               String             @unique // 'reviews'
-  title             String // '사용 후기'
+  key               String             @unique // 'reviews' | 'feedback'
+  title             String // '사용 후기' | '건의사항'
   type              CommunityBoardType @default(REVIEW)
-  enableRating      Boolean            @default(true)
+  enableRating      Boolean            @default(true) // 별점 사용 (REVIEW)
   ratingWritePolicy RatingWritePolicy  @default(ADMIN)
+  enableLike        Boolean            @default(false) // 공감 사용 (FEEDBACK)
+  singlePostPerUser Boolean            @default(false) // 1인 1개 강제 (REVIEW=true) — 앱 레벨 검사
   commentMaxDepth   Int                @default(2) // 1..3
   sortOrder         Int                @default(0)
   createdAt         DateTime // KST 주입
@@ -28,21 +40,24 @@ model CommunityBoard {
 }
 
 model CommunityPost {
-  id      String  @id @default(uuid())
-  boardId String
-  userId  String
-  title   String
-  content String
-  rating  Int? // 1..5, 보드 ratingWritePolicy에 따라 작성/수정
+  id       String            @id @default(uuid())
+  boardId  String
+  userId   String
+  title    String
+  content  String
+  rating   Int? // 1..5, 보드 ratingWritePolicy에 따라 작성/수정 (REVIEW)
+  category FeedbackCategory? // 건의사항 분류 (FEEDBACK), REVIEW는 null
 
   createdAt DateTime // KST 주입
   updatedAt DateTime // KST 주입
 
-  board    CommunityBoard     @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  board    CommunityBoard      @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user     User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   comments CommunityComment[]
+  likes    CommunityPostLike[]
 
-  @@unique([boardId, userId]) // 1인 1후기
+  // ⚠️ 1인 1개는 DB unique가 아니라 board.singlePostPerUser 플래그 + 앱 레벨 검사로 강제한다
+  // (FEEDBACK은 1인 여러 개여야 하므로 base에는 제약을 두지 않음).
   @@index([boardId, createdAt(sort: Desc)])
 }
 
@@ -63,4 +78,18 @@ model CommunityComment {
   children CommunityComment[] @relation("CommentThread")
 
   @@index([postId, createdAt])
+}
+
+// 공감(좋아요). 유저당 1회 토글 — 순수 조인 테이블이라 createdAt만 둔다(수정 없음).
+model CommunityPostLike {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  createdAt DateTime // KST 주입
+
+  post CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId]) // 1인 1공감
+  @@index([postId])
 }
