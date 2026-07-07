@@ -1,5 +1,6 @@
 'use client';
 
+import ConfirmDialog from '@/components/common/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -17,16 +18,22 @@ import {
 } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { useTypeaheadNav } from '@/hooks/use-typeahead-nav';
 import {
+  useAddValuationWatch,
   useAdminValuations,
+  useRemoveValuationWatch,
   useSetGrowthOverrideMutation,
 } from '@/lib/services/admin/use-admin-valuations';
+import type { StockSuggestion } from '@/lib/services/stock/use-stock-suggestions';
+import { useStockSuggestions } from '@/lib/services/stock/use-stock-suggestions';
 import { cn } from '@/lib/utils';
 import type { AdminValuationItem } from '@/types/valuation';
-import { Check, ChevronsUpDown } from 'lucide-react';
-import { useState } from 'react';
+import { Check, ChevronsUpDown, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 
 const ALL_SECTORS = '__all__';
+const OTHERS_KEY = '__others__';
 
 const usd = (n: number | null) =>
   n == null
@@ -34,12 +41,20 @@ const usd = (n: number | null) =>
     : n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 const pct = (n: number | null) => (n == null ? '—' : `${n.toFixed(1)}%`);
 
-function ValuationCard({ item }: { item: AdminValuationItem }) {
+function ValuationCard({
+  item,
+  removable = false,
+}: {
+  item: AdminValuationItem;
+  removable?: boolean;
+}) {
   const setOverride = useSetGrowthOverrideMutation();
+  const removeWatch = useRemoveValuationWatch();
   const [draft, setDraft] = useState(
     item.growthOverride != null ? String(item.growthOverride) : '',
   );
   const hasOverride = item.growthOverride != null;
+  const isPending = item.status === 'PENDING';
   const pending = setOverride.isPending;
 
   const save = () => {
@@ -72,11 +87,35 @@ function ValuationCard({ item }: { item: AdminValuationItem }) {
             {item.symbol} · {usd(item.price)}
           </p>
         </div>
-        {hasOverride && (
-          <span className="shrink-0 rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400">
-            조정중
-          </span>
-        )}
+        <div className="flex shrink-0 items-center gap-1">
+          {isPending && (
+            <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+              스냅샷 대기
+            </span>
+          )}
+          {hasOverride && (
+            <span className="rounded bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400">
+              조정중
+            </span>
+          )}
+          {removable && (
+            <ConfirmDialog
+              title={<>&ldquo;{item.symbol}&rdquo; 종목을 제거할까요?</>}
+              description="섹터 미지정 관리 목록에서 제거합니다. 이 작업은 되돌릴 수 없습니다."
+              confirmLabel="제거"
+              onConfirm={() => removeWatch.mutate(item.symbol)}
+              trigger={
+                <button
+                  type="button"
+                  className="rounded p-1 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500"
+                  aria-label={`${item.symbol} 제거`}
+                >
+                  <X className="size-3.5" />
+                </button>
+              }
+            />
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-xs">
@@ -130,6 +169,115 @@ function ValuationCard({ item }: { item: AdminValuationItem }) {
   );
 }
 
+// "섹터 미지정" 관리 대상에 종목을 검색해 추가 (공용 종목검색 자동완성 + 키보드 네비 재사용).
+function ValuationWatchAdder() {
+  const [q, setQ] = useState('');
+  const [open, setOpen] = useState(false);
+  const { suggestions, isLoading } = useStockSuggestions(q, 12);
+  const addWatch = useAddValuationWatch();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const results = suggestions.slice(0, 12);
+  const isAddable = (r: StockSuggestion) => r.inDirectory !== false;
+
+  const add = (symbol: string) => {
+    addWatch.mutate(symbol, {
+      onSuccess: () => {
+        setQ('');
+        setOpen(false);
+      },
+    });
+  };
+
+  const showSuggest = open && q.trim().length >= 2;
+
+  const { highlight, setHighlight, onKeyDown, reset } = useTypeaheadNav({
+    items: results,
+    isOpen: showSuggest,
+    onClose: () => setOpen(false),
+    listRef,
+    onSelect: (r) => {
+      if (isAddable(r) && !addWatch.isPending) add(r.symbol);
+    },
+  });
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
+
+  return (
+    <div ref={rootRef} className="relative sm:max-w-md">
+      <Input
+        value={q}
+        onChange={(e) => {
+          setQ(e.target.value);
+          setOpen(true);
+          reset();
+        }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={onKeyDown}
+        placeholder="종목 검색 후 추가 (예: RKLB / 로켓랩)"
+        className="h-9 text-sm"
+        autoComplete="off"
+        disabled={addWatch.isPending}
+      />
+      {showSuggest && (
+        <div
+          ref={listRef}
+          className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-border bg-popover shadow-lg"
+        >
+          {isLoading ? (
+            <div className="px-3 py-2 text-xs text-muted-foreground">
+              검색 중...
+            </div>
+          ) : results.length === 0 ? (
+            <div className="px-3 py-2 text-xs text-muted-foreground">
+              결과 없음
+            </div>
+          ) : (
+            results.map((r, i) => {
+              const addable = isAddable(r);
+              return (
+                <button
+                  key={r.symbol}
+                  type="button"
+                  data-typeahead-item
+                  disabled={addWatch.isPending || !addable}
+                  onClick={() => addable && add(r.symbol)}
+                  onMouseEnter={() => setHighlight(i)}
+                  title={
+                    addable
+                      ? undefined
+                      : '디렉터리에 없는 종목입니다(상장폐지/미수록). 추가할 수 없습니다.'
+                  }
+                  className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent ${
+                    i === highlight ? 'bg-accent' : 'hover:bg-accent/50'
+                  }`}
+                >
+                  <span className="font-mono font-medium">{r.symbol}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {r.kr || r.description}
+                  </span>
+                  {!addable && (
+                    <span className="ml-auto shrink-0 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                      추가 불가
+                    </span>
+                  )}
+                </button>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminValuationPage() {
   const { data, isLoading } = useAdminValuations();
   const [query, setQuery] = useState('');
@@ -138,7 +286,7 @@ export default function AdminValuationPage() {
 
   const allGroups = data ?? [];
   const sectorKeyOf = (g: { sectorId: string | null }) =>
-    g.sectorId ?? '__others__';
+    g.sectorId ?? OTHERS_KEY;
   const selectedGroup =
     sectorKey === ALL_SECTORS
       ? null
@@ -152,21 +300,25 @@ export default function AdminValuationPage() {
   // 검색어는 디바운스해 매 타이핑마다 전체 목록을 다시 필터링하지 않는다.
   const debouncedQuery = useDebouncedValue(query, 200);
   const q = debouncedQuery.trim().toLowerCase();
-  const groups = allGroups
+  const matchQ = (it: AdminValuationItem) =>
+    !q ||
+    it.symbol.toLowerCase().includes(q) ||
+    it.name.toLowerCase().includes(q);
+
+  // "섹터 미지정"(null 그룹)은 관리자 추가 UI가 딸려 항상 렌더하므로 일반 섹터 그룹과 분리한다.
+  const sectorGroups = allGroups
+    .filter((group) => group.sectorId !== null)
     .filter((group) =>
       sectorKey === ALL_SECTORS ? true : sectorKeyOf(group) === sectorKey,
     )
-    .map((group) => ({
-      ...group,
-      items: q
-        ? group.items.filter(
-            (it) =>
-              it.symbol.toLowerCase().includes(q) ||
-              it.name.toLowerCase().includes(q),
-          )
-        : group.items,
-    }))
+    .map((group) => ({ ...group, items: group.items.filter(matchQ) }))
     .filter((group) => group.items.length > 0);
+
+  const showOthers =
+    sectorKey === ALL_SECTORS || sectorKey === OTHERS_KEY;
+  const othersItems = (
+    allGroups.find((g) => g.sectorId === null)?.items ?? []
+  ).filter(matchQ);
 
   return (
     <main className="flex flex-1 min-h-0 flex-col gap-6 overflow-y-auto no-scrollbar p-6">
@@ -259,16 +411,10 @@ export default function AdminValuationPage() {
             <Skeleton key={i} className="h-44 rounded-2xl" />
           ))}
         </div>
-      ) : groups.length === 0 ? (
-        <div className="rounded-xl border border-border p-8 text-center text-sm text-muted-foreground">
-          {q
-            ? '검색 결과가 없습니다.'
-            : '스냅샷된 종목이 없습니다. 먼저 적정주가 배치를 실행하세요.'}
-        </div>
       ) : (
         <div className="flex flex-col gap-7">
-          {groups.map((group) => (
-            <section key={group.sectorId ?? '__others__'}>
+          {sectorGroups.map((group) => (
+            <section key={group.sectorId}>
               <div className="mb-3 flex items-baseline gap-2">
                 <h2 className="text-sm font-semibold text-foreground">
                   {group.sectorName}
@@ -280,13 +426,57 @@ export default function AdminValuationPage() {
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {group.items.map((item) => (
                   <ValuationCard
-                    key={`${group.sectorId ?? 'x'}-${item.symbol}`}
+                    key={`${group.sectorId}-${item.symbol}`}
                     item={item}
                   />
                 ))}
               </div>
             </section>
           ))}
+
+          {/* 섹터 미지정 — 관리자가 직접 등록한 종목만. 추가 UI를 항상 노출. */}
+          {showOthers && (
+            <section>
+              <div className="mb-3 flex items-baseline gap-2">
+                <h2 className="text-sm font-semibold text-foreground">
+                  기타 (섹터 미지정)
+                </h2>
+                <span className="text-xs text-muted-foreground/70">
+                  {othersItems.length}개
+                </span>
+              </div>
+              <p className="mb-3 text-xs text-muted-foreground/80 break-keep">
+                섹터에 없는 종목을 직접 등록해 적정주가를 관리합니다. 유저
+                즐겨찾기는 여기 자동으로 뜨지 않습니다.
+              </p>
+              <div className="mb-3">
+                <ValuationWatchAdder />
+              </div>
+              {othersItems.length > 0 ? (
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {othersItems.map((item) => (
+                    <ValuationCard
+                      key={`others-${item.symbol}`}
+                      item={item}
+                      removable
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+                  {q
+                    ? '검색 결과가 없습니다.'
+                    : '아직 등록한 종목이 없습니다. 위에서 검색해 추가하세요.'}
+                </div>
+              )}
+            </section>
+          )}
+
+          {sectorGroups.length === 0 && !showOthers && (
+            <div className="rounded-xl border border-border p-8 text-center text-sm text-muted-foreground">
+              {q ? '검색 결과가 없습니다.' : '표시할 종목이 없습니다.'}
+            </div>
+          )}
         </div>
       )}
     </main>

@@ -4,7 +4,7 @@ import type { StockReportStatus } from '@/types/stocks-report';
 export type AdminValuationItem = {
   symbol: string;
   name: string;
-  price: number;
+  price: number | null; // 스냅샷 전(PENDING)이면 null
   growthPct: number | null; // 실제 사용된 성장률(%) — 조정값이 있으면 그 값
   growthOverride: number | null; // 수동 조정 성장률(%) — 비어있으면 자동
   growthSource: string; // 'MANUAL' | 'EPS_TTM' | ...

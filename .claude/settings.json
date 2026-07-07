@@ -43,7 +43,8 @@
       "Bash(echo \"=== gemini tsc exit $? ===\")",
       "Bash(command -v deno)",
       "Bash(deno check *)",
-      "Bash(curl -s -m 6 -o /dev/null -w \"/my/favorites -> %{http_code}\\\\n\" \"http://localhost:3000/my/favorites\")"
+      "Bash(curl -s -m 6 -o /dev/null -w \"/my/favorites -> %{http_code}\\\\n\" \"http://localhost:3000/my/favorites\")",
+      "Bash(grep -rA40 \"model StockValuation\" prisma/schema/)"
     ],
     "additionalDirectories": [
       "/Users/hjs/projects/gemini-server/src",

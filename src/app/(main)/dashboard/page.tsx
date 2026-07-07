@@ -45,6 +45,10 @@ export default function Page() {
         <h2 className="text-xl tracking-tight mt-1">
           시간순 추적 — 다가오는 경제 지표
         </h2>
+        <p className="text-xs text-muted-foreground/80 mt-2 leading-relaxed break-keep">
+          경제 지표 발표와 네 마녀의 날·FOMC 등 주요 시장 이벤트를 다가오는
+          순서로 함께 보여드려요. 시장 이벤트는 일정이 임박했을 때 나타납니다.
+        </p>
       </header>
 
       <section className="flex flex-col gap-6 sm:flex-1 sm:flex-row sm:min-h-0">

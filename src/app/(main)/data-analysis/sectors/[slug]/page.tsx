@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Sparkline from '@/components/common/sparkline';
 import { useAnalysisSectorDetail } from '@/lib/services/analysis/use-analysis-sectors';
 import { useEtfPerformance } from '@/lib/services/stock/use-etf-performance';
+import { useStockLogos } from '@/lib/services/stock/use-stock-logos';
 import { cn } from '@/lib/utils';
 import type {
   AnalysisSectorEtfRow,
@@ -92,6 +93,10 @@ export default function AnalysisSectorDetailPage() {
   );
   const perfBySymbol = new Map((perf ?? []).map((p) => [p.symbol, p]));
 
+  // 회사 로고(캐시 기반, 비동기) — 없으면 모노그램 폴백.
+  const { data: logos } = useStockLogos(items.map((it) => it.symbol));
+  const logoBySym = new Map((logos ?? []).map((l) => [l.symbol, l.logo]));
+
   const isEmpty = !isLoading && items.length === 0;
 
   const toggle = (symbol: string) =>
@@ -162,6 +167,7 @@ export default function AnalysisSectorDetailPage() {
                     <StockRow
                       key={item.symbol}
                       item={item}
+                      logo={logoBySym.get(item.symbol) ?? null}
                       isOpen={open.has(item.symbol)}
                       onToggle={() => toggle(item.symbol)}
                     />
@@ -197,6 +203,7 @@ export default function AnalysisSectorDetailPage() {
                     <EtfRow
                       key={item.symbol}
                       item={item}
+                      logo={logoBySym.get(item.symbol) ?? null}
                       perf={perfBySymbol.get(item.symbol)}
                       perfLoading={perfLoading}
                       isOpen={open.has(item.symbol)}
@@ -244,12 +251,33 @@ function ExpandPanel({
   );
 }
 
+// 종목/ETF 행 앞 로고 배지 — 로고 URL 있으면 이미지, 없으면 티커 모노그램 폴백.
+function LogoBadge({ symbol, logo }: { symbol: string; logo: string | null }) {
+  if (logo) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- 외부 로고 URL, 소형 아이콘
+      <img
+        src={logo}
+        alt=""
+        className="size-8 shrink-0 rounded-md border border-border bg-white object-contain"
+      />
+    );
+  }
+  return (
+    <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-[11px] font-semibold text-muted-foreground">
+      {symbol.slice(0, 2)}
+    </span>
+  );
+}
+
 function StockRow({
   item,
+  logo,
   isOpen,
   onToggle,
 }: {
   item: AnalysisSectorStockRow;
+  logo: string | null;
   isOpen: boolean;
   onToggle: () => void;
 }) {
@@ -261,19 +289,22 @@ function StockRow({
         onClick={onToggle}
         className={cn(STOCK_GRID, 'w-full px-4 py-3 text-left hover:bg-accent/30')}
       >
-        <div className="flex min-w-0 flex-col">
-          <span className="truncate text-sm font-medium text-foreground">
-            {item.name}
-          </span>
-          <span className="font-mono text-[11px] text-muted-foreground/70">
-            {item.symbol}
-            {date && <span className="ml-1.5">· {date} 기준</span>}
-          </span>
-          {item.note && (
-            <span className="mt-0.5 truncate text-[11px] text-muted-foreground break-keep">
-              {item.note}
+        <div className="flex min-w-0 items-center gap-2.5">
+          <LogoBadge symbol={item.symbol} logo={logo} />
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-sm font-medium text-foreground">
+              {item.name}
             </span>
-          )}
+            <span className="font-mono text-[11px] text-muted-foreground/70">
+              {item.symbol}
+              {date && <span className="ml-1.5">· {date} 기준</span>}
+            </span>
+            {item.note && (
+              <span className="mt-0.5 truncate text-[11px] text-muted-foreground break-keep">
+                {item.note}
+              </span>
+            )}
+          </div>
         </div>
         <div className="text-right">
           {item.price != null && item.price > 0 ? (
@@ -354,12 +385,14 @@ function StockRow({
 
 function EtfRow({
   item,
+  logo,
   perf,
   perfLoading,
   isOpen,
   onToggle,
 }: {
   item: AnalysisSectorEtfRow;
+  logo: string | null;
   perf?: EtfPerformance;
   perfLoading: boolean;
   isOpen: boolean;
@@ -372,18 +405,21 @@ function EtfRow({
         onClick={onToggle}
         className={cn(ETF_GRID, 'w-full px-4 py-3 text-left hover:bg-accent/30')}
       >
-        <div className="flex min-w-0 flex-col">
-          <span className="truncate text-sm font-medium text-foreground">
-            {item.name}
-          </span>
-          <span className="font-mono text-[11px] text-muted-foreground/70">
-            {item.symbol}
-          </span>
-          {item.note && (
-            <span className="mt-0.5 truncate text-[11px] text-muted-foreground break-keep">
-              {item.note}
+        <div className="flex min-w-0 items-center gap-2.5">
+          <LogoBadge symbol={item.symbol} logo={logo} />
+          <div className="flex min-w-0 flex-col">
+            <span className="truncate text-sm font-medium text-foreground">
+              {item.name}
             </span>
-          )}
+            <span className="font-mono text-[11px] text-muted-foreground/70">
+              {item.symbol}
+            </span>
+            {item.note && (
+              <span className="mt-0.5 truncate text-[11px] text-muted-foreground break-keep">
+                {item.note}
+              </span>
+            )}
+          </div>
         </div>
         <div className="text-right">
           {perf?.price != null ? (
