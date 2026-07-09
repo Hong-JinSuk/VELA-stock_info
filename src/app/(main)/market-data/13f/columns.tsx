@@ -1,6 +1,7 @@
 import FavoriteButton from '@/components/common/favorite-button';
 import Sparkline from '@/components/common/sparkline';
 import { sectorColor } from '@/constants/sector-colors';
+import { fmtUsdCompact } from '@/lib/stock/format';
 import { cn } from '@/lib/utils';
 import type {
   ThirteenFListItem,
@@ -37,14 +38,6 @@ function quarterLabel(periodEnding: string): string {
   const [y, m] = periodEnding.split('-');
   const quarter = Math.ceil(Number(m) / 3);
   return `${y} Q${quarter}`;
-}
-
-// $431.76B / $18.21B / $431.8M 형태.
-function formatAum(n: number): string {
-  if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
-  if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
-  if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
-  return `$${n.toLocaleString()}`;
 }
 
 // TOP SECTORS: top 섹터를 상대 비율로 채운 바 + 상위 2개 레전드. 비중 desc 순서 유지.
@@ -162,7 +155,7 @@ export const thirteenFColumns: ColumnDef<ThirteenFListItem>[] = [
       if (!s) return <Dash />;
       return (
         <div className="flex flex-col items-end gap-0.5">
-          <span className="text-sm font-semibold">{formatAum(s.aumUsd)}</span>
+          <span className="text-sm font-semibold">{fmtUsdCompact(s.aumUsd)}</span>
           {/* 최신 분기가 아닌 마지막 보고 기준 데이터임을 표시 (보고 중단/지연 filer). */}
           {summaryAsOf && (
             <span className="whitespace-nowrap text-[10px] text-amber-500/80">

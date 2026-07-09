@@ -3,6 +3,9 @@
 import { useFavorites } from '@/lib/services/favorites/use-favorites';
 import { FileBarChart } from 'lucide-react';
 import FavoriteThirteenFConsensus from './components/favorite-13f-consensus';
+import FavoriteThirteenFFlow from './components/favorite-13f-flow';
+import FavoriteThirteenFSectors from './components/favorite-13f-sectors';
+import FavoriteThirteenFTopPerformers from './components/favorite-13f-top-performers';
 
 // 마이페이지 보고서 — 즐겨찾기한 13F 기관들의 공통 매매 컨센서스 등.
 export default function Page() {
@@ -38,14 +41,19 @@ export default function Page() {
           </p>
         </div>
       ) : (
-        <section>
-          <header className="mb-3 flex items-baseline gap-2">
-            <h2 className="text-base font-semibold text-foreground">
-              13F 공통 매매
-            </h2>
-          </header>
-          <FavoriteThirteenFConsensus ciks={ciks} />
-        </section>
+        <>
+          <FavoriteThirteenFFlow ciks={ciks} />
+          <FavoriteThirteenFTopPerformers ciks={ciks} />
+          <FavoriteThirteenFSectors ciks={ciks} />
+          <section>
+            <header className="mb-3 flex items-baseline gap-2">
+              <h2 className="text-base font-semibold text-foreground">
+                13F 공통 매매
+              </h2>
+            </header>
+            <FavoriteThirteenFConsensus ciks={ciks} />
+          </section>
+        </>
       )}
     </main>
   );

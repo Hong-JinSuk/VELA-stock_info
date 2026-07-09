@@ -19,7 +19,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { sectorColor } from '@/constants/sector-colors';
+import { sectorColor, sectorLabel } from '@/constants/sector-colors';
 import { krNameOf } from '@/constants/stock-korean-names';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -250,24 +250,6 @@ function ActivityRow({
       <dd className="text-sm tabular-nums text-right shrink-0">{children}</dd>
     </div>
   );
-}
-
-// 섹터 버킷(영문) → 한국어 표기. 우리 버킷은 Consumer(Disc+Staples 병합) 기준.
-const SECTOR_KO: Record<string, string> = {
-  Technology: '기술',
-  Financials: '금융',
-  'Health Care': '헬스케어',
-  Consumer: '소비재',
-  'Communication Services': '커뮤니케이션',
-  Industrials: '산업재',
-  Energy: '에너지',
-  Materials: '소재',
-  Utilities: '유틸리티',
-  'Real Estate': '부동산',
-  Other: '기타',
-};
-function sectorLabel(sector: string): string {
-  return SECTOR_KO[sector] ?? sector;
 }
 
 // "2025-09-30" → "Q3 2025"

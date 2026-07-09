@@ -19,7 +19,7 @@ export function NavAdmin() {
   if (session?.user?.role !== 'ADMIN') return null;
 
   return (
-    <SidebarGroup className="mt-auto">
+    <SidebarGroup>
       <SidebarGroupLabel>Admin</SidebarGroupLabel>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu className="gap-y-1.5">

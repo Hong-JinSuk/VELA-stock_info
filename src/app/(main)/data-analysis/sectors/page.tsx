@@ -1,8 +1,9 @@
 'use client';
 
+import { analysisSectorIcon } from '@/constants/analysis-sector-icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAnalysisSectors } from '@/lib/services/analysis/use-analysis-sectors';
-import { ChevronRight, Layers } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AnalysisSectorsPage() {
@@ -33,31 +34,34 @@ export default function AnalysisSectorsPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {data!.map((s) => (
-            <Link
-              key={s.id}
-              href={`/data-analysis/sectors/${s.slug}`}
-              className="group flex items-start gap-3 rounded-2xl border border-border bg-card/40 p-5 transition-colors hover:bg-accent/40"
-            >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                <Layers className="size-5" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-foreground">
-                  {s.name}
-                </p>
-                {s.description && (
-                  <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground break-keep">
-                    {s.description}
+          {data!.map((s) => {
+            const Icon = analysisSectorIcon(s.name, s.slug);
+            return (
+              <Link
+                key={s.id}
+                href={`/data-analysis/sectors/${s.slug}`}
+                className="group flex items-start gap-3 rounded-2xl border border-border bg-card/40 p-5 transition-colors hover:bg-accent/40"
+              >
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <Icon className="size-5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {s.name}
                   </p>
-                )}
-                <p className="mt-1 text-[11px] text-muted-foreground/70">
-                  종목 {s.itemCount}개
-                </p>
-              </div>
-              <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          ))}
+                  {s.description && (
+                    <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground break-keep">
+                      {s.description}
+                    </p>
+                  )}
+                  <p className="mt-1 text-[11px] text-muted-foreground/70">
+                    종목 {s.itemCount}개
+                  </p>
+                </div>
+                <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            );
+          })}
         </div>
       )}
     </main>

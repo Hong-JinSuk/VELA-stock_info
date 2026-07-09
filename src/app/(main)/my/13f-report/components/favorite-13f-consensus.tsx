@@ -21,9 +21,23 @@ type HoldAgg = {
   key: string;
   ticker: string | null;
   name: string;
-  filers: number;
-  weightSum: number; // 비중 합 (평균 산출용)
+  weights: number[]; // 펀드별(같은 펀드의 A/B 클래스는 합산) 포트폴리오 비중. 중앙값/최대 산출용
 };
+
+// 종목 식별 키. 같은 회사의 공유 클래스(BRK/A·BRK/B, HEI/A 등 "루트/클래스" 표기)는
+// 티커 루트로 병합해 한 종목으로 집계한다(공통 보유 기관 수 이중 카운트 방지).
+// 티커가 없으면 이름으로 묶는다. (GOOG/GOOGL처럼 루트가 다른 이종 클래스는 의결권까지
+// 다른 별개 종목이라 병합하지 않는다.)
+function canonicalId(
+  ticker: string | null,
+  name: string,
+): { key: string; ticker: string | null; name: string } {
+  if (ticker) {
+    const root = ticker.split('/')[0].toUpperCase();
+    return { key: `T:${root}`, ticker: root, name };
+  }
+  return { key: `N:${name.toLowerCase()}`, ticker: null, name };
+}
 
 function withSummary(
   items: ThirteenFListItem[],
@@ -38,43 +52,68 @@ function aggregateTrades(
   rows: { summary: ThirteenFListSummary }[],
   pick: (s: ThirteenFListSummary) => ThirteenFListSummary['topBuys'],
 ): TradeAgg[] {
-  const map = new Map<string, TradeAgg>();
-  for (const { summary } of rows) {
-    for (const t of pick(summary)) {
-      const key = t.ticker ?? t.name;
-      const cur = map.get(key) ?? {
-        key,
-        ticker: t.ticker,
-        name: t.name,
-        filers: 0,
-        totalUsd: 0,
-      };
-      cur.filers += 1;
-      cur.totalUsd += t.tradeUsd;
-      map.set(key, cur);
+  // 공유 클래스는 canonicalId로 병합하고, filers는 distinct 펀드 수로 센다
+  // (한 펀드가 A/B 클래스를 둘 다 거래해도 1곳).
+  const map = new Map<
+    string,
+    {
+      key: string;
+      ticker: string | null;
+      name: string;
+      funds: Set<number>;
+      totalUsd: number;
     }
-  }
-  return [...map.values()];
+  >();
+  rows.forEach(({ summary }, fundIdx) => {
+    for (const t of pick(summary)) {
+      const { key, ticker, name } = canonicalId(t.ticker, t.name);
+      let cur = map.get(key);
+      if (!cur) {
+        cur = { key, ticker, name, funds: new Set(), totalUsd: 0 };
+        map.set(key, cur);
+      }
+      cur.funds.add(fundIdx);
+      cur.totalUsd += t.tradeUsd;
+    }
+  });
+  return [...map.values()].map((c) => ({
+    key: c.key,
+    ticker: c.ticker,
+    name: c.name,
+    filers: c.funds.size,
+    totalUsd: c.totalUsd,
+  }));
 }
 
 function aggregateHoldings(rows: { summary: ThirteenFListSummary }[]): HoldAgg[] {
-  const map = new Map<string, HoldAgg>();
-  for (const { summary } of rows) {
-    for (const h of summary.topHoldings) {
-      const key = h.ticker ?? h.name;
-      const cur = map.get(key) ?? {
-        key,
-        ticker: h.ticker,
-        name: h.name,
-        filers: 0,
-        weightSum: 0,
-      };
-      cur.filers += 1;
-      cur.weightSum += h.weightPercent;
-      map.set(key, cur);
+  // 회사별로 "펀드별 비중"을 모은다. 같은 펀드가 공유 클래스(A/B)를 둘 다 들면 비중을 합산해
+  // 그 펀드의 회사 총비중 하나로 만든다 → 중앙값/최대가 펀드 단위로 산출된다.
+  const map = new Map<
+    string,
+    {
+      key: string;
+      ticker: string | null;
+      name: string;
+      byFund: Map<number, number>;
     }
-  }
-  return [...map.values()];
+  >();
+  rows.forEach(({ summary }, fundIdx) => {
+    for (const h of summary.topHoldings) {
+      const { key, ticker, name } = canonicalId(h.ticker, h.name);
+      let cur = map.get(key);
+      if (!cur) {
+        cur = { key, ticker, name, byFund: new Map() };
+        map.set(key, cur);
+      }
+      cur.byFund.set(fundIdx, (cur.byFund.get(fundIdx) ?? 0) + h.weightPercent);
+    }
+  });
+  return [...map.values()].map((c) => ({
+    key: c.key,
+    ticker: c.ticker,
+    name: c.name,
+    weights: [...c.byFund.values()],
+  }));
 }
 
 function fmtUsd(v: number): string {
@@ -164,7 +203,8 @@ function ConsensusList({
 }
 
 // 즐겨찾기한 13F 기관들의 주요 매수/매도/보유를 종목별 합산 → 공통 TOP 10.
-// 랭킹: 공통 기관 수 desc → 합산 금액(매수↓/매도|↓|/비중↓).
+// 공유 클래스(BRK/A·B 등)는 한 종목으로 병합, 기관 수는 distinct 펀드.
+// 랭킹: 공통 기관 수 desc → 매수 합산액↓ / 매도 합산액|↓| / 보유 최대비중↓.
 export default function FavoriteThirteenFConsensus({ ciks }: { ciks: string[] }) {
   const { data } = useThirteenFByCiks(ciks);
   const rows = withSummary(data ?? []);
@@ -182,9 +222,22 @@ export default function FavoriteThirteenFConsensus({ ciks }: { ciks: string[] })
     .map((a) => ({ ...a, amount: fmtUsd(a.totalUsd) }));
 
   const holds = aggregateHoldings(rows)
-    .sort((a, b) => b.filers - a.filers || b.weightSum - a.weightSum)
+    .map((a) => ({
+      key: a.key,
+      ticker: a.ticker,
+      name: a.name,
+      filers: a.weights.length,
+      max: Math.max(...a.weights), // 가장 크게 몰빵한 기관의 포트폴리오 비중
+    }))
+    .sort((a, b) => b.filers - a.filers || b.max - a.max)
     .slice(0, TOP_N)
-    .map((a) => ({ ...a, amount: `${(a.weightSum / a.filers).toFixed(1)}%` }));
+    .map((a) => ({
+      key: a.key,
+      ticker: a.ticker,
+      name: a.name,
+      filers: a.filers,
+      amount: `최대 ${Math.round(a.max)}%`,
+    }));
 
   return (
     <div>

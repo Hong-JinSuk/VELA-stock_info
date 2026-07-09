@@ -28,3 +28,25 @@ export const SECTOR_COLOR_FALLBACK = 'bg-zinc-400';
 export function sectorColor(sector: string): string {
   return SECTOR_COLOR_BY_NAME[sector] ?? SECTOR_COLOR_FALLBACK;
 }
+
+// 섹터 버킷(영문) → 한국어 표기. 13F summary 버킷 기준(Consumer는 Disc+Staples 병합).
+// 서비스 전체에서 "같은 섹터 = 같은 한글명"이 되도록 공유한다.
+export const SECTOR_KO: Record<string, string> = {
+  Technology: '기술',
+  Financials: '금융',
+  'Health Care': '헬스케어',
+  Consumer: '소비재',
+  'Consumer Discretionary': '소비재(경기)',
+  'Consumer Staples': '소비재(필수)',
+  'Communication Services': '커뮤니케이션',
+  Industrials: '산업재',
+  Energy: '에너지',
+  Materials: '소재',
+  Utilities: '유틸리티',
+  'Real Estate': '부동산',
+  Other: '기타',
+};
+
+export function sectorLabel(sector: string): string {
+  return SECTOR_KO[sector] ?? sector;
+}

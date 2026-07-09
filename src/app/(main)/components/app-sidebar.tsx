@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useNavMenus } from '@/lib/services/menu/use-nav-menus';
 import Link from 'next/link';
 import { NavAdmin } from './nav-admin';
+import { NavDeveloperMail } from './nav-developer-mail';
 import { NavMain } from './nav-main';
 import { NavUser } from './nav-user';
 
@@ -51,6 +52,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           visibleNav.length > 0 && <NavMain items={visibleNav} />
         )}
         {/* {navPresonal.length > 0 && <NavPersonal items={navPresonal} />} */}
+        <NavDeveloperMail />
         <NavAdmin />
         {/* {data.documents.length > 0 && <NavDocuments items={data.documents} />}
         {data.navSecondary.length > 0 && (

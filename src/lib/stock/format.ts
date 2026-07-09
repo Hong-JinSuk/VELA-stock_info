@@ -18,6 +18,15 @@ export function fmtUsd(v: number | null | undefined, decimals = 2): string {
   return `$${fmtNum(v, decimals)}`;
 }
 
+// 큰 달러 값을 축약 표기($431.76B / $18.21B / $431.76M). AUM·포트폴리오 총액 등에.
+export function fmtUsdCompact(v: number | null | undefined): string {
+  if (v == null || !Number.isFinite(v)) return '–';
+  if (v >= 1e12) return `$${(v / 1e12).toFixed(2)}T`;
+  if (v >= 1e9) return `$${(v / 1e9).toFixed(2)}B`;
+  if (v >= 1e6) return `$${(v / 1e6).toFixed(2)}M`;
+  return `$${v.toLocaleString()}`;
+}
+
 export function fmtShares(v: number): string {
   return Math.round(v).toLocaleString('en-US');
 }
