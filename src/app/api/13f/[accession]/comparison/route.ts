@@ -41,9 +41,6 @@ export async function GET(
       console.warn(`[13F_COMPARISON] not found accession=${accession}`);
       return NextResponse.json({ message: 'not found' }, { status: 404 });
     }
-    console.log(
-      `[13F_COMPARISON] loaded accession=${accession} buys=${result.buys.length} sells=${result.sells.length} holds=${result.holds.length}`,
-    );
     return NextResponse.json(result);
   } catch (e) {
     console.error(`[13F_COMPARISON] failed accession=${accession}:`, e);

@@ -15,8 +15,6 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log('[REFINE] start');
-
     const stream = await ai.models.generateContentStream({
       model: 'gemini-2.5-flash',
       contents: getRefinePrompt(stockData),
@@ -26,8 +24,6 @@ export async function POST(request: Request) {
     for await (const chunk of stream) {
       refinedData += chunk.text;
     }
-
-    console.log('[REFINE] end');
 
     return NextResponse.json({ refinedData });
   } catch (error) {

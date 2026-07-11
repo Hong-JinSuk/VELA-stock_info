@@ -47,7 +47,6 @@ export async function GET(req: NextRequest) {
       take: limit,
     });
 
-    console.log(`[13F_FILERS] searchKey="${searchKey}" returned=${filers.length}`);
     return NextResponse.json({ filers });
   } catch (error) {
     console.error('[13F_FILERS] failed:', error);

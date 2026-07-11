@@ -24,13 +24,6 @@ export async function GET() {
         where: { type: 'AI_INSIGHT' },
         orderBy: { dateKey: 'desc' },
       });
-      if (snapshot) {
-        console.log(
-          `[OVERVIEW_INSIGHT] fallback to latest dateKey=${snapshot.dateKey} (today=${todayKey})`,
-        );
-      }
-    } else {
-      console.log(`[OVERVIEW_INSIGHT] loaded snapshot for dateKey=${todayKey}`);
     }
 
     if (!snapshot) {

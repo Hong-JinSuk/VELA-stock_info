@@ -61,8 +61,6 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log(`[PREDICT] start userId=${userId} ticker=${stockName}`);
-
     const stream = await ai.models.generateContentStream({
       model: 'gemini-2.5-flash',
       contents: getPredictPrompt(stockName, refinedData ?? ''),
@@ -76,8 +74,6 @@ export async function POST(request: Request) {
     for await (const chunk of stream) {
       fullText += chunk.text;
     }
-
-    console.log(`[PREDICT] end userId=${userId} ticker=${stockName}`);
 
     const startIndex = fullText.indexOf('{');
     const endIndex = fullText.lastIndexOf('}');

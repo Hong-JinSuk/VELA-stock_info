@@ -29,11 +29,6 @@ export async function POST(req: Request): Promise<NextResponse<ApiResponse>> {
       },
     });
 
-    const nickname = (session.user as { nickname?: string }).nickname;
-    console.log(
-      `[AI_LOG] saved logId=${log.id} nickname=${nickname ?? 'N/A'} ticker=${stockName}`,
-    );
-
     // 규격 적용: message, status, result
     return createResponse('로그가 성공적으로 기록되었습니다.', 201, {
       logId: log.id,

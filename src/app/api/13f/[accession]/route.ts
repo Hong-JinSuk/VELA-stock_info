@@ -228,9 +228,6 @@ export async function GET(
       console.warn(`[13F_DETAIL] not found accession=${accession}`);
       return NextResponse.json({ message: 'not found' }, { status: 404 });
     }
-    console.log(
-      `[13F_DETAIL] loaded accession=${accession} cik=${detail.cik} holdings=${detail.holdings.length}`,
-    );
     return NextResponse.json(detail);
   } catch (e) {
     console.error(`[13F_DETAIL] failed accession=${accession}:`, e);

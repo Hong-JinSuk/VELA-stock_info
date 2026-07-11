@@ -3,6 +3,7 @@
 import EtfHoldingsCard from '@/app/(main)/market-data/stocks/components/etf-holdings-card';
 import { Skeleton } from '@/components/ui/skeleton';
 import Sparkline from '@/components/common/sparkline';
+import { analysisSectorTheme } from '@/constants/analysis-sector-icons';
 import { useAnalysisSectorDetail } from '@/lib/services/analysis/use-analysis-sectors';
 import { useEtfPerformance } from '@/lib/services/stock/use-etf-performance';
 import { useStockLogos } from '@/lib/services/stock/use-stock-logos';
@@ -99,6 +100,12 @@ export default function AnalysisSectorDetailPage() {
 
   const isEmpty = !isLoading && items.length === 0;
 
+  // 헤더 아이콘·테마색 (리스트 카드와 동일 리졸버). 로딩 중엔 이름이 없어 기본 아이콘.
+  const { Icon: SectorIcon, badge: sectorBadge } = analysisSectorTheme(
+    data?.name ?? '',
+    slug,
+  );
+
   const toggle = (symbol: string) =>
     setOpen((prev) => {
       const next = new Set(prev);
@@ -116,9 +123,16 @@ export default function AnalysisSectorDetailPage() {
         >
           ← 섹터 분석
         </Link>
-        <h1 className="mt-1 font-serif text-xl tracking-tight">
-          {data?.name ?? '섹터'}
-        </h1>
+        <div className="mt-1 flex items-center gap-2.5">
+          <span
+            className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${sectorBadge}`}
+          >
+            <SectorIcon className="size-5" />
+          </span>
+          <h1 className="font-serif text-xl tracking-tight">
+            {data?.name ?? '섹터'}
+          </h1>
+        </div>
         {data?.description && (
           <p className="mt-1 text-sm text-muted-foreground break-keep">
             {data.description}

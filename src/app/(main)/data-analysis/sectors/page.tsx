@@ -1,6 +1,6 @@
 'use client';
 
-import { analysisSectorIcon } from '@/constants/analysis-sector-icons';
+import { analysisSectorTheme } from '@/constants/analysis-sector-icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAnalysisSectors } from '@/lib/services/analysis/use-analysis-sectors';
 import { ChevronRight } from 'lucide-react';
@@ -35,14 +35,16 @@ export default function AnalysisSectorsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data!.map((s) => {
-            const Icon = analysisSectorIcon(s.name, s.slug);
+            const { Icon, badge } = analysisSectorTheme(s.name, s.slug);
             return (
               <Link
                 key={s.id}
                 href={`/data-analysis/sectors/${s.slug}`}
                 className="group flex items-start gap-3 rounded-2xl border border-border bg-card/40 p-5 transition-colors hover:bg-accent/40"
               >
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                <span
+                  className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${badge}`}
+                >
                   <Icon className="size-5" />
                 </span>
                 <div className="min-w-0 flex-1">

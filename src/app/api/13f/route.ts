@@ -102,29 +102,30 @@ export async function GET(req: NextRequest) {
       ...(filerNameOr ? { OR: filerNameOr } : {}),
     };
 
-    const [richTotal, restTotal, priorityFilers, prioritySummaries] =
-      await Promise.all([
-        period ? prisma.thirteenFSummary.count({ where: richWhere }) : 0,
-        prisma.thirteenFFiler.count({ where: restWhere }),
-        priorityCiks.length > 0
-          ? prisma.thirteenFFiler.findMany({
-              where: { cik: { in: priorityCiks } },
-              select: {
-                cik: true,
-                name: true,
-                krName: true,
-                lastFiledDate: true,
-                latestAccession: true,
+    const [richTotal, restTotal, priorityFilers] = await Promise.all([
+      period ? prisma.thirteenFSummary.count({ where: richWhere }) : 0,
+      prisma.thirteenFFiler.count({ where: restWhere }),
+      priorityCiks.length > 0
+        ? prisma.thirteenFFiler.findMany({
+            where: { cik: { in: priorityCiks } },
+            select: {
+              cik: true,
+              name: true,
+              krName: true,
+              lastFiledDate: true,
+              latestAccession: true,
+              // 최신 분기 summary가 없으면(예: 타 filer가 조기 신고해 전역 period가
+              // 앞당겨진 경우) 이 filer의 가장 최근 분기 summary로 fallback한다.
+              // tier2와 동일하게 구분기면 summaryAsOf로 표시(아래 priorityItems).
+              summaries: {
+                orderBy: { periodEnding: 'desc' },
+                take: 1,
+                select: SUMMARY_SELECT,
               },
-            })
-          : [],
-        priorityCiks.length > 0 && period
-          ? prisma.thirteenFSummary.findMany({
-              where: { cik: { in: priorityCiks }, periodEnding: period },
-              select: SUMMARY_SELECT,
-            })
-          : [],
-      ]);
+            },
+          })
+        : [],
+    ]);
 
     // tier0은 order 오름차순 고정 정렬 (DB에 없는 cik는 자연히 빠짐).
     const orderByCik = new Map(PRIORITY_FILLINGS.map((p) => [p.cik, p.order]));
@@ -187,15 +188,10 @@ export async function GET(req: NextRequest) {
       prioritySkip,
       prioritySkip + priorityTake,
     );
-    const prioritySummaryByCik = new Map(
-      prioritySummaries.map((s) => [s.cik, s]),
-    );
 
     // summary 있는 행(tier0 + tier1 + 구분기 summary 보유 tier2)의 AUM 시계열(TREND).
     const richCiks = [
-      ...pagePriority
-        .filter((f) => prioritySummaryByCik.has(f.cik))
-        .map((f) => f.cik),
+      ...pagePriority.filter((f) => f.summaries.length > 0).map((f) => f.cik),
       ...richRows.map((r) => r.cik),
       ...restRows.filter((f) => f.summaries.length > 0).map((f) => f.cik),
     ];
@@ -215,7 +211,7 @@ export async function GET(req: NextRequest) {
     }
 
     const priorityItems: ThirteenFListItem[] = pagePriority.map((f) => {
-      const s = prioritySummaryByCik.get(f.cik);
+      const s = f.summaries[0];
       if (!s) {
         return {
           accession: f.latestAccession ?? '',
@@ -226,13 +222,16 @@ export async function GET(req: NextRequest) {
           summary: null,
         };
       }
+      // 최신 분기 summary가 아니면(구분기 fallback) summaryAsOf로 "…기준" 표시.
+      const isStale = s.periodEnding !== period;
       return {
         accession: s.accession,
         cik: f.cik,
         filerName: f.name,
         krName: f.krName,
         fileDate: s.fileDate,
-        periodEnding: period,
+        periodEnding: s.periodEnding,
+        ...(isStale ? { summaryAsOf: s.periodEnding } : {}),
         summary: toListSummary(s, trendByCik.get(f.cik) ?? []),
       };
     });
@@ -276,9 +275,6 @@ export async function GET(req: NextRequest) {
       [...priorityItems, ...richItems, ...restItems],
       total,
       { page, size },
-    );
-    console.log(
-      `[13F_LIST] q="${entityName}" period=${period} page=${page} pri=${priorityItems.length} rich=${richItems.length} rest=${restItems.length} total=${total}`,
     );
     return NextResponse.json(response);
   } catch (e) {

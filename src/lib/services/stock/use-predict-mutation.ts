@@ -97,7 +97,6 @@ export function usePredictMutation() {
       await updateSession();
     },
     onError: (error: unknown) => {
-      console.log('error : ', error);
       if (isCanceledError(error)) {
         setAgentStatus('분석 취소');
         return;
