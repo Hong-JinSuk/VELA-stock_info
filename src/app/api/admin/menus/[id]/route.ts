@@ -91,6 +91,7 @@ export async function PATCH(
       ...(data.disabled !== undefined ? { disabled: data.disabled } : {}),
       ...(data.minRole !== undefined ? { minRole: data.minRole } : {}),
       ...(data.hidden !== undefined ? { hidden: data.hidden } : {}),
+      ...(data.beta !== undefined ? { beta: data.beta } : {}),
       ...(data.locked !== undefined ? { locked: data.locked } : {}),
       ...(data.parentId !== undefined ? { parentId: data.parentId } : {}),
       ...(data.sortOrder !== undefined ? { sortOrder: data.sortOrder } : {}),

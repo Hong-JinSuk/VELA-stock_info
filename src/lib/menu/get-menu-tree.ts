@@ -24,6 +24,7 @@ export async function getMenuTree(): Promise<MenuNode[]> {
       disabled: r.disabled,
       minRole: r.minRole as AccessLevel,
       hidden: r.hidden,
+      beta: r.beta,
       locked: r.locked,
       sortOrder: r.sortOrder,
       children: [],

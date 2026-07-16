@@ -91,6 +91,7 @@ export async function POST(req: NextRequest) {
       disabled: rest.disabled ?? false,
       minRole: rest.minRole ?? 'FREE',
       hidden: rest.hidden ?? false,
+      beta: rest.beta ?? false,
       locked: rest.locked ?? false,
       sortOrder: order,
     },

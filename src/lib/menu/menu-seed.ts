@@ -63,6 +63,7 @@ export const DEFAULT_MENU_SEED: SeedGroup[] = [
       { key: 'my-favorites', title: '즐겨찾기', path: '/my/favorites' },
       { key: 'my-13f-report', title: '13F 보고서', path: '/my/13f-report' },
       { key: 'my-stocks-report', title: '종목 보고서', path: '/my/stocks-report' },
+      { key: 'my-portfolio', title: '포트폴리오 진단', path: '/my/portfolio' },
       { key: 'my-ai-logs', title: 'AI 분석 기록', path: '/my/ai-logs', disabled: true },
       { key: 'my-setting', title: '환경 설정', path: '/my/setting', disabled: true },
     ],

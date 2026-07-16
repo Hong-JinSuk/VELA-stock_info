@@ -16,6 +16,7 @@ export type MenuNode = {
   disabled: boolean;
   minRole: AccessLevel;
   hidden: boolean;
+  beta: boolean;
   locked: boolean;
   sortOrder: number;
   children: MenuNode[];

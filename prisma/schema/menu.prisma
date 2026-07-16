@@ -21,6 +21,7 @@ model Menu {
   disabled  Boolean  @default(false)
   minRole   String   @default("FREE")
   hidden    Boolean  @default(false)
+  beta      Boolean  @default(false) // Beta 서비스 배지 표시
   locked    Boolean  @default(false)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())

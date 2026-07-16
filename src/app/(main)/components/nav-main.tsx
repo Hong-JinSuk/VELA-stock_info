@@ -98,6 +98,7 @@ export function NavMain({ items }: { items: NavItemProps[] }) {
                             준비 중
                           </span>
                         )}
+                        {item.beta && <BetaTag className="ml-auto" />}
                         <IconChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
@@ -138,8 +139,14 @@ export function NavMain({ items }: { items: NavItemProps[] }) {
                                     <AppWindow className="size-3.5 opacity-60" />
                                   </button>
                                 ) : (
-                                  <Link href={fullUrl}>
+                                  <Link
+                                    href={fullUrl}
+                                    className="flex w-full items-center"
+                                  >
                                     <span>{subItem.title}</span>
+                                    {subItem.beta && (
+                                      <BetaTag className="ml-auto" />
+                                    )}
                                   </Link>
                                 )}
                               </SidebarMenuSubButton>
@@ -195,6 +202,7 @@ export function NavMain({ items }: { items: NavItemProps[] }) {
                           {item.badge}
                         </span>
                       )}
+                      {item.beta && <BetaTag className="ml-auto" />}
                     </Link>
                   )}
                 </SidebarMenuButton>
@@ -204,5 +212,16 @@ export function NavMain({ items }: { items: NavItemProps[] }) {
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
+  );
+}
+
+// Beta 서비스 배지 — Menu.beta=true인 항목에 표시.
+function BetaTag({ className = '' }: { className?: string }) {
+  return (
+    <span
+      className={`flex items-center justify-center rounded-md bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-bold leading-none text-violet-600 dark:text-violet-400 ${className}`}
+    >
+      BETA
+    </span>
   );
 }

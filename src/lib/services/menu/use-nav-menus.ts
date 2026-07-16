@@ -26,6 +26,7 @@ export function useNavMenus(): { items: NavItemProps[]; isLoading: boolean } {
         disabled: group.disabled,
         popup: group.type === 'POPUP',
         badge: group.badge ?? undefined,
+        beta: group.beta,
       };
 
       // FOLDER만 아코디언으로 자식을 펼친다. LINK/POPUP은 단일 항목.
@@ -38,6 +39,7 @@ export function useNavMenus(): { items: NavItemProps[]; isLoading: boolean } {
             title: c.title,
             url: c.path,
             disabled: c.disabled,
+            beta: c.beta,
             popup: c.type === 'POPUP',
             routeKey: c.key,
           })),

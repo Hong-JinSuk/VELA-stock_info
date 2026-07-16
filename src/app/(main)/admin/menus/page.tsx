@@ -29,6 +29,7 @@ import {
   ChevronUp,
   Eye,
   EyeOff,
+  FlaskConical,
   Lock,
   LockOpen,
   Pencil,
@@ -138,6 +139,8 @@ export default function AdminMenusPage() {
               onDelete: () => del.mutate(node.id),
               onToggleHidden: () =>
                 update.mutate({ id: node.id, hidden: !node.hidden }),
+              onToggleBeta: () =>
+                update.mutate({ id: node.id, beta: !node.beta }),
               onToggleLock: () =>
                 update.mutate({ id: node.id, locked: !node.locked }),
               onMinRole: (minRole: AccessLevel) =>
@@ -195,6 +198,7 @@ type RowHandlers = {
   onEdit: () => void;
   onDelete: () => void;
   onToggleHidden: () => void;
+  onToggleBeta: () => void;
   onToggleLock: () => void;
   onMinRole: (v: AccessLevel) => void;
 };
@@ -205,6 +209,7 @@ function FolderGroup({
   onEdit,
   onDelete,
   onToggleHidden,
+  onToggleBeta,
   onToggleLock,
   onAddChild,
   onMoveChild,
@@ -246,10 +251,12 @@ function FolderGroup({
             {children.length}
           </span>
           {node.hidden && <HiddenBadge />}
+          {node.beta && <BetaBadge />}
         </button>
         <div className="flex shrink-0 items-center gap-1">
           <ReorderButtons {...reorder} disabled={locked} />
           <HiddenToggle hidden={node.hidden} disabled={locked} onToggle={onToggleHidden} />
+          <BetaToggle beta={node.beta} disabled={locked} onToggle={onToggleBeta} />
           <IconButton title="하위 메뉴 추가" disabled={locked} onClick={onAddChild}>
             <Plus className="size-4" />
           </IconButton>
@@ -295,6 +302,9 @@ function FolderGroup({
                     onToggleHidden={() =>
                       onUpdateChild(child, { hidden: !child.hidden })
                     }
+                    onToggleBeta={() =>
+                      onUpdateChild(child, { beta: !child.beta })
+                    }
                     onToggleLock={() =>
                       onUpdateChild(child, { locked: !child.locked })
                     }
@@ -316,6 +326,7 @@ function LeafRow({
   onEdit,
   onDelete,
   onToggleHidden,
+  onToggleBeta,
   onToggleLock,
   onMinRole,
   showIcon,
@@ -337,6 +348,7 @@ function LeafRow({
               </span>
             )}
             {node.hidden && <HiddenBadge />}
+            {node.beta && <BetaBadge />}
           </p>
           <p className="font-mono text-[11px] text-muted-foreground/70">
             {node.path}
@@ -346,6 +358,7 @@ function LeafRow({
       <div className="flex shrink-0 flex-wrap items-center gap-2">
         <MinRoleSelect value={node.minRole} disabled={locked} onChange={onMinRole} />
         <HiddenToggle hidden={node.hidden} disabled={locked} onToggle={onToggleHidden} />
+        <BetaToggle beta={node.beta} disabled={locked} onToggle={onToggleBeta} />
         <ReorderButtons {...reorder} disabled={locked} />
         <IconButton title="편집" disabled={locked} onClick={onEdit}>
           <Pencil className="size-4" />
@@ -369,6 +382,14 @@ function HiddenBadge() {
   return (
     <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-600 dark:text-amber-400">
       숨김
+    </span>
+  );
+}
+
+function BetaBadge() {
+  return (
+    <span className="shrink-0 rounded bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-medium text-violet-600 dark:text-violet-400">
+      Beta
     </span>
   );
 }
@@ -482,6 +503,34 @@ function LockToggle({
       }`}
     >
       {locked ? <Lock className="size-4" /> : <LockOpen className="size-4" />}
+    </button>
+  );
+}
+
+// 행에서 바로 Beta on/off (편집 다이얼로그 없이). 켜지면 보라색.
+function BetaToggle({
+  beta,
+  disabled,
+  onToggle,
+}: {
+  beta: boolean;
+  disabled?: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={disabled}
+      aria-pressed={beta}
+      title={beta ? 'Beta 표시 중 (클릭하면 해제)' : 'Beta 아님 (클릭하면 Beta로 표시)'}
+      className={`flex size-8 items-center justify-center rounded-lg border transition-colors disabled:opacity-40 ${
+        beta
+          ? 'border-violet-500/30 bg-violet-500/10 text-violet-600 dark:text-violet-400'
+          : 'border-border bg-background text-muted-foreground hover:text-foreground'
+      }`}
+    >
+      <FlaskConical className="size-4" />
     </button>
   );
 }
