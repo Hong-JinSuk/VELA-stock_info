@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
-import { type Column, flexRender } from '@tanstack/react-table';
+import { type Column, type Row, flexRender } from '@tanstack/react-table';
 import { motion } from 'motion/react';
 import { type CSSProperties, useEffect, useRef } from 'react';
 import DataTablePagination from './data-table-pagination';
@@ -55,6 +55,7 @@ export default function DataTable<TData>({
   showPagination,
   pageSizeOptions,
   animateRows = false,
+  mobileCard,
   className,
 }: DataTableProps<TData>) {
   const { onRowClick, onRowHover } = table.options.meta ?? {};
@@ -86,6 +87,8 @@ export default function DataTable<TData>({
           scrollX ? 'overflow-x-auto' : 'overflow-x-hidden',
         )}
       >
+        {/* mobileCard가 켜지면 데스크톱에서만 표를 보이고, 모바일은 아래 카드로 대체. */}
+        <div className={cn(mobileCard && 'hidden sm:block')}>
         {/* shadcn Table 내부 컨테이너 overflow 무력화 → 스크롤은 위 div 한 곳에서만. */}
         <Table
           containerClassName="overflow-x-visible"
@@ -201,11 +204,114 @@ export default function DataTable<TData>({
             )}
           </TableBody>
         </Table>
+        </div>
+
+        {/* 모바일(<640px): 표 대신 행별 카드. mobileCard가 켜진 표만. */}
+        {mobileCard && (
+          <div className="flex flex-col gap-2 sm:hidden">
+            {isLoading ? (
+              Array.from({ length: Math.min(skeletonRows, 4) }).map((_, i) => (
+                <Skeleton key={`mc-sk-${i}`} className="h-40 rounded-xl" />
+              ))
+            ) : rows.length === 0 ? (
+              <div className="rounded-xl border border-border p-8 text-center text-sm text-muted-foreground">
+                {emptyMessage}
+              </div>
+            ) : (
+              rows.map((row) => {
+                const key = rowKey ? String(row.original[rowKey]) : row.id;
+                const onClick = onRowClick
+                  ? () => onRowClick(row)
+                  : undefined;
+                return (
+                  <div
+                    key={key}
+                    onClick={onClick}
+                    className={cn(
+                      'rounded-xl border border-border p-4',
+                      onClick && 'cursor-pointer hover:bg-accent/30',
+                    )}
+                  >
+                    {typeof mobileCard === 'function'
+                      ? mobileCard(row)
+                      : <AutoMobileCard row={row} />}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
       </div>
 
       {paginated && (
         <DataTablePagination table={table} pageSizeOptions={pageSizeOptions} />
       )}
     </div>
+  );
+}
+
+// 자동 모바일 카드 — 컬럼 정의(meta)로부터 제목/액션/본문(라벨:값)을 만든다.
+// 제목=meta.mobileTitle(없으면 첫 컬럼), 우상단=meta.mobileHeaderAction,
+// 숨김=meta.mobileHidden, 라벨=meta.mobileLabel ?? header(문자열).
+function AutoMobileCard<TData>({ row }: { row: Row<TData> }) {
+  const cells = row.getVisibleCells();
+  const titleCell =
+    cells.find((c) => c.column.columnDef.meta?.mobileTitle) ?? cells[0];
+  const actionCell = cells.find(
+    (c) => c.column.columnDef.meta?.mobileHeaderAction,
+  );
+  const bodyCells = cells.filter(
+    (c) =>
+      c.id !== titleCell?.id &&
+      c.id !== actionCell?.id &&
+      !c.column.columnDef.meta?.mobileHidden,
+  );
+  return (
+    <>
+      <div className="flex items-start justify-between gap-2">
+        {titleCell && (
+          <div className="min-w-0 flex-1">
+            {flexRender(
+              titleCell.column.columnDef.cell,
+              titleCell.getContext(),
+            )}
+          </div>
+        )}
+        {actionCell && (
+          <div className="shrink-0">
+            {flexRender(
+              actionCell.column.columnDef.cell,
+              actionCell.getContext(),
+            )}
+          </div>
+        )}
+      </div>
+      {bodyCells.length > 0 && (
+        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3">
+          {bodyCells.map((c) => {
+            const { meta, header } = c.column.columnDef;
+            const label =
+              meta?.mobileLabel ??
+              (typeof header === 'string' ? header : '');
+            return (
+              <div
+                key={c.id}
+                className={cn(
+                  'flex min-w-0 flex-col gap-0.5',
+                  meta?.mobileFullWidth && 'col-span-2',
+                )}
+              >
+                {label && (
+                  <dt className="text-[11px] text-muted-foreground">{label}</dt>
+                )}
+                <dd className="min-w-0 text-sm">
+                  {flexRender(c.column.columnDef.cell, c.getContext())}
+                </dd>
+              </div>
+            );
+          })}
+        </dl>
+      )}
+    </>
   );
 }

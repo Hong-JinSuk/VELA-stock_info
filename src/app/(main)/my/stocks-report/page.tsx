@@ -56,6 +56,7 @@ export default function StocksReportPage() {
             rowHeight={64}
             isLoading={isLoading}
             showPagination={false}
+            mobileCard
           />
           <div className="flex items-start gap-2.5 rounded-2xl border border-border bg-card/40 p-4 text-xs text-muted-foreground">
             <Info className="mt-0.5 size-4 shrink-0" />

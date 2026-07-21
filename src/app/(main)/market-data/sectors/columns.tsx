@@ -65,7 +65,7 @@ export function buildSectorColumns(
       id: 'favorite',
       header: '',
       size: 40,
-      meta: { align: 'center' },
+      meta: { align: 'center', mobileHeaderAction: true },
       cell: ({ row }) => (
         <FavoriteButton
           type="SECTOR"
@@ -79,6 +79,7 @@ export function buildSectorColumns(
       accessorKey: 'nameKo',
       header: '섹터',
       size: 180,
+      meta: { mobileTitle: true },
       cell: ({ row }) => (
         <div className="flex min-w-0 items-center gap-2">
           <span
@@ -122,7 +123,7 @@ export function buildSectorColumns(
       id: 'trend',
       header: '추이',
       size: 100,
-      meta: { align: 'center' },
+      meta: { align: 'center', mobileFullWidth: true },
       cell: ({ row }) => <Sparkline data={row.original.trend} />,
     },
   ];

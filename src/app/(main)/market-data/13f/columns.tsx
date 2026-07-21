@@ -17,7 +17,7 @@ export const thirteenFFavoriteColumn: ColumnDef<ThirteenFListItem> = {
   id: 'favorite',
   header: '',
   size: 40,
-  meta: { align: 'center' },
+  meta: { align: 'center', mobileHeaderAction: true },
   cell: ({ row }) => (
     <FavoriteButton
       type="THIRTEENF_FILER"
@@ -127,6 +127,7 @@ export const thirteenFColumns: ColumnDef<ThirteenFListItem>[] = [
     accessorKey: 'filerName',
     header: '펀드 / 매니저',
     size: 260,
+    meta: { mobileTitle: true },
     cell: ({ row }) => (
       <div className="flex min-w-0 items-center gap-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
@@ -194,7 +195,7 @@ export const thirteenFColumns: ColumnDef<ThirteenFListItem>[] = [
     id: 'trend',
     header: '추이',
     size: 100,
-    meta: { align: 'center' },
+    meta: { align: 'center', mobileFullWidth: true },
     cell: ({ row }) => <Sparkline data={row.original.summary?.trend ?? []} />,
   },
   {

@@ -20,6 +20,12 @@ export default function FavoriteSectorTable({
   });
 
   return (
-    <DataTable table={table} rowKey="ticker" scrollX showPagination={false} />
+    <DataTable
+      table={table}
+      rowKey="ticker"
+      scrollX
+      showPagination={false}
+      mobileCard
+    />
   );
 }

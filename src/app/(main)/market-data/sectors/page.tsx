@@ -140,6 +140,7 @@ export default function Page() {
               skeletonRows={11}
               scrollX
               animateRows
+              mobileCard
               emptyMessage="섹터 데이터가 없습니다."
             />
           </section>
@@ -154,6 +155,7 @@ export default function Page() {
               skeletonRows={6}
               scrollX
               animateRows
+              mobileCard
               emptyMessage="산업 ETF 데이터가 없습니다."
             />
           </section>

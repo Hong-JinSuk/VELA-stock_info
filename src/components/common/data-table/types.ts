@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import type { Row, RowData, Table } from '@tanstack/react-table';
 
+export type { Row } from '@tanstack/react-table';
+
 // TanStack Table의 meta를 확장(module augmentation)해서,
 // row 동작/컬럼 표시 옵션을 columnDef와 같은 자리(useReactTable)에서 정의하게 한다.
 // 이렇게 하면 DataTable 본체를 수정하지 않고도 동작을 주입할 수 있다.
@@ -21,6 +23,19 @@ declare module '@tanstack/react-table' {
     headerClassName?: string;
     /** 데이터 셀(td)에 추가할 className. */
     cellClassName?: string;
+
+    // ── 모바일 카드(자동) 힌트: DataTable의 mobileCard가 켜진 표에서만 사용된다.
+    //    (mobileCard 미사용 표에선 무시되므로 공용 컬럼에 달아 둬도 안전.)
+    /** 이 컬럼을 카드 상단 "제목"으로 크게 표시(라벨 없이). 보통 이름 열. */
+    mobileTitle?: boolean;
+    /** 이 컬럼을 카드 우상단 액션으로 표시(예: 즐겨찾기 별표). 라벨 없음. */
+    mobileHeaderAction?: boolean;
+    /** 카드에서 이 컬럼을 숨김(스페이서/불필요 열). */
+    mobileHidden?: boolean;
+    /** 카드에서 이 컬럼을 전체폭(2열 span)으로. 그래프/스파크라인·바 등 넓은 셀에 사용. */
+    mobileFullWidth?: boolean;
+    /** 카드 라벨 override. 기본은 컬럼 header 문자열. */
+    mobileLabel?: string;
   }
 }
 
@@ -59,5 +74,15 @@ export type DataTableProps<TData> = {
    * rowKey가 안정적이어야 자연스럽게 동작한다.
    */
   animateRows?: boolean;
+  /**
+   * 모바일(<640px)에서 표를 카드로 전환한다 (데스크톱은 그대로 표).
+   * - `true`: 컬럼 정의로부터 자동 카드 생성(제목 컬럼 + 나머지 라벨:값).
+   *   제목은 `meta.mobileTitle`, 우상단 액션은 `meta.mobileHeaderAction`,
+   *   숨김은 `meta.mobileHidden`, 라벨은 `meta.mobileLabel`로 제어.
+   * - 함수: 각 row를 카드 내용으로 직접 렌더(밀집 표 맞춤). DataTable이 카드
+   *   외곽(테두리/패딩/행클릭)을 감싸 준다.
+   * - 미지정(기본): 카드 없음 — 기존 동작(좁으면 가로 스크롤) 유지.
+   */
+  mobileCard?: boolean | ((row: Row<TData>) => ReactNode);
   className?: string;
 };

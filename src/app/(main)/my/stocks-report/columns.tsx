@@ -33,6 +33,7 @@ export const stocksReportColumns: ColumnDef<StockReportItem>[] = [
   {
     accessorKey: 'name',
     header: '종목',
+    meta: { mobileTitle: true },
     cell: ({ row }) => {
       const { name, symbol, snapshotAt } = row.original;
       const d = shortDate(snapshotAt);

@@ -176,6 +176,7 @@ POST / PATCH / PUT / DELETE:
 - **UI(컴포넌트/페이지)를 추가하거나 수정하면 모바일 폭(< 640px) 검증은 필수.** 데스크톱만 확인하고 끝내지 말 것. 작업 완료 보고 시 "모바일 폭에서 확인함"을 명시할 것.
 - 새 컴포넌트는 처음부터 `grid-cols-1`/`flex-col` 기본 + `sm:`·`lg:`로 확장하는 mobile-first로 작성. 기존 컴포넌트의 반응형 패턴을 참고해 일관성 유지.
 - 좁은 폭에서 깨지기 쉬운 곳을 항상 점검: 가로 배치(`justify-between`) 카드, 버튼 토글 그룹, 제목+칩 한 줄, 긴 라벨 → 필요하면 `flex-wrap`·`break-keep`·세로 스택(`flex-col sm:flex-row`)으로 처리.
+- **밀집 표(여러 열)는 모바일에서 가로 스크롤로 방치하지 말고 카드로 전환**한다. 공용 DataTable은 `mobileCard`로 자동 지원(→ "DataTable > 모바일 카드" 참고), 수제 표는 `hidden sm:block` + `sm:hidden` 카드. 레퍼런스: 섹터 분석 상세.
 - 터치 환경에서는 hover가 동작하지 않으므로 **Tooltip 대신 Popover** 사용.
 
 ### 공용화로 UX 일관성 확보 — ⚠️ CRITICAL
@@ -216,6 +217,20 @@ POST / PATCH / PUT / DELETE:
 - **페이지 전환 시 스크롤 최상단 리셋(내장)**: `pageIndex`가 바뀌면 DataTable이 세로 스크롤 영역을 자동으로 최상단(`scrollTo({ top: 0 })`)으로 되돌린다 — 새 페이지는 항상 위에서부터 보이게. 별도 설정 불필요(서버·클라 페이지네이션 공통). 페이지네이션 없는 테이블은 `pageIndex`가 0 고정이라 영향 없음.
 - `scrollX`: 기본(false)은 비율 폭이라 가로 스크롤 없음. true면 px 폭 + `min-width`로 컨테이너가 좁을 때만 가로 스크롤.
 - 페이지 크기를 바꾸면 항상 1페이지로 리셋된다 (pagination 컴포넌트 내장 동작).
+
+### 모바일 카드 (<640px) — ⚠️ CRITICAL
+
+**표는 모바일에서 가로 스크롤 대신 카드로 보여준다.** `mobileCard` prop을 주면 데스크톱은 표 그대로, 모바일(<640px)은 **행별 카드**로 자동 전환된다(데스크톱 표는 `hidden sm:block`으로 감싸기만 해서 마크업·sticky 헤더·스크롤 전부 무변화, 카드 스택을 `sm:hidden`으로 추가). `scrollX`(가로 스크롤) 표에는 사실상 필수.
+
+- **`mobileCard`(=true) — 자동 카드**: 컬럼 정의로부터 카드를 만든다. 컬럼 `meta`로 배치 제어:
+  - `mobileTitle`: 카드 제목(라벨 없이 크게). 보통 이름 열.
+  - `mobileHeaderAction`: 카드 우상단 액션(예: 즐겨찾기 별표).
+  - `mobileFullWidth`: 2열을 가로지르는 전체폭 — **그래프/스파크라인·바 등 넓은 셀**(그래프는 항상 이걸로).
+  - `mobileHidden`: 카드에서 제외(스페이서 열 등). `mobileLabel`: 라벨 override(기본은 header 문자열).
+  - 이 힌트들은 `mobileCard`를 안 켠 표에선 무시되므로 **공용 컬럼(예: `thirteenFColumns`, `buildSectorColumns`)에 미리 달아 둬도 안전**.
+- **`mobileCard={(row) => …}`(함수) — 맞춤 카드**: 자동 배치가 어색한 특수 표만 카드 내용을 직접 렌더(DataTable이 테두리/패딩/행클릭 shell을 감싼다).
+- **DataTable을 쓰는 새 표는 `mobileCard`만 켜면 카드가 자동으로 붙는다 — 페이지에서 카드를 따로 구현하지 말 것.** DataTable이 아닌 수제 그리드 표(예: 즐겨찾기 종목 표)만 `hidden sm:block`(표) + `sm:hidden`(카드)로 직접 처리하고, 값 계산은 `deriveRow`류로 두 경로가 공용하게 한다.
+- 적용됨: 13F(메인·즐겨찾기)·마켓 섹터(GICS/산업)·즐겨찾기 섹터·종목 보고서·즐겨찾기 종목(수제).
 
 ## React Compiler 주의 — ⚠️ CRITICAL
 

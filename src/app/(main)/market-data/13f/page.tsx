@@ -247,6 +247,7 @@ export default function Page() {
           isLoading={isLoading || isFetching}
           rowHeight={88}
           scrollX
+          mobileCard
           showPagination={!!data}
           pageSizeOptions={[20, 50, 100]}
           emptyMessage={

@@ -43,6 +43,7 @@ export default function FavoriteThirteenFTable({ ciks }: { ciks: string[] }) {
       scrollX
       showPagination={false}
       isLoading={isLoading}
+      mobileCard
     />
   );
 }
