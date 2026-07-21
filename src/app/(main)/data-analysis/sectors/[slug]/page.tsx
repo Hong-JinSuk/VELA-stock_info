@@ -8,6 +8,7 @@ import { analysisSectorTheme } from '@/constants/analysis-sector-icons';
 import {
   INDICATOR_SERIES,
   isIndicatorSeriesKey,
+  type IndicatorSeriesKey,
 } from '@/constants/indicator-series';
 import { useAnalysisSectorDetail } from '@/lib/services/analysis/use-analysis-sectors';
 import { useEtfPerformance } from '@/lib/services/stock/use-etf-performance';
@@ -22,7 +23,7 @@ import type { EtfPeriodKey, EtfPerformance } from '@/types/sector';
 import { ChevronDown, Info } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { type ComponentType, useState } from 'react';
 
 const STOCK_GRID =
   'grid grid-cols-[minmax(0,1fr)_5rem_5rem_4.5rem_4rem_1.5rem] items-center gap-2';
@@ -43,6 +44,12 @@ const GROWTH_SRC: Record<string, string> = {
   EPS_TTM: '최근 1년',
   EPS_3Y: '3년',
   EPS_5Y: '5년',
+};
+
+// seriesKey → 차트 컴포넌트. Record<IndicatorSeriesKey>라 INDICATOR_SERIES에
+// 새 key를 추가하면 여기에도 컴포넌트를 등록해야 컴파일된다(빈 그래프 방지).
+const INDICATOR_CHARTS: Record<IndicatorSeriesKey, ComponentType> = {
+  TOKEN_THROUGHPUT: TokenThroughputChart,
 };
 
 function usd(v: number | null): string {
@@ -170,7 +177,8 @@ export default function AnalysisSectorDetailPage() {
           {stocks.length > 0 && (
             <section className="flex flex-col gap-3">
               <h2 className="text-sm font-semibold text-foreground">개별 종목</h2>
-              <div className="overflow-x-auto rounded-xl border border-border">
+              {/* 데스크톱: 표 (모바일은 아래 카드) */}
+              <div className="hidden overflow-x-auto rounded-xl border border-border sm:block">
                 <div className="min-w-[600px]">
                   <div
                     className={cn(
@@ -198,6 +206,18 @@ export default function AnalysisSectorDetailPage() {
                   ))}
                 </div>
               </div>
+              {/* 모바일: 카드형 */}
+              <div className="flex flex-col gap-2 sm:hidden">
+                {stocks.map((item) => (
+                  <StockCard
+                    key={item.symbol}
+                    item={item}
+                    logo={logoBySym.get(item.symbol) ?? null}
+                    isOpen={open.has(item.symbol)}
+                    onToggle={() => toggle(item.symbol)}
+                  />
+                ))}
+              </div>
             </section>
           )}
 
@@ -205,7 +225,8 @@ export default function AnalysisSectorDetailPage() {
           {etfs.length > 0 && (
             <section className="flex flex-col gap-3">
               <h2 className="text-sm font-semibold text-foreground">ETF</h2>
-              <div className="overflow-x-auto rounded-xl border border-border">
+              {/* 데스크톱: 표 (모바일은 아래 카드) */}
+              <div className="hidden overflow-x-auto rounded-xl border border-border sm:block">
                 <div className="min-w-[920px]">
                   <div
                     className={cn(
@@ -235,6 +256,20 @@ export default function AnalysisSectorDetailPage() {
                     />
                   ))}
                 </div>
+              </div>
+              {/* 모바일: 카드형 */}
+              <div className="flex flex-col gap-2 sm:hidden">
+                {etfs.map((item) => (
+                  <EtfCard
+                    key={item.symbol}
+                    item={item}
+                    logo={logoBySym.get(item.symbol) ?? null}
+                    perf={perfBySymbol.get(item.symbol)}
+                    perfLoading={perfLoading}
+                    isOpen={open.has(item.symbol)}
+                    onToggle={() => toggle(item.symbol)}
+                  />
+                ))}
               </div>
             </section>
           )}
@@ -311,6 +346,8 @@ function StockRow({
       <button
         type="button"
         onClick={onToggle}
+        aria-expanded={isOpen}
+        aria-label={`${item.name} 상세 ${isOpen ? '접기' : '펼치기'}`}
         className={cn(STOCK_GRID, 'w-full px-4 py-3 text-left hover:bg-accent/30')}
       >
         <div className="flex min-w-0 items-center gap-2.5">
@@ -427,6 +464,8 @@ function EtfRow({
       <button
         type="button"
         onClick={onToggle}
+        aria-expanded={isOpen}
+        aria-label={`${item.name} 보유종목 ${isOpen ? '접기' : '펼치기'}`}
         className={cn(ETF_GRID, 'w-full px-4 py-3 text-left hover:bg-accent/30')}
       >
         <div className="flex min-w-0 items-center gap-2.5">
@@ -481,6 +520,217 @@ function EtfRow({
           ETF 상세 보기 →
         </Link>
       </ExpandPanel>
+    </div>
+  );
+}
+
+// 모바일 종목 카드 — 표 대신 세로 스택(가로 스크롤 제거). 표와 동일한 헬퍼/펼침을 재사용.
+function StockCard({
+  item,
+  logo,
+  isOpen,
+  onToggle,
+}: {
+  item: AnalysisSectorStockRow;
+  logo: string | null;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  const date = shortDate(item.snapshotAt);
+  const q = item.roaTtm != null ? roaQuality(item.roaTtm) : null;
+  return (
+    <div className="rounded-xl border border-border">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        aria-label={`${item.name} 상세 ${isOpen ? '접기' : '펼치기'}`}
+        className="w-full px-4 py-3 text-left hover:bg-accent/30"
+      >
+        <div className="flex items-center gap-2.5">
+          <LogoBadge symbol={item.symbol} logo={logo} />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="truncate text-sm font-medium text-foreground">
+              {item.name}
+            </span>
+            <span className="font-mono text-[11px] text-muted-foreground/70">
+              {item.symbol}
+              {date && <span className="ml-1.5">· {date} 기준</span>}
+            </span>
+          </div>
+          <ChevronDown
+            className={cn(
+              'size-4 shrink-0 text-muted-foreground transition-transform',
+              isOpen && 'rotate-180',
+            )}
+          />
+        </div>
+        {item.note && (
+          <p className="mt-1.5 text-[11px] text-muted-foreground break-keep">
+            {item.note}
+          </p>
+        )}
+        <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2.5">
+          <CardStat label="현재가">
+            {item.price != null && item.price > 0 ? (
+              <span className="text-sm tabular-nums">{usd(item.price)}</span>
+            ) : (
+              <span className="text-xs text-muted-foreground/60">
+                {item.status === 'PENDING' ? '집계 중' : '—'}
+              </span>
+            )}
+          </CardStat>
+          <CardStat label="적정주가">
+            {item.status === 'PENDING' ? (
+              <span className="text-xs text-muted-foreground/60">집계 중</span>
+            ) : item.status === 'NO_DATA' || item.fairValue == null ? (
+              <span className="text-xs text-muted-foreground/50">추정 불가</span>
+            ) : (
+              <span className="text-sm font-semibold tabular-nums">
+                {usd(item.fairValue)}
+              </span>
+            )}
+          </CardStat>
+          <CardStat label="상승여력">
+            {item.status === 'OK' && item.upsidePct != null ? (
+              <span
+                className={cn(
+                  'inline-block rounded px-1.5 py-0.5 text-xs font-medium tabular-nums',
+                  item.upsidePct >= 0
+                    ? 'bg-emerald-500/15 text-emerald-500'
+                    : 'bg-rose-500/15 text-rose-500',
+                )}
+              >
+                {item.upsidePct >= 0 ? '+' : ''}
+                {item.upsidePct.toFixed(1)}%
+              </span>
+            ) : (
+              <Dash />
+            )}
+          </CardStat>
+          <CardStat label="수익성 (ROA)">
+            {item.roaTtm != null && q ? (
+              <span className={cn('text-sm font-medium tabular-nums', q.cls)}>
+                {item.roaTtm.toFixed(1)}%
+                <span className="ml-1 text-[10px]">· {q.label}</span>
+              </span>
+            ) : (
+              <Dash />
+            )}
+          </CardStat>
+        </dl>
+      </button>
+
+      <ExpandPanel isOpen={isOpen}>
+        <StockDetail item={item} />
+        <Link
+          href={`/market-data/stocks/${item.symbol}`}
+          className="mt-3 inline-block text-xs text-blue-500 hover:underline"
+        >
+          종목 상세 보기 →
+        </Link>
+      </ExpandPanel>
+    </div>
+  );
+}
+
+// 모바일 ETF 카드 — 현재가+추이 한 줄, 기간 수익률은 4열 그리드. 펼치면 보유종목.
+function EtfCard({
+  item,
+  logo,
+  perf,
+  perfLoading,
+  isOpen,
+  onToggle,
+}: {
+  item: AnalysisSectorEtfRow;
+  logo: string | null;
+  perf?: EtfPerformance;
+  perfLoading: boolean;
+  isOpen: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="rounded-xl border border-border">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={isOpen}
+        aria-label={`${item.name} 보유종목 ${isOpen ? '접기' : '펼치기'}`}
+        className="w-full px-4 py-3 text-left hover:bg-accent/30"
+      >
+        <div className="flex items-center gap-2.5">
+          <LogoBadge symbol={item.symbol} logo={logo} />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="truncate text-sm font-medium text-foreground">
+              {item.name}
+            </span>
+            <span className="font-mono text-[11px] text-muted-foreground/70">
+              {item.symbol}
+            </span>
+          </div>
+          <ChevronDown
+            className={cn(
+              'size-4 shrink-0 text-muted-foreground transition-transform',
+              isOpen && 'rotate-180',
+            )}
+          />
+        </div>
+        {item.note && (
+          <p className="mt-1.5 text-[11px] text-muted-foreground break-keep">
+            {item.note}
+          </p>
+        )}
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[11px] text-muted-foreground">현재가</span>
+            {perf?.price != null ? (
+              <span className="text-sm tabular-nums">{usd(perf.price)}</span>
+            ) : (
+              <span className="text-xs text-muted-foreground/60">
+                {perfLoading ? '집계 중' : '—'}
+              </span>
+            )}
+          </div>
+          <div className="h-7 w-20">
+            <Sparkline data={perf?.trend ?? []} />
+          </div>
+        </div>
+        <div className="mt-3 grid grid-cols-4 gap-x-2 gap-y-2">
+          {PERIODS.map((p) => (
+            <div key={p.key} className="flex flex-col items-center gap-0.5">
+              <span className="text-[10px] text-muted-foreground">{p.label}</span>
+              <ReturnCell value={perf?.returns[p.key] ?? null} />
+            </div>
+          ))}
+        </div>
+      </button>
+
+      <ExpandPanel isOpen={isOpen}>
+        <EtfHoldingsCard ticker={item.symbol} />
+        <Link
+          href={`/market-data/stocks/${item.symbol}`}
+          className="mt-3 inline-block text-xs text-blue-500 hover:underline"
+        >
+          ETF 상세 보기 →
+        </Link>
+      </ExpandPanel>
+    </div>
+  );
+}
+
+// 모바일 카드의 라벨:값 한 칸.
+function CardStat({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <dt className="text-[11px] text-muted-foreground">{label}</dt>
+      <dd>{children}</dd>
     </div>
   );
 }
@@ -590,9 +840,11 @@ function IndicatorsSection({
 
 // 차트형 지표 카드 — 설명 + 그래프 + 캐비엇(프록시 안내).
 function ChartedIndicatorCard({ indicator }: { indicator: SectorIndicator }) {
-  const meta = isIndicatorSeriesKey(indicator.seriesKey)
-    ? INDICATOR_SERIES[indicator.seriesKey]
+  const key = isIndicatorSeriesKey(indicator.seriesKey)
+    ? indicator.seriesKey
     : null;
+  const meta = key ? INDICATOR_SERIES[key] : null;
+  const Chart = key ? INDICATOR_CHARTS[key] : null;
   return (
     <div className="rounded-xl border border-border bg-card/40 p-4">
       <div className="flex items-start justify-between gap-2">
@@ -604,9 +856,11 @@ function ChartedIndicatorCard({ indicator }: { indicator: SectorIndicator }) {
       <p className="mt-1 text-xs leading-relaxed text-muted-foreground break-keep">
         {indicator.description}
       </p>
-      <div className="mt-3">
-        {indicator.seriesKey === 'TOKEN_THROUGHPUT' && <TokenThroughputChart />}
-      </div>
+      {Chart && (
+        <div className="mt-3">
+          <Chart />
+        </div>
+      )}
       {meta?.caption && (
         <p className="mt-2 text-[11px] text-muted-foreground/50 break-keep">
           {meta.caption}

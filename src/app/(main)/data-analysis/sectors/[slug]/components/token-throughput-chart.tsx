@@ -12,6 +12,9 @@ import {
   YAxis,
 } from 'recharts';
 
+// 라인/영역 강조색 — sky-500. 라이트/다크 배경 모두 대비가 충분해 고정.
+const ACCENT = '#0ea5e9';
+
 // 토큰 수 축약 — OpenRouter 일별 총량은 보통 조 단위.
 function fmtTokens(v: number): string {
   if (v >= 1e12) return `${(v / 1e12).toFixed(1)}조`;
@@ -21,6 +24,7 @@ function fmtTokens(v: number): string {
 }
 
 // AI 토큰 처리량(OpenRouter) 라인 그래프. 키 미설정/데이터 없음은 안내로 대체.
+// 색은 currentColor(래퍼의 text-muted-foreground) + CSS 변수로 테마를 따라간다.
 export default function TokenThroughputChart() {
   const { data, isLoading, isError } = useTokenThroughput();
 
@@ -42,7 +46,7 @@ export default function TokenThroughputChart() {
   }));
 
   return (
-    <div className="h-[220px] w-full">
+    <div className="h-[220px] w-full text-muted-foreground">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart
           data={chartData}
@@ -50,25 +54,26 @@ export default function TokenThroughputChart() {
         >
           <defs>
             <linearGradient id="tokenFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0ea5e9" stopOpacity={0.35} />
-              <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0} />
+              <stop offset="0%" stopColor={ACCENT} stopOpacity={0.35} />
+              <stop offset="100%" stopColor={ACCENT} stopOpacity={0} />
             </linearGradient>
           </defs>
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="#27272a"
+            stroke="currentColor"
+            strokeOpacity={0.15}
             vertical={false}
           />
           <XAxis
             dataKey="date"
-            stroke="#71717a"
+            stroke="currentColor"
             fontSize={10}
             tickLine={false}
             axisLine={false}
             minTickGap={28}
           />
           <YAxis
-            stroke="#71717a"
+            stroke="currentColor"
             fontSize={10}
             tickLine={false}
             axisLine={false}
@@ -76,19 +81,22 @@ export default function TokenThroughputChart() {
             tickFormatter={fmtTokens}
           />
           <Tooltip
+            cursor={{ stroke: 'currentColor', strokeOpacity: 0.25 }}
             contentStyle={{
-              background: '#0a0a0a',
-              border: '1px solid #27272a',
+              background: 'var(--popover)',
+              border: '1px solid var(--border)',
               borderRadius: 8,
               fontSize: 12,
+              color: 'var(--popover-foreground)',
             }}
-            labelStyle={{ color: '#a1a1aa' }}
+            labelStyle={{ color: 'var(--muted-foreground)' }}
+            itemStyle={{ color: 'var(--popover-foreground)' }}
             formatter={(value) => [fmtTokens(Number(value)), '토큰']}
           />
           <Area
             type="monotone"
             dataKey="tokens"
-            stroke="#0ea5e9"
+            stroke={ACCENT}
             strokeWidth={2}
             fill="url(#tokenFill)"
           />
