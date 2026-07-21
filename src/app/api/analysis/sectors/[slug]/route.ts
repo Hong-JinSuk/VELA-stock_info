@@ -19,7 +19,10 @@ export async function GET(
   const { slug } = await params;
   const sector = await prisma.analysisSector.findUnique({
     where: { slug },
-    include: { items: { orderBy: [{ sortOrder: 'asc' }] } },
+    include: {
+      items: { orderBy: [{ sortOrder: 'asc' }] },
+      indicators: { orderBy: [{ sortOrder: 'asc' }] },
+    },
   });
   if (!sector) {
     return NextResponse.json(
@@ -92,6 +95,13 @@ export async function GET(
     name: sector.name,
     description: sector.description,
     items,
+    indicators: sector.indicators.map((i) => ({
+      id: i.id,
+      name: i.name,
+      description: i.description,
+      link: i.link,
+      seriesKey: i.seriesKey,
+    })),
   };
   return NextResponse.json(detail);
 }

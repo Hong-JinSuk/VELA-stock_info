@@ -118,3 +118,73 @@ export function useRemoveSectorItem() {
     onError: (e: Error) => toast.error(e.message || '삭제 실패'),
   });
 }
+
+// ── 섹터 중요 지표 (id = 섹터 id) ──────────────────────────────
+export function useAddSectorIndicator() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string;
+      name: string;
+      description: string;
+      link?: string;
+      seriesKey?: string;
+    }) => {
+      const { id, ...body } = input;
+      const { data } = await api.post(
+        `/admin/analysis/sectors/${id}/indicators`,
+        body,
+      );
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('지표가 추가되었습니다.');
+      invalidate();
+    },
+    meta: { ignoreGlobalError: true },
+    onError: (e: Error) => toast.error(e.message || '추가 실패'),
+  });
+}
+
+export function useUpdateSectorIndicator() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async (input: {
+      id: string; // 섹터 id
+      indicatorId: string;
+      name?: string;
+      description?: string;
+      link?: string | null;
+      seriesKey?: string | null;
+    }) => {
+      const { id, indicatorId, ...rest } = input;
+      const { data } = await api.patch(
+        `/admin/analysis/sectors/${id}/indicators`,
+        { id: indicatorId, ...rest },
+      );
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('지표가 저장되었습니다.');
+      invalidate();
+    },
+    meta: { ignoreGlobalError: true },
+    onError: (e: Error) => toast.error(e.message || '저장 실패'),
+  });
+}
+
+export function useRemoveSectorIndicator() {
+  const invalidate = useInvalidate();
+  return useMutation({
+    mutationFn: async (input: { id: string; indicatorId: string }) => {
+      const { data } = await api.delete(
+        `/admin/analysis/sectors/${input.id}/indicators`,
+        { params: { indicatorId: input.indicatorId } },
+      );
+      return data;
+    },
+    onSuccess: () => invalidate(),
+    meta: { ignoreGlobalError: true },
+    onError: (e: Error) => toast.error(e.message || '삭제 실패'),
+  });
+}

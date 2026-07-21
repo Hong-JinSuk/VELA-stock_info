@@ -9,7 +9,8 @@ model AnalysisSector {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  items AnalysisSectorItem[]
+  items      AnalysisSectorItem[]
+  indicators AnalysisSectorIndicator[]
 
   @@index([sortOrder])
 }
@@ -26,5 +27,21 @@ model AnalysisSectorItem {
   sector AnalysisSector @relation(fields: [sectorId], references: [id], onDelete: Cascade)
 
   @@unique([sectorId, symbol]) // 같은 섹터 중복 방지
+  @@index([sectorId, sortOrder])
+}
+
+// 섹터에서 중요한 지표 1건 (ADMIN 큐레이션). 실시간 값 피드 없이 이름 + 왜 중요한가 + 선택 링크.
+// 예: AI산업의 "토큰 처리량"(선행지표). AnalysisSectorItem과 동일한 큐레이션 패턴.
+model AnalysisSectorIndicator {
+  id          String  @id @default(uuid())
+  sectorId    String
+  name        String // 지표명 (예: "토큰 처리량")
+  description String // 왜 중요한가 — 사용자에게 노출
+  link        String? // 인앱 경로(/market-data/..) 또는 외부 URL (선택)
+  seriesKey   String? // 차트형 시계열 키(예: "TOKEN_THROUGHPUT"). 있으면 그래프로 렌더.
+  sortOrder   Int     @default(0)
+
+  sector AnalysisSector @relation(fields: [sectorId], references: [id], onDelete: Cascade)
+
   @@index([sectorId, sortOrder])
 }

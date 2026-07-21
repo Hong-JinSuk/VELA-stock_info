@@ -29,6 +29,15 @@ export type AnalysisSectorEtfRow = {
 
 export type AnalysisSectorRow = AnalysisSectorStockRow | AnalysisSectorEtfRow;
 
+// 섹터에서 중요한 지표 (조회용) — 이름 + 왜 중요한가 + 선택 링크(인앱/외부) + 선택 차트 키.
+export type SectorIndicator = {
+  id: string;
+  name: string;
+  description: string;
+  link: string | null;
+  seriesKey: string | null; // 차트형 시계열 키. null이면 텍스트만.
+};
+
 // 섹터 분석 상세 (조회용) — 종목/ETF를 sortOrder 순서로 섞은 통합 목록(행 펼침).
 export type AnalysisSectorDetail = {
   id: string;
@@ -36,6 +45,7 @@ export type AnalysisSectorDetail = {
   name: string;
   description: string | null;
   items: AnalysisSectorRow[];
+  indicators: SectorIndicator[];
 };
 
 // 관리(ADMIN)용 — note/sortOrder 포함, valuation은 불필요.
@@ -46,6 +56,16 @@ export type AdminSectorItem = {
   sortOrder: number;
 };
 
+// 관리(ADMIN)용 중요 지표.
+export type AdminSectorIndicator = {
+  id: string;
+  name: string;
+  description: string;
+  link: string | null;
+  seriesKey: string | null;
+  sortOrder: number;
+};
+
 export type AdminSector = {
   id: string;
   slug: string;
@@ -53,4 +73,5 @@ export type AdminSector = {
   description: string | null;
   sortOrder: number;
   items: AdminSectorItem[];
+  indicators: AdminSectorIndicator[];
 };

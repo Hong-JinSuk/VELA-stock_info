@@ -10,18 +10,26 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  useAddSectorIndicator,
   useAddSectorItem,
   useAdminSectors,
   useCreateSector,
   useDeleteSector,
+  useRemoveSectorIndicator,
   useRemoveSectorItem,
+  useUpdateSectorIndicator,
   useUpdateSectorItem,
 } from '@/lib/services/admin/use-admin-sectors';
 import { useStockSuggestions } from '@/lib/services/stock/use-stock-suggestions';
 import { useTypeaheadNav } from '@/hooks/use-typeahead-nav';
 import type { StockSuggestion } from '@/lib/services/stock/use-stock-suggestions';
-import type { AdminSector, AdminSectorItem } from '@/types/analysis';
+import type {
+  AdminSector,
+  AdminSectorIndicator,
+  AdminSectorItem,
+} from '@/types/analysis';
 import { cn } from '@/lib/utils';
+import { INDICATOR_SERIES_OPTIONS } from '@/constants/indicator-series';
 import { ChevronRight, Pencil, Trash2, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -233,6 +241,220 @@ function SectorItemRow({
   );
 }
 
+// 차트 연결(seriesKey) 선택 — 값 피드가 있는 지표(예: 토큰 처리량)를 그래프로 연결.
+function SeriesSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      title="차트 연결 (선택)"
+      className="h-9 rounded-lg border border-border bg-background px-2 text-sm text-foreground outline-none focus:border-blue-500/50"
+    >
+      <option value="">차트 연결 없음</option>
+      {INDICATOR_SERIES_OPTIONS.map((o) => (
+        <option key={o.value} value={o.value}>
+          📈 {o.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+// 섹터 "중요 지표" 추가 폼 — 지표명 + 왜 중요한가 + 선택 링크 + 선택 차트 연결.
+function SectorIndicatorAdder({ sectorId }: { sectorId: string }) {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [link, setLink] = useState('');
+  const [seriesKey, setSeriesKey] = useState('');
+  const add = useAddSectorIndicator();
+
+  const submit = () => {
+    if (!name.trim() || !description.trim()) return;
+    add.mutate(
+      {
+        id: sectorId,
+        name: name.trim(),
+        description: description.trim(),
+        link: link.trim() || undefined,
+        seriesKey: seriesKey || undefined,
+      },
+      {
+        onSuccess: () => {
+          setName('');
+          setDescription('');
+          setLink('');
+          setSeriesKey('');
+        },
+      },
+    );
+  };
+
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-dashed border-border p-3">
+      <div className="grid gap-2 sm:grid-cols-[180px_1fr]">
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="지표명 (예: 토큰 처리량)"
+          className="h-9 text-sm"
+          maxLength={100}
+        />
+        <Input
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="왜 중요한가 (사용자 노출)"
+          className="h-9 text-sm"
+          maxLength={500}
+        />
+      </div>
+      <Input
+        value={link}
+        onChange={(e) => setLink(e.target.value)}
+        placeholder="링크 (선택) — /market-data/... 또는 https://..."
+        className="h-9 text-sm"
+        maxLength={300}
+      />
+      <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+        <SeriesSelect value={seriesKey} onChange={setSeriesKey} />
+        <Button onClick={submit} disabled={add.isPending} className="h-9">
+          지표 추가
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// 추가된 중요 지표 1건 — 인라인 편집(이름/설명/링크) + 제거.
+function SectorIndicatorRow({
+  sectorId,
+  indicator,
+}: {
+  sectorId: string;
+  indicator: AdminSectorIndicator;
+}) {
+  const update = useUpdateSectorIndicator();
+  const remove = useRemoveSectorIndicator();
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(indicator.name);
+  const [description, setDescription] = useState(indicator.description);
+  const [link, setLink] = useState(indicator.link ?? '');
+  const [seriesKey, setSeriesKey] = useState(indicator.seriesKey ?? '');
+
+  const startEdit = () => {
+    setName(indicator.name);
+    setDescription(indicator.description);
+    setLink(indicator.link ?? '');
+    setSeriesKey(indicator.seriesKey ?? '');
+    setEditing(true);
+  };
+  const save = () => {
+    if (!name.trim() || !description.trim()) {
+      setEditing(false);
+      return;
+    }
+    update.mutate({
+      id: sectorId,
+      indicatorId: indicator.id,
+      name: name.trim(),
+      description: description.trim(),
+      link: link.trim() || null,
+      seriesKey: seriesKey || null,
+    });
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <li className="flex flex-col gap-2 rounded-lg border border-border bg-background/40 px-3 py-2">
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="지표명"
+          className="h-8 text-xs"
+          maxLength={100}
+        />
+        <Input
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="왜 중요한가"
+          className="h-8 text-xs"
+          maxLength={500}
+        />
+        <Input
+          value={link}
+          onChange={(e) => setLink(e.target.value)}
+          placeholder="링크 (선택)"
+          className="h-8 text-xs"
+          maxLength={300}
+        />
+        <SeriesSelect value={seriesKey} onChange={setSeriesKey} />
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={() => setEditing(false)}>
+            취소
+          </Button>
+          <Button size="sm" onClick={save} disabled={update.isPending}>
+            저장
+          </Button>
+        </div>
+      </li>
+    );
+  }
+
+  return (
+    <li className="flex items-start gap-2 rounded-lg border border-border bg-background/40 px-3 py-2">
+      <div className="min-w-0 flex-1">
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+          {indicator.name}
+          {indicator.seriesKey && (
+            <span className="rounded bg-blue-500/10 px-1 py-0.5 text-[10px] font-normal text-blue-500">
+              📈 차트
+            </span>
+          )}
+        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground break-keep">
+          {indicator.description}
+        </p>
+        {indicator.link && (
+          <p className="mt-0.5 truncate font-mono text-[10px] text-blue-500/70">
+            {indicator.link}
+          </p>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={startEdit}
+        className="shrink-0 rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+        aria-label={`${indicator.name} 편집`}
+      >
+        <Pencil className="size-3.5" />
+      </button>
+      <ConfirmDialog
+        title={<>&ldquo;{indicator.name}&rdquo; 지표를 제거할까요?</>}
+        description="섹터에서 이 지표를 제거합니다. 이 작업은 되돌릴 수 없습니다."
+        confirmLabel="제거"
+        onConfirm={() =>
+          remove.mutate({ id: sectorId, indicatorId: indicator.id })
+        }
+        trigger={
+          <button
+            type="button"
+            className="shrink-0 rounded p-1 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-500"
+            aria-label={`${indicator.name} 제거`}
+          >
+            <X className="size-3.5" />
+          </button>
+        }
+      />
+    </li>
+  );
+}
+
 function SectorCard({ sector }: { sector: AdminSector }) {
   const deleteSector = useDeleteSector();
   const [open, setOpen] = useState(false);
@@ -280,6 +502,9 @@ function SectorCard({ sector }: { sector: AdminSector }) {
           닫힘 애니메이션은 base의 overflow-hidden이 그대로 적용돼 깔끔하게 유지됨. */}
       <CollapsibleContent className="data-[state=open]:overflow-visible">
         <div className="border-t border-border px-4 py-4">
+          <p className="mb-2 text-xs font-semibold text-muted-foreground">
+            종목·ETF ({sector.items.length})
+          </p>
           {sector.items.length > 0 && (
             <ul className="mb-3 flex flex-col gap-1.5">
               {sector.items.map((it) => (
@@ -289,6 +514,25 @@ function SectorCard({ sector }: { sector: AdminSector }) {
           )}
 
           <SectorItemAdder sectorId={sector.id} />
+
+          {/* 중요 지표 — 이 섹터에서 봐야 할 지표 큐레이션 */}
+          <div className="mt-5 border-t border-dashed border-border pt-4">
+            <p className="mb-2 text-xs font-semibold text-muted-foreground">
+              중요 지표 ({sector.indicators.length})
+            </p>
+            {sector.indicators.length > 0 && (
+              <ul className="mb-3 flex flex-col gap-1.5">
+                {sector.indicators.map((ind) => (
+                  <SectorIndicatorRow
+                    key={ind.id}
+                    sectorId={sector.id}
+                    indicator={ind}
+                  />
+                ))}
+              </ul>
+            )}
+            <SectorIndicatorAdder sectorId={sector.id} />
+          </div>
         </div>
       </CollapsibleContent>
     </Collapsible>

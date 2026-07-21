@@ -28,7 +28,28 @@ export const updateSectorItemSchema = z.object({
   note: z.string().max(300).nullable(),
 });
 
+// 섹터 중요 지표 추가 — name + description + link(선택) + seriesKey(선택, 차트 연결).
+export const addSectorIndicatorSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().min(1).max(500),
+  link: z.string().max(300).optional(),
+  seriesKey: z.string().max(50).optional(),
+});
+
+// 중요 지표 수정 — id로 대상 지정, 나머지는 부분 갱신.
+export const updateSectorIndicatorSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().min(1).max(500).optional(),
+  link: z.string().max(300).nullable().optional(),
+  seriesKey: z.string().max(50).nullable().optional(),
+});
+
 export type CreateSectorInput = z.infer<typeof createSectorSchema>;
 export type UpdateSectorInput = z.infer<typeof updateSectorSchema>;
 export type AddSectorItemInput = z.infer<typeof addSectorItemSchema>;
 export type UpdateSectorItemInput = z.infer<typeof updateSectorItemSchema>;
+export type AddSectorIndicatorInput = z.infer<typeof addSectorIndicatorSchema>;
+export type UpdateSectorIndicatorInput = z.infer<
+  typeof updateSectorIndicatorSchema
+>;

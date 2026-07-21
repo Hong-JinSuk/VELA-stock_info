@@ -11,6 +11,14 @@ function toAdminSector(s: {
   description: string | null;
   sortOrder: number;
   items: { id: string; symbol: string; note: string | null; sortOrder: number }[];
+  indicators: {
+    id: string;
+    name: string;
+    description: string;
+    link: string | null;
+    seriesKey: string | null;
+    sortOrder: number;
+  }[];
 }): AdminSector {
   return {
     id: s.id,
@@ -24,6 +32,14 @@ function toAdminSector(s: {
       note: i.note,
       sortOrder: i.sortOrder,
     })),
+    indicators: s.indicators.map((i) => ({
+      id: i.id,
+      name: i.name,
+      description: i.description,
+      link: i.link,
+      seriesKey: i.seriesKey,
+      sortOrder: i.sortOrder,
+    })),
   };
 }
 
@@ -34,7 +50,10 @@ export async function GET() {
 
   const sectors = await prisma.analysisSector.findMany({
     orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
-    include: { items: { orderBy: [{ sortOrder: 'asc' }] } },
+    include: {
+      items: { orderBy: [{ sortOrder: 'asc' }] },
+      indicators: { orderBy: [{ sortOrder: 'asc' }] },
+    },
   });
   return NextResponse.json(sectors.map(toAdminSector));
 }
@@ -65,7 +84,7 @@ export async function POST(req: NextRequest) {
 
   const created = await prisma.analysisSector.create({
     data: { slug, name, description: description ?? null },
-    include: { items: true },
+    include: { items: true, indicators: true },
   });
   return NextResponse.json(toAdminSector(created), { status: 201 });
 }

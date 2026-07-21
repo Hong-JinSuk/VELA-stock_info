@@ -1,9 +1,14 @@
 'use client';
 
 import EtfHoldingsCard from '@/app/(main)/market-data/stocks/components/etf-holdings-card';
+import TokenThroughputChart from './components/token-throughput-chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import Sparkline from '@/components/common/sparkline';
 import { analysisSectorTheme } from '@/constants/analysis-sector-icons';
+import {
+  INDICATOR_SERIES,
+  isIndicatorSeriesKey,
+} from '@/constants/indicator-series';
 import { useAnalysisSectorDetail } from '@/lib/services/analysis/use-analysis-sectors';
 import { useEtfPerformance } from '@/lib/services/stock/use-etf-performance';
 import { useStockLogos } from '@/lib/services/stock/use-stock-logos';
@@ -11,6 +16,7 @@ import { cn } from '@/lib/utils';
 import type {
   AnalysisSectorEtfRow,
   AnalysisSectorStockRow,
+  SectorIndicator,
 } from '@/types/analysis';
 import type { EtfPeriodKey, EtfPerformance } from '@/types/sector';
 import { ChevronDown, Info } from 'lucide-react';
@@ -116,10 +122,10 @@ export default function AnalysisSectorDetailPage() {
 
   return (
     <main className="flex flex-1 min-h-0 flex-col gap-6 overflow-y-auto no-scrollbar p-6">
-      <header>
+      <header className="-mt-4">
         <Link
           href="/data-analysis/sectors"
-          className="text-xs text-muted-foreground hover:text-foreground"
+          className="-ml-2 mb-1 inline-flex items-center gap-1 rounded-md px-2 py-2 text-sm text-muted-foreground hover:text-foreground"
         >
           ← 섹터 분석
         </Link>
@@ -139,6 +145,10 @@ export default function AnalysisSectorDetailPage() {
           </p>
         )}
       </header>
+
+      {data && data.indicators.length > 0 && (
+        <IndicatorsSection indicators={data.indicators} />
+      )}
 
       {isError ? (
         <div className="rounded-xl border border-border p-6 text-sm text-muted-foreground">
@@ -533,5 +543,92 @@ function Metric({
       </span>
       {sub && <span className="text-[10px] text-muted-foreground/70">{sub}</span>}
     </div>
+  );
+}
+
+// 이 섹터에서 봐야 할 중요 지표(ADMIN 큐레이션). 차트 연결(seriesKey)이 있으면 그래프, 없으면 텍스트 카드.
+function IndicatorsSection({
+  indicators,
+}: {
+  indicators: SectorIndicator[];
+}) {
+  const charted = indicators.filter((i) => isIndicatorSeriesKey(i.seriesKey));
+  const plain = indicators.filter((i) => !isIndicatorSeriesKey(i.seriesKey));
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-sm font-semibold text-foreground">
+        이 섹터에서 중요한 지표
+      </h2>
+
+      {charted.map((ind) => (
+        <ChartedIndicatorCard key={ind.id} indicator={ind} />
+      ))}
+
+      {plain.length > 0 && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {plain.map((ind) => (
+            <div
+              key={ind.id}
+              className="rounded-xl border border-border bg-card/40 p-4"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="text-sm font-semibold text-foreground break-keep">
+                  {ind.name}
+                </h3>
+                {ind.link && <IndicatorLink href={ind.link} />}
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground break-keep">
+                {ind.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// 차트형 지표 카드 — 설명 + 그래프 + 캐비엇(프록시 안내).
+function ChartedIndicatorCard({ indicator }: { indicator: SectorIndicator }) {
+  const meta = isIndicatorSeriesKey(indicator.seriesKey)
+    ? INDICATOR_SERIES[indicator.seriesKey]
+    : null;
+  return (
+    <div className="rounded-xl border border-border bg-card/40 p-4">
+      <div className="flex items-start justify-between gap-2">
+        <h3 className="text-sm font-semibold text-foreground break-keep">
+          {indicator.name}
+        </h3>
+        {indicator.link && <IndicatorLink href={indicator.link} />}
+      </div>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground break-keep">
+        {indicator.description}
+      </p>
+      <div className="mt-3">
+        {indicator.seriesKey === 'TOKEN_THROUGHPUT' && <TokenThroughputChart />}
+      </div>
+      {meta?.caption && (
+        <p className="mt-2 text-[11px] text-muted-foreground/50 break-keep">
+          {meta.caption}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// 지표 링크 — 외부(http)면 새 탭, 내부 경로면 Link.
+function IndicatorLink({ href }: { href: string }) {
+  const cls = 'shrink-0 text-xs text-blue-500 hover:underline';
+  if (/^https?:\/\//.test(href)) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
+        보기 →
+      </a>
+    );
+  }
+  return (
+    <Link href={href} className={cls}>
+      보기 →
+    </Link>
   );
 }
