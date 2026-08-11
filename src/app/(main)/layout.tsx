@@ -1,7 +1,14 @@
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import type { Metadata } from 'next';
 import { ReactNode } from 'react';
 import { AppSidebar } from './components/app-sidebar';
 import { MainHeader } from './components/main-header';
+
+// 로그인 뒤 화면 전체. 크롤러에겐 빈 화면으로 보이고 색인될 이유도 없으므로 noindex.
+// (공개 콘텐츠로 열게 되는 라우트가 생기면 해당 layout에서 robots를 덮어쓸 것.)
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (

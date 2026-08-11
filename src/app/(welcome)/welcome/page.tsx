@@ -1,6 +1,7 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
+import { Contact } from './components/contact';
 import { Features } from './components/features';
 import { Footer } from './components/footer';
 import { Header } from './components/header';
@@ -18,6 +19,7 @@ export default function Page() {
         <Hero session={session} />
         <Features />
         <Philosophy />
+        <Contact session={session} />
         <Footer />
       </>
       {/* )} */}

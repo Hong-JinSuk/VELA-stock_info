@@ -23,6 +23,7 @@ export type ClassDiagnosis = {
   actualPct: number;
   actualAmount: number;
   deviation: number; // actualPct - targetPct (%p)
+  band: number; // 이 자산군의 허용 편차(%p). 목표 비중에 따라 가변 — deviationBand() 참고
   status: ClassStatus;
   rebalanceAmount: number; // 목표 도달까지 필요한 금액. + 매수 / - 매도
 };

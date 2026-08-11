@@ -1,4 +1,5 @@
 import { ASSET_CLASSES, type AssetClass } from '@/constants/asset-classes';
+import type { PortfolioCurrency } from '@/constants/portfolio-currency';
 import type { TemplateId } from '@/constants/portfolio-templates';
 import type { Holdings } from '@/types/portfolio';
 import { atomWithStorage } from 'jotai/utils';
@@ -35,4 +36,10 @@ export const holdingsAtom = atomWithStorage<Holdings>(
 export const customTargetAtom = atomWithStorage<Record<AssetClass, number>>(
   'vela.portfolio.customTarget',
   EMPTY_TARGET,
+);
+
+// 입력 금액 표시 통화(₩/$). 진단 값엔 영향 없고 입력 명확성용. 기본 원화.
+export const portfolioCurrencyAtom = atomWithStorage<PortfolioCurrency>(
+  'vela.portfolio.currency',
+  'KRW',
 );

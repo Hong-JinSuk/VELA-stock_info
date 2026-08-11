@@ -6,6 +6,8 @@ export type ContactData = {
   authorEmail: string;
   title: string;
   content: string;
+  /** 봇 트랩(honeypot). 사람이 채울 일이 없는 숨김 필드. */
+  website?: string;
 };
 
 export function useContact() {

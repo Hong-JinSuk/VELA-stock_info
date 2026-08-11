@@ -11,10 +11,22 @@ import type {
   Holdings,
 } from '@/types/portfolio';
 
-// 목표 대비 |편차| 이 값(%p) 이내면 '적정'으로 본다.
-export const DEVIATION_BAND = 5;
+// 허용 편차(%p)의 상한. 비중이 큰 자산군은 여기서 멈춘다(종전의 고정 밴드와 동일).
+export const MAX_DEVIATION_BAND = 5;
+// 허용 편차(%p)의 하한. 상대 기준만 쓰면 작은 비중이 0.5%p 흔들려도 '과다'가 되어
+// 지나치게 예민해지므로, 작은 비중은 어느 정도 몰리는 것을 허용한다.
+export const MIN_DEVIATION_BAND = 2.5;
+// 상대 기준 — 목표 비중의 이 비율만큼을 허용 편차로 본다(자산배분의 통상적인 25% 룰).
+export const RELATIVE_BAND_RATIO = 0.25;
 // 한 종목이 전체 자산의 이 비율(%) 초과면 집중 위험으로 경고.
 export const CONCENTRATION_THRESHOLD = 20;
+
+// 목표 비중에 따른 허용 편차(%p). 목표의 25%를 쓰되 MIN~MAX로 클램프한다.
+// 목표 20% 이상은 종전과 같은 ±5%p, 10% 이하는 하한 ±2.5%p로 완화된 상태를 유지.
+export function deviationBand(targetPct: number): number {
+  const relative = safe(targetPct) * RELATIVE_BAND_RATIO;
+  return Math.min(MAX_DEVIATION_BAND, Math.max(MIN_DEVIATION_BAND, relative));
+}
 
 // 자산군별 금액 합계 (주식은 종목 amount 합산).
 export function amountByClass(h: Holdings): Record<AssetClass, number> {
@@ -51,12 +63,9 @@ export function diagnose(
   const byClass: ClassDiagnosis[] = ASSET_CLASSES.map((c) => {
     const actualPct = pct(amounts[c]);
     const deviation = actualPct - target[c];
+    const band = deviationBand(target[c]);
     const status: ClassStatus =
-      Math.abs(deviation) <= DEVIATION_BAND
-        ? 'ok'
-        : deviation > 0
-          ? 'over'
-          : 'under';
+      Math.abs(deviation) <= band ? 'ok' : deviation > 0 ? 'over' : 'under';
     const targetAmount = (target[c] / 100) * total;
     return {
       assetClass: c,
@@ -64,6 +73,7 @@ export function diagnose(
       actualPct,
       actualAmount: amounts[c],
       deviation,
+      band,
       status,
       rebalanceAmount: targetAmount - amounts[c],
     };

@@ -1,6 +1,18 @@
 'use client';
 
+import {
+  Popover,
+  PopoverContent,
+  PopoverTitle,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { ASSET_CLASS_META } from '@/constants/asset-classes';
+import {
+  MAX_DEVIATION_BAND,
+  MIN_DEVIATION_BAND,
+  RELATIVE_BAND_RATIO,
+} from '@/lib/portfolio/diagnose';
+import { cn } from '@/lib/utils';
 import type { ClassDiagnosis, Diagnosis } from '@/types/portfolio';
 import { AlertTriangle, TrendingDown, TrendingUp } from 'lucide-react';
 
@@ -8,7 +20,13 @@ import { AlertTriangle, TrendingDown, TrendingUp } from 'lucide-react';
 const RISK_GAP = 5;
 
 // 진단 결과 — 위험 성향 요약 + 자산군별 목표 대비 과부족 + 종목 집중 경고.
-export default function DiagnosisResult({ result }: { result: Diagnosis }) {
+export default function DiagnosisResult({
+  result,
+  currencySymbol,
+}: {
+  result: Diagnosis;
+  currencySymbol: string;
+}) {
   const { byClass, actualRisk, targetRisk, concentration } = result;
   const riskGap = actualRisk - targetRisk;
   const riskVerdict =
@@ -54,9 +72,13 @@ export default function DiagnosisResult({ result }: { result: Diagnosis }) {
           자산군별 목표 대비
         </h3>
         <div className="flex flex-col gap-4">
-          {byClass.map((d) => (
-            <ClassRow key={d.assetClass} d={d} />
-          ))}
+          {byClass
+            // 목표에도 없고(0%) 실제 보유도 없는 자산군은 노이즈라 숨김
+            // (목표 0%인데 보유가 있으면 과다배분이므로 남긴다).
+            .filter((d) => d.targetPct > 0 || d.actualAmount > 0)
+            .map((d) => (
+              <ClassRow key={d.assetClass} d={d} symbol={currencySymbol} />
+            ))}
         </div>
       </section>
 
@@ -102,7 +124,7 @@ export default function DiagnosisResult({ result }: { result: Diagnosis }) {
   );
 }
 
-function ClassRow({ d }: { d: ClassDiagnosis }) {
+function ClassRow({ d, symbol }: { d: ClassDiagnosis; symbol: string }) {
   const meta = ASSET_CLASS_META[d.assetClass];
   const rebalance = Math.round(d.rebalanceAmount);
   return (
@@ -135,8 +157,8 @@ function ClassRow({ d }: { d: ClassDiagnosis }) {
         {d.status !== 'ok' && rebalance !== 0 && (
           <span className={rebalance > 0 ? 'text-sky-500' : 'text-rose-500'}>
             {rebalance > 0
-              ? `${Math.abs(rebalance).toLocaleString()} 매수 필요`
-              : `${Math.abs(rebalance).toLocaleString()} 매도 검토`}
+              ? `${symbol}${Math.abs(rebalance).toLocaleString()} 매수 필요`
+              : `${symbol}${Math.abs(rebalance).toLocaleString()} 매도 검토`}
           </span>
         )}
       </div>
@@ -144,26 +166,70 @@ function ClassRow({ d }: { d: ClassDiagnosis }) {
   );
 }
 
+// 판정 배지 — 누르면 어떤 기준으로 그렇게 나왔는지 보여준다.
+// 터치에선 hover가 없으므로 Tooltip 대신 Popover(클릭/탭)로 띄운다.
+// (목표 마커는 2px이라 탭 타깃이 못 되어, 판정 결과인 배지 자체를 트리거로 삼았다.)
 function DeviationBadge({ d }: { d: ClassDiagnosis }) {
-  if (d.status === 'ok') {
-    return (
-      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-500">
-        적정
-      </span>
-    );
-  }
+  const meta = ASSET_CLASS_META[d.assetClass];
+  const ok = d.status === 'ok';
   const over = d.status === 'over';
   const Icon = over ? TrendingUp : TrendingDown;
+  const low = Math.max(0, d.targetPct - d.band);
+  const high = d.targetPct + d.band;
+
   return (
-    <span
-      className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tabular-nums ${
-        over ? 'bg-rose-500/10 text-rose-500' : 'bg-sky-500/10 text-sky-500'
-      }`}
-    >
-      <Icon className="size-3" />
-      {over ? '과다' : '부족'} {d.deviation > 0 ? '+' : ''}
-      {d.deviation.toFixed(1)}%p
-    </span>
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={`${meta.label} 판정 기준 보기`}
+          className={cn(
+            'flex cursor-pointer items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tabular-nums transition-opacity hover:opacity-80',
+            ok
+              ? 'bg-emerald-500/10 text-emerald-500'
+              : over
+                ? 'bg-rose-500/10 text-rose-500'
+                : 'bg-sky-500/10 text-sky-500',
+          )}
+        >
+          {ok ? (
+            '적정'
+          ) : (
+            <>
+              <Icon className="size-3" />
+              {over ? '과다' : '부족'} {d.deviation > 0 ? '+' : ''}
+              {d.deviation.toFixed(1)}%p
+            </>
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64 gap-2">
+        <PopoverTitle className="text-xs">{meta.label} 판정 기준</PopoverTitle>
+        <dl className="flex flex-col gap-1 text-[11px] tabular-nums">
+          <CriteriaRow label="현재 비중" value={`${d.actualPct.toFixed(1)}%`} />
+          <CriteriaRow label="목표 비중" value={`${d.targetPct}%`} />
+          <CriteriaRow label="허용 편차" value={`±${d.band}%p`} />
+          <CriteriaRow
+            label="적정 범위"
+            value={`${low.toFixed(1)}% ~ ${high.toFixed(1)}%`}
+          />
+        </dl>
+        <p className="text-[11px] leading-relaxed text-muted-foreground break-keep">
+          허용 편차는 목표 비중의 {RELATIVE_BAND_RATIO * 100}%로 잡되, 최소 ±
+          {MIN_DEVIATION_BAND}%p · 최대 ±{MAX_DEVIATION_BAND}%p로 제한합니다.
+          비중이 작은 자산군이 다소 몰리는 것까지 과하게 잡지 않기 위함입니다.
+        </p>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function CriteriaRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="font-medium text-foreground">{value}</dd>
+    </div>
   );
 }
 

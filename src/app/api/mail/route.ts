@@ -1,15 +1,34 @@
+import { contactSchema } from '@/schemas/contact-schema';
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
+// 메일 헤더(제목/발신자명)에 들어가는 값은 개행을 제거한다(헤더 인젝션 방지).
+const singleLine = (value: string) => value.replace(/[\r\n]+/g, ' ').trim();
+
+// 로그인 없이도 호출되는 공개 엔드포인트(welcome 문의 섹션).
 export async function POST(req: Request) {
   try {
-    const { title, content, authorEmail, author } = await req.json();
+    const body = await req.json();
+    const parsed = contactSchema.safeParse(body);
 
-    // 1. 유효성 검사 (최소한의 방어 로직)
-    if (!title || !content || !authorEmail) {
+    if (!parsed.success) {
       return NextResponse.json(
-        { code: 400, message: '필수 입력 항목이 누락되었습니다.' },
+        {
+          code: 400,
+          message:
+            parsed.error.issues[0]?.message ?? '입력값을 다시 확인해주세요.',
+        },
         { status: 400 },
+      );
+    }
+
+    const { title, content, authorEmail, author, website } = parsed.data;
+
+    // honeypot에 값이 있으면 봇. 실패를 알려주면 우회하므로 조용히 성공 처리.
+    if (website) {
+      return NextResponse.json(
+        { code: 200, message: '메일이 성공적으로 전송되었습니다.' },
+        { status: 200 },
       );
     }
 
@@ -25,10 +44,10 @@ export async function POST(req: Request) {
     });
 
     const mailOptions = {
-      from: `"${author}" <${process.env.SMTP_USER}>`,
+      from: `"${singleLine(author)}" <${process.env.SMTP_USER}>`,
       to: process.env.ADMIN_EMAIL,
       replyTo: authorEmail,
-      subject: `[V E L A] ${title}`,
+      subject: `[V E L A] ${singleLine(title)}`,
       text: `
 [새로운 건의사항 접수]
 
